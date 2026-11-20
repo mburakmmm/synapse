@@ -1,0 +1,146 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://synapse.local/schemas/run_manifest.v1.schema.json",
+  "title": "SYNAPSE Run Manifest v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "run_id",
+    "content_fingerprint",
+    "status",
+    "is_synthetic_fixture",
+    "analysis_intent",
+    "protocol_id",
+    "protocol_revision",
+    "protocol_sha256",
+    "experiment_id",
+    "condition_id",
+    "replicate_id",
+    "dataset_id",
+    "dataset_release",
+    "dataset_manifest_sha256",
+    "model_id",
+    "model_revision",
+    "parameter_manifest_sha256",
+    "resolved_interventions",
+    "seed_info",
+    "source_provenance",
+    "environment",
+    "simulation_settings",
+    "started_at_utc",
+    "ended_at_utc",
+    "resource_usage",
+    "outputs",
+    "warnings",
+    "failure_reason"
+  ],
+  "properties": {
+    "schema_version": { "type": "string", "const": "1.0" },
+    "run_id": { "type": "string", "minLength": 1 },
+    "content_fingerprint": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+    "status": {
+      "type": "string",
+      "enum": [
+        "queued",
+        "preparing",
+        "running",
+        "cancel_requested",
+        "succeeded",
+        "failed",
+        "cancelled"
+      ]
+    },
+    "is_synthetic_fixture": { "type": "boolean" },
+    "analysis_intent": { "type": "string", "enum": ["exploratory", "confirmatory"] },
+    "protocol_id": { "type": "string", "minLength": 1 },
+    "protocol_revision": { "type": "integer", "minimum": 1 },
+    "protocol_sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+    "experiment_id": { "type": "string", "minLength": 1 },
+    "condition_id": { "type": "string", "minLength": 1 },
+    "replicate_id": { "type": "integer", "minimum": 0 },
+    "dataset_id": { "type": "string", "minLength": 1 },
+    "dataset_release": { "type": "string", "minLength": 1 },
+    "dataset_manifest_sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+    "model_id": { "type": "string", "minLength": 1 },
+    "model_revision": { "type": "string", "minLength": 1 },
+    "parameter_manifest_sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+    "resolved_interventions": {
+      "type": "array",
+      "items": { "type": "object" }
+    },
+    "seed_info": {
+      "type": "object",
+      "required": ["algorithm", "master_seed", "derived_seeds"],
+      "properties": {
+        "algorithm": { "type": "string", "minLength": 1 },
+        "master_seed": { "type": "integer", "minimum": 0 },
+        "derived_seeds": {
+          "type": "object",
+          "additionalProperties": { "type": "integer", "minimum": 0 }
+        }
+      }
+    },
+    "source_provenance": {
+      "type": "object",
+      "required": ["git_commit", "git_dirty", "git_diff_sha256"],
+      "properties": {
+        "git_commit": { "type": ["string", "null"] },
+        "git_dirty": { "type": "boolean" },
+        "git_diff_sha256": { "type": ["string", "null"] }
+      }
+    },
+    "environment": {
+      "type": "object",
+      "required": ["os", "machine", "python_version", "library_versions"],
+      "properties": {
+        "os": { "type": "string", "minLength": 1 },
+        "machine": { "type": "string", "minLength": 1 },
+        "python_version": { "type": "string", "minLength": 1 },
+        "library_versions": {
+          "type": "object",
+          "additionalProperties": { "type": "string" }
+        }
+      }
+    },
+    "simulation_settings": {
+      "type": "object",
+      "required": ["backend_id", "solver", "precision", "dt_s", "duration_s"],
+      "properties": {
+        "backend_id": { "type": "string", "minLength": 1 },
+        "solver": { "type": "string", "minLength": 1 },
+        "precision": { "type": "string", "minLength": 1 },
+        "dt_s": { "type": "number", "exclusiveMinimum": 0 },
+        "duration_s": { "type": "number", "exclusiveMinimum": 0 }
+      }
+    },
+    "started_at_utc": { "type": "string", "format": "date-time" },
+    "ended_at_utc": { "type": ["string", "null"], "format": "date-time" },
+    "resource_usage": {
+      "type": "object",
+      "required": ["wall_seconds", "estimated_memory_bytes"],
+      "properties": {
+        "wall_seconds": { "type": ["number", "null"], "minimum": 0 },
+        "estimated_memory_bytes": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "outputs": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["path", "role", "bytes", "sha256"],
+        "properties": {
+          "path": { "type": "string", "minLength": 1 },
+          "role": { "type": "string", "minLength": 1 },
+          "bytes": { "type": "integer", "minimum": 0 },
+          "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" }
+        }
+      }
+    },
+    "warnings": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "failure_reason": { "type": ["string", "null"] }
+  }
+}

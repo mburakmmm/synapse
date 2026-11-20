@@ -1,0 +1,101 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 280" width="1200" height="280" role="img" aria-labelledby="synapseTitle synapseDesc">
+  <title id="synapseTitle">SYNAPSE — Local-First Reproducible Computational Neuroscience Research Platform</title>
+  <desc id="synapseDesc">Stylized Drosophila connectome motif paired with SYNAPSE title and Research Use Only badge.</desc>
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0B111E"/>
+      <stop offset="55%" stop-color="#11192C"/>
+      <stop offset="100%" stop-color="#0D1524"/>
+    </linearGradient>
+    <linearGradient id="accentGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#38BDF8"/>
+      <stop offset="50%" stop-color="#818CF8"/>
+      <stop offset="100%" stop-color="#34D399"/>
+    </linearGradient>
+    <radialGradient id="glowCyan" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#38BDF8" stop-opacity="0.28"/>
+      <stop offset="100%" stop-color="#38BDF8" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="glowIndigo" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#818CF8" stop-opacity="0.22"/>
+      <stop offset="100%" stop-color="#818CF8" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <!-- Outer card with subtle border legible on both light & dark GitHub themes -->
+  <rect x="2" y="2" width="1196" height="276" rx="16" fill="url(#bgGrad)" stroke="#30363D" stroke-width="2"/>
+
+  <!-- Subtle background grid -->
+  <g stroke="#1E293B" stroke-width="1" opacity="0.55">
+    <line x1="0" y1="70" x2="1200" y2="70"/>
+    <line x1="0" y1="140" x2="1200" y2="140"/>
+    <line x1="0" y1="210" x2="1200" y2="210"/>
+    <line x1="360" y1="2" x2="360" y2="278"/>
+    <line x1="720" y1="2" x2="720" y2="278"/>
+    <line x1="1080" y1="2" x2="1080" y2="278"/>
+  </g>
+
+  <!-- Soft ambient glows behind connectome graph -->
+  <circle cx="165" cy="140" r="125" fill="url(#glowCyan)"/>
+  <circle cx="275" cy="145" r="105" fill="url(#glowIndigo)"/>
+
+  <!-- Connectome network motif (directed excitatory & inhibitory pathways) -->
+  <g fill="none" stroke-linecap="round">
+    <!-- Layer 1 (GRN sensory) -> Layer 2 (interneurons) -->
+    <path d="M 78 68 C 122 68, 128 84, 166 86" stroke="#38BDF8" stroke-width="2.2" stroke-opacity="0.72"/>
+    <path d="M 78 68 C 122 80, 130 132, 174 140" stroke="#38BDF8" stroke-width="1.6" stroke-opacity="0.52"/>
+    <path d="M 68 140 C 118 140, 126 88, 166 86" stroke="#38BDF8" stroke-width="1.6" stroke-opacity="0.48"/>
+    <path d="M 68 140 C 120 140, 124 140, 174 140" stroke="#38BDF8" stroke-width="2.4" stroke-opacity="0.80"/>
+    <path d="M 68 140 C 118 152, 126 192, 168 196" stroke="#818CF8" stroke-width="1.7" stroke-opacity="0.55"/>
+    <path d="M 80 212 C 120 212, 126 150, 174 140" stroke="#38BDF8" stroke-width="1.8" stroke-opacity="0.58"/>
+    <path d="M 80 212 C 124 210, 128 198, 168 196" stroke="#F59E0B" stroke-width="1.8" stroke-opacity="0.58" stroke-dasharray="4 4"/>
+
+    <!-- Layer 2 -> Layer 3 (convergence & motor readout) -->
+    <path d="M 166 86 C 212 88, 226 106, 266 110" stroke="#818CF8" stroke-width="2.2" stroke-opacity="0.75"/>
+    <path d="M 174 140 C 218 136, 224 114, 266 110" stroke="#34D399" stroke-width="2.2" stroke-opacity="0.75"/>
+    <path d="M 174 140 C 218 144, 224 166, 266 172" stroke="#38BDF8" stroke-width="2.2" stroke-opacity="0.72"/>
+    <path d="M 168 196 C 214 192, 226 176, 266 172" stroke="#F59E0B" stroke-width="1.9" stroke-opacity="0.65" stroke-dasharray="4 4"/>
+    <path d="M 266 110 C 292 114, 294 134, 314 140" stroke="#34D399" stroke-width="2.4" stroke-opacity="0.85"/>
+    <path d="M 266 172 C 292 168, 294 146, 314 140" stroke="#38BDF8" stroke-width="2.4" stroke-opacity="0.85"/>
+  </g>
+
+  <!-- Network nodes -->
+  <g>
+    <!-- Sensory nodes -->
+    <circle cx="78" cy="68" r="7" fill="#0B111E" stroke="#38BDF8" stroke-width="2.5"/>
+    <circle cx="68" cy="140" r="8" fill="#0B111E" stroke="#38BDF8" stroke-width="2.5"/>
+    <circle cx="80" cy="212" r="7" fill="#0B111E" stroke="#38BDF8" stroke-width="2.5"/>
+    <!-- Interneurons -->
+    <circle cx="166" cy="86" r="8" fill="#1E293B" stroke="#818CF8" stroke-width="2.5"/>
+    <circle cx="174" cy="140" r="9.5" fill="#1E293B" stroke="#38BDF8" stroke-width="2.8"/>
+    <circle cx="168" cy="196" r="8" fill="#1E293B" stroke="#F59E0B" stroke-width="2.5"/>
+    <!-- Premotor / Motor nodes -->
+    <circle cx="266" cy="110" r="8" fill="#1E293B" stroke="#34D399" stroke-width="2.5"/>
+    <circle cx="266" cy="172" r="8" fill="#1E293B" stroke="#38BDF8" stroke-width="2.5"/>
+    <circle cx="314" cy="140" r="10.5" fill="#064E3B" stroke="#34D399" stroke-width="3"/>
+    <circle cx="314" cy="140" r="4" fill="#34D399"/>
+  </g>
+
+  <!-- Accent vertical divider -->
+  <rect x="358" y="48" width="3" height="184" rx="1.5" fill="url(#accentGrad)" opacity="0.85"/>
+
+  <!-- Main typography -->
+  <text x="394" y="102" fill="#F8FAFC" font-family="ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="58" font-weight="800" letter-spacing="4">SYNAPSE</text>
+  <text x="396" y="140" fill="#CBD5E1" font-family="ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="21" font-weight="500">Local-First Reproducible Computational Neuroscience Research Platform</text>
+  <text x="396" y="170" fill="#94A3B8" font-family="ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="15">Whole-brain Drosophila connectomics, explicit LIF dynamics, frozen protocols, and SHA-256 provenance.</text>
+
+  <!-- Feature pills -->
+  <g font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace" font-size="12" font-weight="600">
+    <rect x="396" y="196" width="168" height="30" rx="6" fill="#0F172A" stroke="#38BDF8" stroke-width="1.2"/>
+    <text x="480" y="215" fill="#7DD3FC" text-anchor="middle">FlyWire + MaleCNS</text>
+
+    <rect x="576" y="196" width="142" height="30" rx="6" fill="#0F172A" stroke="#818CF8" stroke-width="1.2"/>
+    <text x="647" y="215" fill="#C7D2FE" text-anchor="middle">Brian2 LIF Core</text>
+
+    <rect x="730" y="196" width="188" height="30" rx="6" fill="#0F172A" stroke="#34D399" stroke-width="1.2"/>
+    <text x="824" y="215" fill="#6EE7B7" text-anchor="middle">Frozen SHA-256 Audits</text>
+
+    <rect x="930" y="196" width="214" height="30" rx="6" fill="#2A1215" stroke="#F87171" stroke-width="1.2"/>
+    <text x="1037" y="215" fill="#FCA5A5" text-anchor="middle">RESEARCH USE ONLY (RUO)</text>
+  </g>
+</svg>

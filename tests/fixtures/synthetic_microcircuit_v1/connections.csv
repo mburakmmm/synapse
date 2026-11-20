@@ -1,0 +1,5 @@
+pre_source_id,post_source_id,synapse_count,region,confidence,aggregation_policy
+9007199254740993,9007199254740994,140,synthetic_core,1.0,sum
+9007199254740993,9007199254740995,100,synthetic_core,1.0,sum
+9007199254740994,9007199254740996,200,synthetic_core,1.0,sum
+9007199254740995,9007199254740996,140,synthetic_core,1.0,sum

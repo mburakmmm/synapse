@@ -1,0 +1,118 @@
+{
+  "schema_version": "1.0",
+  "benchmark_id": "SHIU2024-FEEDING-BENCHMARK",
+  "upstream_source": {
+    "paper_doi": "10.1038/s41586-024-07763-9",
+    "repository": "https://github.com/philshiu/Drosophila_brain_model",
+    "commit": "91bdd1e7dcf193f3e7ca5a8933497fcef63b7960",
+    "verified_utc": "2026-11-20",
+    "reference_files": {
+      "sugar_grn_100hz": {
+        "path": "results/example/sugarR_100Hz.parquet",
+        "git_blob_sha1": "bd76730d5e991d64b756f354a749f94ffb874c64",
+        "n_trials": 30,
+        "duration_s": 1.0
+      },
+      "sugar_grn_100hz_silence_grn15": {
+        "path": "results/example/sugarR-720575940617937543.parquet",
+        "git_blob_sha1": "1cdeee4a3d4aa5b16602ac0a1e76f1db14e19f9b",
+        "n_trials": 30,
+        "duration_s": 1.0
+      }
+    }
+  },
+  "tolerance_rationale": "Predeclared tolerances (5.0 Hz absolute mean deviation for stochastic 30-trial Poisson runs across Brian2 2.5.1 cython vs Brian2 2.10.1 numpy RNG streams; 0.0 Hz exact for deterministic zero-stimulus control; negative paired silencing shift).",
+  "conditions": {
+    "baseline_no_stimulus": {
+      "expected_replicates": 30,
+      "expected_max_total_spikes": 0,
+      "targets": [
+        {
+          "neuron_id": "720575940660219265",
+          "label": "MN9_right",
+          "reference_mean_hz": 0.0,
+          "reference_sd_pop_hz": 0.0,
+          "tolerance_abs_hz": 0.0
+        },
+        {
+          "neuron_id": "720575940645521262",
+          "label": "MN9_left",
+          "reference_mean_hz": 0.0,
+          "reference_sd_pop_hz": 0.0,
+          "tolerance_abs_hz": 0.0
+        }
+      ]
+    },
+    "sugar_grn_100hz": {
+      "expected_replicates": 30,
+      "expected_max_total_spikes": null,
+      "targets": [
+        {
+          "neuron_id": "720575940660219265",
+          "label": "MN9_right",
+          "reference_mean_hz": 67.03333333333333,
+          "reference_sd_pop_hz": 6.595368745482572,
+          "tolerance_abs_hz": 5.0
+        },
+        {
+          "neuron_id": "720575940645521262",
+          "label": "MN9_left",
+          "reference_mean_hz": 48.63333333333333,
+          "reference_sd_pop_hz": 4.672496358716859,
+          "tolerance_abs_hz": 5.0
+        },
+        {
+          "neuron_id": "720575940622695448",
+          "label": "top_responder_1",
+          "reference_mean_hz": 114.26666666666667,
+          "reference_sd_pop_hz": 2.096557899838629,
+          "tolerance_abs_hz": 5.0
+        },
+        {
+          "neuron_id": "720575940629888530",
+          "label": "top_responder_2",
+          "reference_mean_hz": 101.7,
+          "reference_sd_pop_hz": 3.1,
+          "tolerance_abs_hz": 5.0
+        },
+        {
+          "neuron_id": "720575940627383685",
+          "label": "top_responder_3",
+          "reference_mean_hz": 101.13333333333334,
+          "reference_sd_pop_hz": 1.875,
+          "tolerance_abs_hz": 5.0
+        }
+      ]
+    },
+    "sugar_grn_100hz_silence_grn15": {
+      "expected_replicates": 30,
+      "expected_max_total_spikes": null,
+      "targets": [
+        {
+          "neuron_id": "720575940660219265",
+          "label": "MN9_right",
+          "reference_mean_hz": 63.266666666666666,
+          "reference_sd_pop_hz": 4.732394273045706,
+          "tolerance_abs_hz": 5.0
+        },
+        {
+          "neuron_id": "720575940645521262",
+          "label": "MN9_left",
+          "reference_mean_hz": 45.666666666666664,
+          "reference_sd_pop_hz": 4.376706016578629,
+          "tolerance_abs_hz": 5.0
+        }
+      ]
+    }
+  },
+  "contrasts": [
+    {
+      "contrast_id": "grn15_silencing_reduces_mn9_right",
+      "baseline_condition": "sugar_grn_100hz",
+      "treatment_condition": "sugar_grn_100hz_silence_grn15",
+      "neuron_id": "720575940660219265",
+      "expected_direction": "negative",
+      "reference_mean_diff_hz": -3.7666666666666657
+    }
+  ]
+}

@@ -1,0 +1,62 @@
+schema_version: "1.0"
+protocol_id: "P0-SYNTH-001"
+revision: 1
+status: "approved"
+analysis_intent: "exploratory"
+question: "In the 4-neuron synthetic engineering microcircuit, does silencing the GABAergic interneuron increase modeled firing rate of the downstream motor node?"
+hypothesis: "Engineering check only: zeroing outgoing edges of GABAergic node 9007199254740995 removes negative synaptic input onto 9007199254740996 and increases firing rate relative to paired baseline seeds."
+biological_unit: "synthetic_engineering_fixture"
+simulation_unit: "paired_seed_run"
+sources:
+  - dataset_id: "synthetic_microcircuit_v1"
+    release: "0.1.0-synth"
+    manifest_sha256: "verified_at_ingest_from_local_fixture"
+model:
+  id: "synapse_lif_v1"
+  revision: "1.0"
+  parameter_manifest_sha256: "verified_at_run_from_lif_parameters"
+  backend: "brian2_cpu"
+  parameters:
+    dt_s: 0.0001
+    solver: "exact"
+    w_syn_v: 0.000275
+conditions:
+  - id: "baseline"
+    interventions:
+      - kind: "sham"
+        description: "intact synthetic microcircuit"
+  - id: "inhibitory_silencing"
+    interventions:
+      - kind: "neuron_silencing"
+        target_neuron_ids:
+          - "9007199254740995"
+        mode: "outgoing_zero"
+stimulus_schedule:
+  duration_s: 0.5
+  stimuli:
+    - kind: "poisson_rate"
+      target_neuron_ids:
+        - "9007199254740993"
+      rate_hz: 150.0
+      weight_v: 0.06875
+      start_s: 0.0
+      end_s: 0.5
+      disable_refractory: true
+measurement_window:
+  start_s: 0.0
+  end_s: 0.5
+seeds:
+  strategy: "paired"
+  master: 20261120
+  replicates: 5
+analysis:
+  primary_endpoint: "target_neuron_firing_rate_hz"
+  target_neuron_id: "9007199254740996"
+  estimand: "paired_condition_difference"
+  uncertainty_method: "seed_ensemble_percentile_bootstrap_95ci"
+  multiplicity_policy: "single_engineering_endpoint"
+  exclusion_policy: "include_all_completed_report_all_failed"
+  acceptance_criteria: "engineering_pipeline_completion_and_positive_disinhibition_delta_only"
+resources:
+  max_wall_seconds: 60.0
+  max_output_bytes: 52428800

@@ -1,0 +1,120 @@
+schema_version: "1.0"
+retrieved_at_utc: "2026-11-20"
+status: "phase4_metabolic_literature_verified"
+
+sources:
+  - id: shiu2024_paper
+    purpose: "Reference Drosophila whole-brain LIF dynamical model and feeding/grooming predictions"
+    citation: "Shiu PK et al. (2024) A Drosophila computational brain model reveals sensorimotor processing. Nature."
+    doi: "10.1038/s41586-024-07763-9"
+    url: "https://doi.org/10.1038/s41586-024-07763-9"
+    verification_status: "doi_listed_in_AGENTS_md_and_crossref_resolved"
+
+  - id: shiu2024_repo
+    purpose: "Reference code and FlyWire v630 baseline data snapshot"
+    url: "https://github.com/philshiu/Drosophila_brain_model"
+    verified_commit: "91bdd1e7dcf193f3e7ca5a8933497fcef63b7960"
+    commit_date_utc: "2024-09-14T13:47:44Z"
+    license: "MIT"
+    files_inspected:
+      - name: "model.py"
+        bytes: 11900
+      - name: "Readme.md"
+        bytes: 3617
+      - name: "2023_03_23_completeness_630_final.csv"
+        bytes: 3057611
+        upstream_checksum: "git-blob-sha1:be745f0ce054308df21accc5c4b3883aa38498f9"
+        local_sha256: "e6b71e17671a9bdb05f55e4bc6774640a1418cb7a05125e0fc994ad40f9bfdfb"
+      - name: "2023_03_23_connectivity_630_final.parquet"
+        bytes: 86630944
+        upstream_checksum: "git-blob-sha1:8b4d9531bc0acbda7c2074ae577e6ac9e2fca166"
+        local_sha256: "94db8c650533bc36ffa3223f2e62325d5648b8d6bd31c3a4e1c804628c7557b3"
+      - name: "Completeness_783.csv"
+        bytes: 3327347
+      - name: "Connectivity_783.parquet"
+        bytes: 100804642
+      - name: "sez_neurons.pickle"
+        bytes: 5114
+
+  - id: flywire_zenodo_783
+    purpose: "FlyWire Whole-brain Connectome Connectivity Data (v783)"
+    doi: "10.5281/zenodo.10676866"
+    url: "https://zenodo.org/records/10676866"
+    license: "cc-by-4.0"
+    publication_date: "2024-06-02"
+    files_verified_via_api:
+      - name: "proofread_connections_783.feather"
+        bytes: 852022274
+        checksum: "md5:f48f972d262323a102aed49af1396b8a"
+      - name: "proofread_root_ids_783.npy"
+        bytes: 1114168
+        checksum: "md5:e0e6c19732fd8c7a4e39a2d170105421"
+      - name: "per_neuron_neuropil_count_post_783.feather"
+        bytes: 233843050
+        checksum: "md5:bb5999f10920ade803d9f37097a43a56"
+      - name: "per_neuron_neuropil_count_pre_783.feather"
+        bytes: 16853770
+        checksum: "md5:90fcdb42c1ba05ed92820840fa1e6ba0"
+      - name: "flywire_synapses_783.feather"
+        bytes: 9492998242
+        checksum: "md5:f8f1b97c9d4b0ea9b4c8b287f6b99091"
+
+  - id: flywire_papers
+    purpose: "Adult female FlyWire/FAFB reconstruction and cell typing"
+    dois:
+      - "10.1038/s41586-024-07558-y"
+      - "10.1038/s41586-024-07686-5"
+    url: "https://codex.flywire.ai/"
+
+  - id: malecns_v1_0
+    purpose: "Adult male Drosophila central nervous system (central brain, optic lobes, VNC)"
+    release: "v1.0"
+    release_date: "2026-06-08"
+    url: "https://male-cns.janelia.org/download/"
+    release_notes_url: "https://male-cns.janelia.org/release/"
+    paper_doi: "10.1016/j.cell.2026.08.015"
+    license: "CC-BY-4.0"
+    files_verified_via_head:
+      - name: "body-annotations-male-cns-v1.0-minconf-0.5.feather"
+        bytes: 14483314
+        checksum: "md5:50a7718770c57220f160ba4f431ab89e"
+        local_sha256: "2177e246113e4cfbf1e7772ec37c6da1955ff22e8063d0b1f833101f99a9a3b2"
+      - name: "body-neurotransmitters-male-cns-v1.0.feather"
+        bytes: 43282834
+        checksum: "md5:3d842b12fe5c49eefade528d7dd24a1f"
+        local_sha256: "95c9289220663abeb3409f3ad9e5a7f8a53f8093f5139d15502cd08da8879621"
+      - name: "connectome-weights-male-cns-v1.0-minconf-0.5.feather"
+        bytes: 1051241946
+        checksum: "md5:f30e9dcca25cfd021bf1e7b3d975599e"
+        local_sha256: "e35da783d1c686b2b58b3b87cd6a403ae43bfcfba8bff28e08ef752c1a56afc1"
+
+  - id: domain_validation_candidates
+    purpose: "Candidate validation references for later phases (not yet reviewed in full)"
+    references:
+      - topic: "Adult taste connectome"
+        doi: "10.1016/j.cell.2026.08.016"
+      - topic: "Nerve injury and sensitization (Khuong et al.)"
+        doi: "10.1126/sciadv.aaw4099"
+      - topic: "Adult nociceptive pathways (verify peer-review status before use)"
+        url: "https://pubmed.ncbi.nlm.nih.gov/41280033/"
+
+  - id: phase4_metabolic_sources
+    purpose: "Verified literature basis for adult Drosophila sugar-GRN hunger/appetite gain modulation"
+    retrieved_at_utc: "2026-11-20"
+    references:
+      - ref_id: inagaki2012_cell
+        citation_short: "Inagaki HK et al. (2012) Cell"
+        doi: "10.1016/j.cell.2011.12.022"
+        claim_scope: "Starvation increases dopaminergic modulation onto sugar sensory terminals, elevating sweet sensitivity"
+      - ref_id: marella2012_neuron
+        citation_short: "Marella S, Mann K, Scott K (2012) Neuron 73(5):941-950"
+        doi: "10.1016/j.neuron.2011.12.032"
+        claim_scope: "Dopaminergic modulation regulates sucrose acceptance / PER probability"
+      - ref_id: engert2022_elife
+        citation_short: "Engert S, Sterne GR, Bock DD, Scott K (2022) eLife"
+        doi: "10.7554/eLife.78110"
+        claim_scope: "EM segregation of Drosophila gustatory projections by taste modality and connectivity"
+      - ref_id: munch2022_nature
+        citation_short: "Munch D, Goldschmidt D, Ribeiro C (2022) Nature 607:747-755"
+        doi: "10.1038/s41586-022-04909-5"
+        claim_scope: "Internal nutritional state modulates feeding motor selection dynamics"

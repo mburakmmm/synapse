@@ -1,0 +1,23 @@
+{
+  "dataset_id": "synthetic_microcircuit_v1",
+  "release": "0.1.0-synth",
+  "species": "synthetic_engineering_fixture",
+  "life_stage": null,
+  "sex": null,
+  "specimen_id": "synthetic_specimen_001",
+  "coverage": "4-neuron asymmetric feed-forward excitation-inhibition motif (synthetic engineering fixture)",
+  "source_uri": "local://tests/fixtures/synthetic_microcircuit_v1",
+  "source_reference": "SYNAPSE Phase 0 internal engineering fixture (no biological source)",
+  "license": "Apache-2.0",
+  "attribution": "SYNAPSE Contributors (synthetic engineering fixture)",
+  "is_synthetic_fixture": true,
+  "known_limitations": [
+    "SYNTHETIC ENGINEERING FIXTURE: Not derived from biological EM reconstruction or experimental physiology.",
+    "Validates schema, 64-bit ID preservation, sparse orientation, Brian2 CPU LIF execution, provenance, and export pipeline only.",
+    "Cannot be cited or interpreted as Drosophila or clinical evidence."
+  ],
+  "unknown_field_reasons": {
+    "life_stage": "Not applicable to synthetic engineering fixture.",
+    "sex": "Not applicable to synthetic engineering fixture."
+  }
+}

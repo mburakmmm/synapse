@@ -1,0 +1,25 @@
+cff-version: 1.2.0
+title: "SYNAPSE: Reproducible Computational Neuroscience Research Platform"
+message: "Research Use Only (RUO). If you use SYNAPSE in computational research, please cite it using these metadata."
+type: software
+authors:
+  - name: "SYNAPSE Contributors"
+version: "0.1.0.dev0"
+license: "Apache-2.0"
+repository-code: "https://github.com/mburakmmm/synapse"
+url: "https://github.com/mburakmmm/synapse"
+abstract: >-
+  Local-first, open-source computational research laboratory for connectome-grounded
+  dynamical simulations in adult Drosophila melanogaster (Research Use Only).
+  SYNAPSE enforces SHA-256 dataset provenance across FlyWire/FAFB v630 and Janelia
+  MaleCNS v1.0, provides computational reproduction of the Shiu et al. (2024)
+  leaky integrate-and-fire feeding circuit, includes a reproducible CLI, API,
+  worker, and web laboratory workbench, and supports pre-registered frozen
+  confirmatory simulation protocols such as P4-MET-001.
+keywords:
+  - computational neuroscience
+  - reproducibility
+  - leaky integrate-and-fire
+  - connectomics
+  - drosophila
+  - research-use-only
