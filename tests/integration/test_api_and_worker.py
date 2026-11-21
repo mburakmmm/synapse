@@ -88,6 +88,9 @@ def test_api_and_worker_full_fixture_lifecycle_security_cancel_and_backup(tmp_pa
         h = client.get("/api/v1/health")
         assert h.status_code == 200
         assert "RUO" in h.json()["ruo_notice"]
+        storage = h.json()["storage"]
+        assert isinstance(storage["data_dir_exists"], bool)
+        assert isinstance(storage["runs_dir_exists"], bool)
 
         neurons_res = client.get("/api/v1/datasets/synthetic_microcircuit_v1/neurons")
         assert neurons_res.status_code == 200

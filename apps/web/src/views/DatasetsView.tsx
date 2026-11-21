@@ -1,4 +1,4 @@
-import React, { Suspense, lazy, useEffect, useState } from "react";
+import React, { Suspense, lazy, useEffect, useRef, useState } from "react";
 import {
   api,
   type DatasetInspectResponse,
@@ -7,6 +7,7 @@ import {
   type NeuronRow,
   type SubgraphResponse,
 } from "../api";
+import type { UiMode } from "../App";
 import { StatusBadge } from "../components/StatusBadge";
 import { SubgraphCanvas } from "../components/SubgraphCanvas";
 import { useI18n } from "../i18n/LanguageContext";
@@ -24,6 +25,7 @@ export interface CircuitPresetRequest {
 }
 
 interface DatasetsViewProps {
+  uiMode: UiMode;
   datasets: DatasetSummary[];
   selectedDataset: string;
   onSelectDataset: (id: string) => void;
@@ -32,7 +34,35 @@ interface DatasetsViewProps {
   onError: (msg: string | null) => void;
 }
 
+const PRESET_CONFIGS: Record<string, Omit<CircuitPresetRequest, "nonce">> = {
+  malecns_v1_0: {
+    datasetId: "malecns_v1_0",
+    seedIds: "523539, 558778, 10592, 804642",
+    hops: 1,
+    direction: "incoming",
+    minSynapses: 8,
+    maxNodes: 75,
+  },
+  flywire_fafb_v630: {
+    datasetId: "flywire_fafb_v630",
+    seedIds: "720575940660219265, 720575940645521262",
+    hops: 1,
+    direction: "incoming",
+    minSynapses: 5,
+    maxNodes: 75,
+  },
+  synthetic_microcircuit_v1: {
+    datasetId: "synthetic_microcircuit_v1",
+    seedIds: "9007199254740993",
+    hops: 2,
+    direction: "outgoing",
+    minSynapses: 1,
+    maxNodes: 25,
+  },
+};
+
 export const DatasetsView: React.FC<DatasetsViewProps> = ({
+  uiMode,
   datasets,
   selectedDataset,
   onSelectDataset,
@@ -41,6 +71,8 @@ export const DatasetsView: React.FC<DatasetsViewProps> = ({
   onError,
 }) => {
   const { t } = useI18n();
+  const autoLoadedRef = useRef<boolean>(false);
+
   const [inspectingId, setInspectingId] = useState<string | null>(null);
   const [inspectResult, setInspectResult] = useState<DatasetInspectResponse | null>(null);
   const [planResult, setPlanResult] = useState<DatasetPlanResponse | null>(null);
@@ -67,9 +99,10 @@ export const DatasetsView: React.FC<DatasetsViewProps> = ({
     dir: "outgoing" | "incoming" | "both",
     minSyn: number,
     maxN: number,
+    suppressErrors = false,
   ) => {
     if (!dsId) return;
-    onError(null);
+    if (!suppressErrors) onError(null);
     const seedIds = rawSeeds
       .split(",")
       .map((s) => s.trim())
@@ -83,14 +116,19 @@ export const DatasetsView: React.FC<DatasetsViewProps> = ({
         min_synapses: minSyn,
         max_nodes: maxN,
       });
-      setSubgraphResult(res);
+      if (res && res.metadata && Array.isArray(res.nodes) && Array.isArray(res.edges)) {
+        setSubgraphResult(res);
+      }
     } catch (err) {
-      onError(err instanceof Error ? err.message : "Subgraph query failed");
+      if (!suppressErrors) {
+        onError(err instanceof Error ? err.message : "Subgraph query failed");
+      }
     }
   };
 
   useEffect(() => {
     if (!presetRequest) return;
+    autoLoadedRef.current = true;
     onSelectDataset(presetRequest.datasetId);
     setSeedInput(presetRequest.seedIds);
     setHops(presetRequest.hops);
@@ -108,6 +146,38 @@ export const DatasetsView: React.FC<DatasetsViewProps> = ({
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [presetRequest?.nonce]);
+
+  useEffect(() => {
+    if (uiMode !== "simple" || presetRequest || subgraphResult || autoLoadedRef.current) {
+      return;
+    }
+    const onDiskIds = datasets.filter((d) => d.on_disk).map((d) => d.dataset_id);
+    if (onDiskIds.length === 0) return;
+    const preferred =
+      ["malecns_v1_0", "flywire_fafb_v630", "synthetic_microcircuit_v1"].find((id) =>
+        onDiskIds.includes(id),
+      ) ?? onDiskIds[0];
+    const preset = PRESET_CONFIGS[preferred];
+    if (!preset) return;
+    autoLoadedRef.current = true;
+    onSelectDataset(preset.datasetId);
+    setSeedInput(preset.seedIds);
+    setHops(preset.hops);
+    setDirection(preset.direction);
+    setMinSynapses(preset.minSynapses);
+    setMaxNodes(preset.maxNodes);
+    setViewMode("3d");
+    void runSubgraphQuery(
+      preset.datasetId,
+      preset.seedIds,
+      preset.hops,
+      preset.direction,
+      preset.minSynapses,
+      preset.maxNodes,
+      true,
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [uiMode, datasets]);
 
   const handleApplyPreset = (preset: Omit<CircuitPresetRequest, "nonce">) => {
     onSelectDataset(preset.datasetId);
@@ -192,152 +262,352 @@ export const DatasetsView: React.FC<DatasetsViewProps> = ({
 
   const hasDatasetOnDisk = (id: string) => datasets.some((d) => d.dataset_id === id && d.on_disk);
 
+  const registryCard = (
+    <div className="card">
+      <div className="card-header">
+        <h2>{t("datasetsTitle")}</h2>
+      </div>
+      <div className="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>{t("colDatasetId")}</th>
+              <th>{t("colRelease")}</th>
+              <th>{t("colSpecimenSex")}</th>
+              <th>{t("colStatus")}</th>
+              <th>{t("colScopeTag")}</th>
+              <th>{t("colAction")}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {datasets.map((ds) => (
+              <tr key={ds.dataset_id}>
+                <td className="mono">{ds.dataset_id}</td>
+                <td>{ds.release}</td>
+                <td>
+                  {ds.specimen_id} ({ds.sex})
+                </td>
+                <td>
+                  <StatusBadge
+                    label={ds.on_disk ? t("statusNormalized") : t("statusRegistry")}
+                    tone={ds.on_disk ? "ok" : "neutral"}
+                  />
+                </td>
+                <td>
+                  <StatusBadge
+                    label={ds.is_synthetic_fixture ? t("synthBadge") : t("bioRuoBadge")}
+                    tone={ds.is_synthetic_fixture ? "synth" : "warn"}
+                  />
+                </td>
+                <td style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                  {ds.on_disk && (
+                    <button
+                      type="button"
+                      className="btn btn-secondary btn-sm"
+                      disabled={inspectingId === ds.dataset_id}
+                      onClick={() => void handleInspect(ds.dataset_id)}
+                    >
+                      {inspectingId === ds.dataset_id ? t("inspecting") : t("inspectGraph")}
+                    </button>
+                  )}
+                  {!ds.is_synthetic_fixture && (
+                    <button
+                      type="button"
+                      className="btn btn-secondary btn-sm"
+                      onClick={() => void handleFetchPlan(ds.dataset_id)}
+                    >
+                      {t("datasetPlanBtn")}
+                    </button>
+                  )}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {inspectResult && (
+        <div className="card" style={{ marginTop: 14, marginBottom: 0 }}>
+          <div className="card-header">
+            <div>
+              <h3>
+                {t("inspectTitle")}: <span className="mono">{inspectResult.dataset_id}</span>
+              </h3>
+              <p className="card-subtitle mono">
+                {t("graphSha")}: {inspectResult.graph_sha256}
+              </p>
+            </div>
+            <button
+              type="button"
+              className="btn btn-secondary btn-sm"
+              onClick={() => setInspectResult(null)}
+            >
+              {t("close")}
+            </button>
+          </div>
+          <div className="param-grid">
+            <div className="param-item">
+              <div className="param-item-k">{t("graphNeurons")}</div>
+              <div className="param-item-v">{inspectResult.n_neurons.toLocaleString()}</div>
+            </div>
+            <div className="param-item">
+              <div className="param-item-k">{t("graphEdges")}</div>
+              <div className="param-item-v">{inspectResult.n_edges.toLocaleString()}</div>
+            </div>
+            <div className="param-item">
+              <div className="param-item-k">{t("graphSynapses")}</div>
+              <div className="param-item-v">{inspectResult.total_synapses.toLocaleString()}</div>
+            </div>
+            <div className="param-item">
+              <div className="param-item-k">{t("graphOrientation")}</div>
+              <div className="param-item-v mono">{inspectResult.orientation}</div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {planResult && (
+        <div className="card" style={{ marginTop: 14, marginBottom: 0 }}>
+          <div className="card-header">
+            <div>
+              <h3>
+                {t("datasetPlanTitle")}: <span className="mono">{planResult.dataset_id}</span>
+              </h3>
+              <p className="card-subtitle">
+                {t("planLicense")}: <strong>{planResult.license}</strong> ·{" "}
+                {t("planAttribution")}: {planResult.attribution}
+              </p>
+            </div>
+            <button
+              type="button"
+              className="btn btn-secondary btn-sm"
+              onClick={() => setPlanResult(null)}
+            >
+              {t("close")}
+            </button>
+          </div>
+          <div className="meta-strip">
+            <span>
+              {t("planAuthReq")}: <strong>{String(planResult.credentials_required)}</strong>
+            </span>
+            {planResult.total_estimated_bytes !== null && (
+              <span>
+                {t("planBytes")}:{" "}
+                <strong>{(planResult.total_estimated_bytes / 1e6).toFixed(1)} MB</strong>
+              </span>
+            )}
+          </div>
+          <pre className="code-panel mono">{JSON.stringify(planResult.files, null, 2)}</pre>
+        </div>
+      )}
+    </div>
+  );
+
+  const manualSubgraphForm = (
+    <form onSubmit={(e) => void handleQuerySubgraph(e)}>
+      <div className="form-row">
+        <label className="field">
+          {t("datasetSelectLabel")}
+          <select value={selectedDataset} onChange={(e) => onSelectDataset(e.target.value)}>
+            {datasets
+              .filter((d) => d.on_disk)
+              .map((d) => (
+                <option key={d.dataset_id} value={d.dataset_id}>
+                  {d.dataset_id}
+                </option>
+              ))}
+          </select>
+        </label>
+        <label className="field" style={{ flex: "1 1 240px" }}>
+          {t("seedIdsLabel")}
+          <input value={seedInput} onChange={(e) => setSeedInput(e.target.value)} />
+        </label>
+        <label className="field" style={{ width: 90 }}>
+          {t("hopsLabel")}
+          <input
+            type="number"
+            min={0}
+            max={4}
+            value={hops}
+            onChange={(e) => setHops(Number(e.target.value))}
+          />
+        </label>
+        <label className="field">
+          {t("directionLabel")}
+          <select
+            value={direction}
+            onChange={(e) => setDirection(e.target.value as "outgoing" | "incoming" | "both")}
+          >
+            <option value="outgoing">{t("dirOutgoing")}</option>
+            <option value="incoming">{t("dirIncoming")}</option>
+            <option value="both">{t("dirBoth")}</option>
+          </select>
+        </label>
+        <label className="field" style={{ width: 95 }}>
+          {t("minSynapsesLabel")}
+          <input
+            type="number"
+            min={1}
+            max={500}
+            value={minSynapses}
+            onChange={(e) => setMinSynapses(Number(e.target.value))}
+          />
+        </label>
+        <label className="field" style={{ width: 105 }}>
+          {t("maxNodesLabel")}
+          <input
+            type="number"
+            min={1}
+            max={5000}
+            value={maxNodes}
+            onChange={(e) => setMaxNodes(Number(e.target.value))}
+          />
+        </label>
+        <button type="submit" className="btn">
+          {t("extractSubgraphBtn")}
+        </button>
+      </div>
+    </form>
+  );
+
+  const neuronBrowserCard = (
+    <div className="card">
+      <div className="card-header">
+        <h3>{t("neuronBrowserTitle")}</h3>
+      </div>
+      <div className="form-row">
+        <label className="field">
+          {t("datasetSelectLabel")}
+          <select value={selectedDataset} onChange={(e) => onSelectDataset(e.target.value)}>
+            {datasets
+              .filter((d) => d.on_disk)
+              .map((d) => (
+                <option key={d.dataset_id} value={d.dataset_id}>
+                  {d.dataset_id}
+                </option>
+              ))}
+          </select>
+        </label>
+        <label className="field" style={{ flex: "1 1 180px" }}>
+          {t("searchNeuronsLabel")}
+          <input
+            value={neuronSearch}
+            onChange={(e) => setNeuronSearch(e.target.value)}
+            placeholder={t("searchNeuronsPlaceholder")}
+          />
+        </label>
+        <button
+          type="button"
+          className="btn"
+          onClick={() => void handleLoadNeurons(selectedDataset, 0)}
+        >
+          {t("loadNeuronsBtn")}
+        </button>
+      </div>
+
+      {neuronIsSynthetic && (
+        <p style={{ marginTop: 0 }}>
+          <StatusBadge label={t("synthWarnFull")} tone="synth" />
+        </p>
+      )}
+
+      {neurons.length === 0 ? (
+        <div className="empty-state">{t("noNeuronsLoaded")}</div>
+      ) : (
+        <>
+          <div className="meta-strip">
+            <span>
+              {t("showingRange")} <strong>{neuronOffset + 1}</strong>–
+              <strong>{neuronOffset + neurons.length}</strong> {t("ofTotal")}{" "}
+              <strong>{neuronTotal.toLocaleString()}</strong>
+            </span>
+            <span style={{ display: "inline-flex", gap: 6 }}>
+              <button
+                type="button"
+                className="btn btn-secondary btn-sm"
+                disabled={neuronOffset === 0}
+                onClick={() =>
+                  void handleLoadNeurons(selectedDataset, Math.max(0, neuronOffset - 25))
+                }
+              >
+                {t("prevPage")}
+              </button>
+              <button
+                type="button"
+                className="btn btn-secondary btn-sm"
+                disabled={neuronOffset + neurons.length >= neuronTotal}
+                onClick={() => void handleLoadNeurons(selectedDataset, neuronOffset + 25)}
+              >
+                {t("nextPage")}
+              </button>
+            </span>
+          </div>
+          <div className="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>{t("colNeuronId")}</th>
+                  <th>{t("colCellType")}</th>
+                  <th>{t("colRegion")}</th>
+                  <th>{t("colNt")}</th>
+                  <th>{t("colConfidence")}</th>
+                  <th>{t("colAction")}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {neurons.map((n) => (
+                  <tr key={n.source_neuron_id}>
+                    <td className="mono">{n.source_neuron_id}</td>
+                    <td>{n.cell_type ?? t("noneDash")}</td>
+                    <td>{n.region ?? t("noneDash")}</td>
+                    <td>
+                      <StatusBadge
+                        label={n.neurotransmitter ?? t("unknown")}
+                        tone={n.neurotransmitter === "GABA" ? "synth" : "neutral"}
+                      />
+                    </td>
+                    <td className="mono">
+                      {n.confidence !== null && n.confidence !== undefined
+                        ? n.confidence.toFixed(2)
+                        : t("noneDash")}
+                    </td>
+                    <td style={{ display: "flex", gap: 6 }}>
+                      <button
+                        type="button"
+                        className="btn btn-secondary btn-sm"
+                        onClick={() => handleAddSeed(n.source_neuron_id)}
+                      >
+                        {t("addSeed")}
+                      </button>
+                      <button
+                        type="button"
+                        className="btn btn-secondary btn-sm"
+                        onClick={() => handleCopy(n.source_neuron_id)}
+                      >
+                        {copiedId === n.source_neuron_id ? t("copied") : t("copyId")}
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </>
+      )}
+    </div>
+  );
+
   return (
     <section role="tabpanel" aria-label={t("navDatasets")}>
-      <div className="card">
-        <div className="card-header">
-          <h2>{t("datasetsTitle")}</h2>
-        </div>
-        <div className="table-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th>{t("colDatasetId")}</th>
-                <th>{t("colRelease")}</th>
-                <th>{t("colSpecimenSex")}</th>
-                <th>{t("colStatus")}</th>
-                <th>{t("colScopeTag")}</th>
-                <th>{t("colAction")}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {datasets.map((ds) => (
-                <tr key={ds.dataset_id}>
-                  <td className="mono">{ds.dataset_id}</td>
-                  <td>{ds.release}</td>
-                  <td>
-                    {ds.specimen_id} ({ds.sex})
-                  </td>
-                  <td>
-                    <StatusBadge
-                      label={ds.on_disk ? t("statusNormalized") : t("statusRegistry")}
-                      tone={ds.on_disk ? "ok" : "neutral"}
-                    />
-                  </td>
-                  <td>
-                    <StatusBadge
-                      label={ds.is_synthetic_fixture ? t("synthBadge") : t("bioRuoBadge")}
-                      tone={ds.is_synthetic_fixture ? "synth" : "warn"}
-                    />
-                  </td>
-                  <td style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-                    {ds.on_disk && (
-                      <button
-                        type="button"
-                        className="btn btn-secondary btn-sm"
-                        disabled={inspectingId === ds.dataset_id}
-                        onClick={() => void handleInspect(ds.dataset_id)}
-                      >
-                        {inspectingId === ds.dataset_id ? t("inspecting") : t("inspectGraph")}
-                      </button>
-                    )}
-                    {!ds.is_synthetic_fixture && (
-                      <button
-                        type="button"
-                        className="btn btn-secondary btn-sm"
-                        onClick={() => void handleFetchPlan(ds.dataset_id)}
-                      >
-                        {t("datasetPlanBtn")}
-                      </button>
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-
-        {inspectResult && (
-          <div className="card" style={{ marginTop: 14, marginBottom: 0 }}>
-            <div className="card-header">
-              <div>
-                <h3>
-                  {t("inspectTitle")}: <span className="mono">{inspectResult.dataset_id}</span>
-                </h3>
-                <p className="card-subtitle mono">
-                  {t("graphSha")}: {inspectResult.graph_sha256}
-                </p>
-              </div>
-              <button
-                type="button"
-                className="btn btn-secondary btn-sm"
-                onClick={() => setInspectResult(null)}
-              >
-                {t("close")}
-              </button>
-            </div>
-            <div className="param-grid">
-              <div className="param-item">
-                <div className="param-item-k">{t("graphNeurons")}</div>
-                <div className="param-item-v">{inspectResult.n_neurons.toLocaleString()}</div>
-              </div>
-              <div className="param-item">
-                <div className="param-item-k">{t("graphEdges")}</div>
-                <div className="param-item-v">{inspectResult.n_edges.toLocaleString()}</div>
-              </div>
-              <div className="param-item">
-                <div className="param-item-k">{t("graphSynapses")}</div>
-                <div className="param-item-v">{inspectResult.total_synapses.toLocaleString()}</div>
-              </div>
-              <div className="param-item">
-                <div className="param-item-k">{t("graphOrientation")}</div>
-                <div className="param-item-v mono">{inspectResult.orientation}</div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {planResult && (
-          <div className="card" style={{ marginTop: 14, marginBottom: 0 }}>
-            <div className="card-header">
-              <div>
-                <h3>
-                  {t("datasetPlanTitle")}: <span className="mono">{planResult.dataset_id}</span>
-                </h3>
-                <p className="card-subtitle">
-                  {t("planLicense")}: <strong>{planResult.license}</strong> ·{" "}
-                  {t("planAttribution")}: {planResult.attribution}
-                </p>
-              </div>
-              <button
-                type="button"
-                className="btn btn-secondary btn-sm"
-                onClick={() => setPlanResult(null)}
-              >
-                {t("close")}
-              </button>
-            </div>
-            <div className="meta-strip">
-              <span>
-                {t("planAuthReq")}: <strong>{String(planResult.credentials_required)}</strong>
-              </span>
-              {planResult.total_estimated_bytes !== null && (
-                <span>
-                  {t("planBytes")}:{" "}
-                  <strong>{(planResult.total_estimated_bytes / 1e6).toFixed(1)} MB</strong>
-                </span>
-              )}
-            </div>
-            <pre className="code-panel mono">{JSON.stringify(planResult.files, null, 2)}</pre>
-          </div>
-        )}
-      </div>
+      {uiMode === "expert" && registryCard}
 
       <div className="card">
         <div className="card-header">
           <div>
-            <h3>{t("subgraphTitle")}</h3>
-            <p className="card-subtitle">{t("presetsLabel")}</p>
+            <h3>{uiMode === "simple" ? t("navCircuitSimple") : t("subgraphTitle")}</h3>
+            <p className="card-subtitle">
+              {uiMode === "simple" ? t("simpleCircuitIntro") : t("presetsLabel")}
+            </p>
           </div>
           <div style={{ display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center" }}>
             <div className="segmented">
@@ -366,16 +636,7 @@ export const DatasetsView: React.FC<DatasetsViewProps> = ({
             <button
               type="button"
               className="pill-btn"
-              onClick={() =>
-                handleApplyPreset({
-                  datasetId: "malecns_v1_0",
-                  seedIds: "523539, 558778, 10592, 804642",
-                  hops: 1,
-                  direction: "incoming",
-                  minSynapses: 8,
-                  maxNodes: 75,
-                })
-              }
+              onClick={() => handleApplyPreset(PRESET_CONFIGS.malecns_v1_0)}
             >
               {t("presetPain")}
             </button>
@@ -384,16 +645,7 @@ export const DatasetsView: React.FC<DatasetsViewProps> = ({
             <button
               type="button"
               className="pill-btn"
-              onClick={() =>
-                handleApplyPreset({
-                  datasetId: "flywire_fafb_v630",
-                  seedIds: "720575940660219265, 720575940645521262",
-                  hops: 1,
-                  direction: "incoming",
-                  minSynapses: 5,
-                  maxNodes: 75,
-                })
-              }
+              onClick={() => handleApplyPreset(PRESET_CONFIGS.flywire_fafb_v630)}
             >
               {t("presetMetabolic")}
             </button>
@@ -402,91 +654,24 @@ export const DatasetsView: React.FC<DatasetsViewProps> = ({
             <button
               type="button"
               className="pill-btn"
-              onClick={() =>
-                handleApplyPreset({
-                  datasetId: "synthetic_microcircuit_v1",
-                  seedIds: "9007199254740993",
-                  hops: 2,
-                  direction: "outgoing",
-                  minSynapses: 1,
-                  maxNodes: 25,
-                })
-              }
+              onClick={() => handleApplyPreset(PRESET_CONFIGS.synthetic_microcircuit_v1)}
             >
               {t("presetSynth")}
             </button>
           )}
         </div>
 
-        <form onSubmit={(e) => void handleQuerySubgraph(e)}>
-          <div className="form-row">
-            <label className="field">
-              {t("datasetSelectLabel")}
-              <select
-                value={selectedDataset}
-                onChange={(e) => onSelectDataset(e.target.value)}
-              >
-                {datasets
-                  .filter((d) => d.on_disk)
-                  .map((d) => (
-                    <option key={d.dataset_id} value={d.dataset_id}>
-                      {d.dataset_id}
-                    </option>
-                  ))}
-              </select>
-            </label>
-            <label className="field" style={{ flex: "1 1 240px" }}>
-              {t("seedIdsLabel")}
-              <input value={seedInput} onChange={(e) => setSeedInput(e.target.value)} />
-            </label>
-            <label className="field" style={{ width: 90 }}>
-              {t("hopsLabel")}
-              <input
-                type="number"
-                min={0}
-                max={4}
-                value={hops}
-                onChange={(e) => setHops(Number(e.target.value))}
-              />
-            </label>
-            <label className="field">
-              {t("directionLabel")}
-              <select
-                value={direction}
-                onChange={(e) =>
-                  setDirection(e.target.value as "outgoing" | "incoming" | "both")
-                }
-              >
-                <option value="outgoing">{t("dirOutgoing")}</option>
-                <option value="incoming">{t("dirIncoming")}</option>
-                <option value="both">{t("dirBoth")}</option>
-              </select>
-            </label>
-            <label className="field" style={{ width: 95 }}>
-              {t("minSynapsesLabel")}
-              <input
-                type="number"
-                min={1}
-                max={500}
-                value={minSynapses}
-                onChange={(e) => setMinSynapses(Number(e.target.value))}
-              />
-            </label>
-            <label className="field" style={{ width: 105 }}>
-              {t("maxNodesLabel")}
-              <input
-                type="number"
-                min={1}
-                max={5000}
-                value={maxNodes}
-                onChange={(e) => setMaxNodes(Number(e.target.value))}
-              />
-            </label>
-            <button type="submit" className="btn">
-              {t("extractSubgraphBtn")}
-            </button>
+        {uiMode === "simple" && (
+          <div className="plain-legend-grid">
+            <strong>{t("plainColorLegendTitle")}:</strong>
+            <span>● {t("plainColorAch")}</span>
+            <span>● {t("plainColorGaba")}</span>
+            <span>● {t("plainColorGlut")}</span>
+            <span>◎ {t("plainColorSeed")}</span>
           </div>
-        </form>
+        )}
+
+        {uiMode === "expert" && manualSubgraphForm}
 
         {subgraphResult && (
           <>
@@ -499,18 +684,24 @@ export const DatasetsView: React.FC<DatasetsViewProps> = ({
                 {t("subgraphEdgesLabel")}:{" "}
                 <strong>{subgraphResult.metadata.n_selected_edges}</strong>
               </span>
-              <span>
-                {t("omittedInLabel")}:{" "}
-                <strong>{subgraphResult.metadata.omitted_incoming_edge_count}</strong>
-              </span>
-              <span>
-                {t("omittedOutLabel")}:{" "}
-                <strong>{subgraphResult.metadata.omitted_outgoing_edge_count}</strong>
-              </span>
+              {uiMode === "expert" && (
+                <>
+                  <span>
+                    {t("omittedInLabel")}:{" "}
+                    <strong>{subgraphResult.metadata.omitted_incoming_edge_count}</strong>
+                  </span>
+                  <span>
+                    {t("omittedOutLabel")}:{" "}
+                    <strong>{subgraphResult.metadata.omitted_outgoing_edge_count}</strong>
+                  </span>
+                </>
+              )}
             </div>
-            <p className="mono" style={{ marginTop: 0 }}>
-              subgraph_sha256: {subgraphResult.metadata.subgraph_sha256}
-            </p>
+            {uiMode === "expert" && (
+              <p className="mono" style={{ marginTop: 0 }}>
+                subgraph_sha256: {subgraphResult.metadata.subgraph_sha256}
+              </p>
+            )}
             {subgraphResult.edges_truncated && (
               <div className="notice-box" style={{ marginBottom: 8 }}>
                 {t("edgesTruncatedWarn")}
@@ -529,136 +720,29 @@ export const DatasetsView: React.FC<DatasetsViewProps> = ({
               <SubgraphCanvas subgraph={subgraphResult} />
             )}
 
-            <ul style={{ fontSize: "0.78rem", color: "var(--text-secondary)", marginBottom: 0 }}>
-              {subgraphResult.metadata.isolation_limitations.map((lim) => (
-                <li key={lim}>{lim}</li>
-              ))}
-            </ul>
-          </>
-        )}
-      </div>
-
-      <div className="card">
-        <div className="card-header">
-          <h3>{t("neuronBrowserTitle")}</h3>
-        </div>
-        <div className="form-row">
-          <label className="field">
-            {t("datasetSelectLabel")}
-            <select
-              value={selectedDataset}
-              onChange={(e) => onSelectDataset(e.target.value)}
-            >
-              {datasets
-                .filter((d) => d.on_disk)
-                .map((d) => (
-                  <option key={d.dataset_id} value={d.dataset_id}>
-                    {d.dataset_id}
-                  </option>
+            {uiMode === "expert" && (
+              <ul style={{ fontSize: "0.78rem", color: "var(--text-secondary)", marginBottom: 0 }}>
+                {subgraphResult.metadata.isolation_limitations.map((lim) => (
+                  <li key={lim}>{lim}</li>
                 ))}
-            </select>
-          </label>
-          <label className="field" style={{ flex: "1 1 180px" }}>
-            {t("searchNeuronsLabel")}
-            <input
-              value={neuronSearch}
-              onChange={(e) => setNeuronSearch(e.target.value)}
-              placeholder={t("searchNeuronsPlaceholder")}
-            />
-          </label>
-          <button
-            type="button"
-            className="btn"
-            onClick={() => void handleLoadNeurons(selectedDataset, 0)}
-          >
-            {t("loadNeuronsBtn")}
-          </button>
-        </div>
-
-        {neuronIsSynthetic && (
-          <p style={{ marginTop: 0 }}>
-            <StatusBadge label={t("synthWarnFull")} tone="synth" />
-          </p>
-        )}
-
-        {neurons.length === 0 ? (
-          <div className="empty-state">{t("noNeuronsLoaded")}</div>
-        ) : (
-          <>
-            <div className="meta-strip">
-              <span>
-                {t("showingRange")} <strong>{neuronOffset + 1}</strong>–
-                <strong>{neuronOffset + neurons.length}</strong> {t("ofTotal")}{" "}
-                <strong>{neuronTotal.toLocaleString()}</strong>
-              </span>
-              <span style={{ display: "inline-flex", gap: 6 }}>
-                <button
-                  type="button"
-                  className="btn btn-secondary btn-sm"
-                  disabled={neuronOffset === 0}
-                  onClick={() =>
-                    void handleLoadNeurons(selectedDataset, Math.max(0, neuronOffset - 25))
-                  }
-                >
-                  {t("prevPage")}
-                </button>
-                <button
-                  type="button"
-                  className="btn btn-secondary btn-sm"
-                  disabled={neuronOffset + neurons.length >= neuronTotal}
-                  onClick={() => void handleLoadNeurons(selectedDataset, neuronOffset + 25)}
-                >
-                  {t("nextPage")}
-                </button>
-              </span>
-            </div>
-            <div className="table-wrap">
-              <table>
-                <thead>
-                  <tr>
-                    <th>{t("colNeuronId")}</th>
-                    <th>{t("colCellType")}</th>
-                    <th>{t("colRegion")}</th>
-                    <th>{t("colNt")}</th>
-                    <th>{t("colAction")}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {neurons.map((n) => (
-                    <tr key={n.source_neuron_id}>
-                      <td className="mono">{n.source_neuron_id}</td>
-                      <td>{n.cell_type ?? t("noneDash")}</td>
-                      <td>{n.region ?? t("noneDash")}</td>
-                      <td>
-                        <StatusBadge
-                          label={n.neurotransmitter ?? t("unknown")}
-                          tone={n.neurotransmitter === "GABA" ? "synth" : "neutral"}
-                        />
-                      </td>
-                      <td style={{ display: "flex", gap: 6 }}>
-                        <button
-                          type="button"
-                          className="btn btn-secondary btn-sm"
-                          onClick={() => handleAddSeed(n.source_neuron_id)}
-                        >
-                          {t("addSeed")}
-                        </button>
-                        <button
-                          type="button"
-                          className="btn btn-secondary btn-sm"
-                          onClick={() => handleCopy(n.source_neuron_id)}
-                        >
-                          {copiedId === n.source_neuron_id ? t("copied") : t("copyId")}
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+              </ul>
+            )}
           </>
         )}
       </div>
+
+      {uiMode === "expert" ? (
+        neuronBrowserCard
+      ) : (
+        <details className="tech-details">
+          <summary>{t("showAdvancedTools")}</summary>
+          <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+            <div className="card">{manualSubgraphForm}</div>
+            {registryCard}
+            {neuronBrowserCard}
+          </div>
+        </details>
+      )}
     </section>
   );
 };

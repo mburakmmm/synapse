@@ -34,11 +34,57 @@ export const ModelsProtocolsView: React.FC<ModelsProtocolsViewProps> = ({
   const [protocolActionResult, setProtocolActionResult] = useState<string | null>(null);
   const [yamlContent, setYamlContent] = useState<ProtocolContentResponse | null>(null);
 
+  const [formProtoId, setFormProtoId] = useState<string>("DRAFT-TEST-001");
+  const [formDataset, setFormDataset] = useState<string>("synthetic_microcircuit_v1");
+  const [formModel, setFormModel] = useState<string>("shiu2024_lif");
+  const [formCondition, setFormCondition] = useState<string>("baseline");
+  const [formReplicates, setFormReplicates] = useState<number>(2);
+  const [formQuestion, setFormQuestion] = useState<string>("Exploratory draft schema check.");
+
   const [draftYamlText, setDraftYamlText] = useState<string>(
     "schema_version: '1.0'\nprotocol_id: DRAFT-TEST-001\nrevision: 1\nstatus: draft\nanalysis_intent: exploratory\nquestion: Exploratory draft schema check.\nhypothesis: Candidate hypothesis.\nbiological_unit: single_specimen\nsimulation_unit: paired_seed_run\nsources:\n  - dataset_id: synthetic_microcircuit_v1\n    release: '1.0'\n    manifest_sha256: UNRESOLVED\nmodel:\n  id: shiu2024_lif\n  revision: '1.0'\n  parameter_manifest_sha256: UNRESOLVED\nconditions:\n  - id: baseline\n    interventions:\n      - kind: sham\nseeds:\n  master: 2026\n  replicates: 2\nanalysis:\n  primary_endpoints: []\noutputs:\n  base_dir: runs/draft_check\n",
   );
   const [allowUnresolvedDraft, setAllowUnresolvedDraft] = useState<boolean>(true);
   const [draftValidationOut, setDraftValidationOut] = useState<string | null>(null);
+
+  const handleGenerateDraftFromForm = () => {
+    const cleanProto = formProtoId.trim() || "DRAFT-TEST-001";
+    const cleanCond = formCondition.trim() || "baseline";
+    const cleanQuestion = formQuestion.trim() || "Exploratory draft check.";
+    const generated = [
+      "schema_version: '1.0'",
+      `protocol_id: ${cleanProto}`,
+      "revision: 1",
+      "status: draft",
+      "analysis_intent: exploratory",
+      `question: ${cleanQuestion}`,
+      "hypothesis: Candidate circuit mechanism test.",
+      "biological_unit: single_specimen",
+      "simulation_unit: paired_seed_run",
+      "sources:",
+      `  - dataset_id: ${formDataset}`,
+      "    release: '1.0'",
+      "    manifest_sha256: UNRESOLVED",
+      "model:",
+      `  id: ${formModel}`,
+      "  revision: '1.0'",
+      "  parameter_manifest_sha256: UNRESOLVED",
+      "conditions:",
+      `  - id: ${cleanCond}`,
+      "    interventions:",
+      "      - kind: sham",
+      "seeds:",
+      "  master: 2026",
+      `  replicates: ${Math.max(1, formReplicates)}`,
+      "analysis:",
+      "  primary_endpoints: []",
+      "outputs:",
+      `  base_dir: runs/${cleanProto.toLowerCase()}`,
+      "",
+    ].join("\n");
+    setDraftYamlText(generated);
+    setAllowUnresolvedDraft(true);
+  };
 
   const handleValidateProtocol = async () => {
     if (!selectedProtocol) return;
@@ -286,6 +332,66 @@ export const ModelsProtocolsView: React.FC<ModelsProtocolsViewProps> = ({
           >
             {t("validateDraftYamlBtn")}
           </button>
+        </div>
+
+        <div
+          style={{
+            padding: 12,
+            borderRadius: 9,
+            background: "var(--bg-panel-subtle)",
+            border: "1px solid var(--border-subtle)",
+            marginBottom: 12,
+          }}
+        >
+          <strong style={{ display: "block", marginBottom: 8, fontSize: "0.84rem" }}>
+            {t("formBuilderTitle")}
+          </strong>
+          <div className="form-row" style={{ marginBottom: 0 }}>
+            <label className="field">
+              {t("formProtoId")}
+              <input value={formProtoId} onChange={(e) => setFormProtoId(e.target.value)} />
+            </label>
+            <label className="field">
+              {t("formDataset")}
+              <select value={formDataset} onChange={(e) => setFormDataset(e.target.value)}>
+                <option value="synthetic_microcircuit_v1">synthetic_microcircuit_v1</option>
+                <option value="flywire_fafb_v630">flywire_fafb_v630</option>
+                <option value="malecns_v1_0">malecns_v1_0</option>
+              </select>
+            </label>
+            <label className="field">
+              {t("formModel")}
+              <select value={formModel} onChange={(e) => setFormModel(e.target.value)}>
+                <option value="shiu2024_lif">shiu2024_lif</option>
+                <option value="synapse_lif_v1">synapse_lif_v1</option>
+              </select>
+            </label>
+            <label className="field">
+              {t("formCondition")}
+              <input value={formCondition} onChange={(e) => setFormCondition(e.target.value)} />
+            </label>
+            <label className="field" style={{ width: 95 }}>
+              {t("replicatesLabel")}
+              <input
+                type="number"
+                min={1}
+                max={50}
+                value={formReplicates}
+                onChange={(e) => setFormReplicates(Number(e.target.value))}
+              />
+            </label>
+            <label className="field" style={{ flex: "1 1 200px" }}>
+              {t("formQuestion")}
+              <input value={formQuestion} onChange={(e) => setFormQuestion(e.target.value)} />
+            </label>
+            <button
+              type="button"
+              className="btn btn-secondary"
+              onClick={handleGenerateDraftFromForm}
+            >
+              {t("generateDraftYamlBtn")}
+            </button>
+          </div>
         </div>
 
         <label

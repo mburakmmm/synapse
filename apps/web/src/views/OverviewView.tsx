@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import type {
   AnalysisSummaryItem,
   AuditEventItem,
@@ -8,11 +8,14 @@ import type {
   HealthResponse,
   ResearchModuleItem,
   RunSummary,
+  StudiesResponse,
 } from "../api";
+import type { UiMode } from "../App";
 import { ShieldIcon } from "../components/Icons";
 import { StatusBadge, type BadgeTone } from "../components/StatusBadge";
 import { useI18n } from "../i18n/LanguageContext";
 import type { TranslationKey } from "../i18n/translations";
+import type { CircuitPresetRequest } from "./DatasetsView";
 
 export type WorkspaceTabId =
   | "overview"
@@ -23,9 +26,11 @@ export type WorkspaceTabId =
   | "results";
 
 interface OverviewViewProps {
+  uiMode: UiMode;
   health: HealthResponse | null;
   datasets: DatasetSummary[];
   modules: ResearchModuleItem[];
+  studies: StudiesResponse | null;
   runs: RunSummary[];
   runsTotal: number;
   benchmarks: BenchmarkEnvelope[];
@@ -33,12 +38,11 @@ interface OverviewViewProps {
   exportsList: ExportBundleItem[];
   auditEvents: AuditEventItem[];
   onNavigateModule: (moduleId: string) => void;
+  onExploreCircuit3D: (preset: Omit<CircuitPresetRequest, "nonce">) => void;
+  onSwitchExpert: () => void;
 }
 
-const MODULE_META: Record<
-  string,
-  { nameKey: TranslationKey; descKey: TranslationKey }
-> = {
+const MODULE_META: Record<string, { nameKey: TranslationKey; descKey: TranslationKey }> = {
   shiu2024_benchmark: { nameKey: "modShiuName", descKey: "modShiuDesc" },
   metabolic: { nameKey: "modMetName", descKey: "modMetDesc" },
   pain: { nameKey: "modPainName", descKey: "modPainDesc" },
@@ -48,6 +52,19 @@ const MODULE_META: Record<
   pharma: { nameKey: "modPharmaName", descKey: "modPharmaDesc" },
   stress: { nameKey: "modStressName", descKey: "modStressDesc" },
 };
+
+const GLOSSARY_KEYS: Array<{
+  id: string;
+  titleKey: TranslationKey;
+  defKey: TranslationKey;
+}> = [
+  { id: "connectome", titleKey: "glossConnectomeTitle", defKey: "glossConnectomeDef" },
+  { id: "gaba", titleKey: "glossGabaTitle", defKey: "glossGabaDef" },
+  { id: "ach", titleKey: "glossAchTitle", defKey: "glossAchDef" },
+  { id: "ctrl", titleKey: "glossCtrlTitle", defKey: "glossCtrlDef" },
+  { id: "sham", titleKey: "glossShamTitle", defKey: "glossShamDef" },
+  { id: "hz", titleKey: "glossHzTitle", defKey: "glossHzDef" },
+];
 
 export function moduleStateBadge(
   uiState: string,
@@ -66,9 +83,11 @@ export function moduleStateBadge(
 }
 
 export const OverviewView: React.FC<OverviewViewProps> = ({
+  uiMode,
   health,
   datasets,
   modules,
+  studies,
   runs,
   runsTotal,
   benchmarks,
@@ -76,10 +95,192 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
   exportsList,
   auditEvents,
   onNavigateModule,
+  onExploreCircuit3D,
+  onSwitchExpert,
 }) => {
   const { t } = useI18n();
+  const [selectedGlossId, setSelectedGlossId] = useState<string>("connectome");
   const normalizedCount = datasets.filter((d) => d.on_disk).length;
   const activeModulesCount = modules.filter((m) => m.ui_state !== "planned").length;
+
+  const painPrimary = studies?.pain.confirmatory?.primary_contrasts.find(
+    (c) => c.contrast_name === "p1_523539_edge_mask_vs_base",
+  );
+  const metPrimary = studies?.metabolic.confirmatory.find((c) =>
+    c.analysis_key.includes("mn9r_gain_1p50"),
+  );
+  const primaryBench = benchmarks[0]?.report;
+
+  if (uiMode === "simple") {
+    const activeGloss = GLOSSARY_KEYS.find((g) => g.id === selectedGlossId) ?? GLOSSARY_KEYS[0];
+    return (
+      <section role="tabpanel" aria-label={t("navHomeSimple")}>
+        <div className="hero-card">
+          <div>
+            <h2>{t("simpleHeroTitle")}</h2>
+            <p>{t("simpleHeroBody")}</p>
+          </div>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+            <StatusBadge label={t("ruoBadge")} tone="ruo" />
+            <StatusBadge
+              label={health ? t("connected") : t("connecting")}
+              tone={health ? "ok" : "warn"}
+            />
+          </div>
+        </div>
+
+        <div className="notice-box">{t("simpleRuoPlain")}</div>
+
+        <div>
+          <h2 style={{ margin: "4px 0 12px", fontSize: "1.05rem" }}>{t("simpleStoriesTitle")}</h2>
+          <div className="story-grid">
+            <div className="story-card">
+              <div>
+                <div className="card-header" style={{ marginBottom: 6 }}>
+                  <h3>{t("simplePainTitle")}</h3>
+                  <StatusBadge label={t("stateExperimental")} tone="info" />
+                </div>
+                <div className="story-card-metric">
+                  {painPrimary
+                    ? `+${painPrimary.mean_difference_hz.toFixed(1)} Hz`
+                    : t("noneDash")}
+                </div>
+                <p style={{ fontSize: "0.83rem", color: "var(--text-secondary)", marginBottom: 0 }}>
+                  {painPrimary ? t("simplePainSummary") : t("simpleMissingNote")}
+                </p>
+              </div>
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                <button
+                  type="button"
+                  className="btn btn-sm"
+                  onClick={() => onNavigateModule("pain")}
+                >
+                  {t("readStoryBtn")}
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-secondary btn-sm"
+                  onClick={() =>
+                    onExploreCircuit3D({
+                      datasetId: "malecns_v1_0",
+                      seedIds: "523539, 558778, 10592, 804642",
+                      hops: 1,
+                      direction: "incoming",
+                      minSynapses: 8,
+                      maxNodes: 75,
+                    })
+                  }
+                >
+                  {t("open3dBtn")}
+                </button>
+              </div>
+            </div>
+
+            <div className="story-card">
+              <div>
+                <div className="card-header" style={{ marginBottom: 6 }}>
+                  <h3>{t("simpleMetTitle")}</h3>
+                  <StatusBadge label={t("stateExperimental")} tone="info" />
+                </div>
+                <div className="story-card-metric">
+                  {metPrimary
+                    ? `+${metPrimary.paired_metrics.mean_difference_hz.toFixed(1)} Hz`
+                    : t("noneDash")}
+                </div>
+                <p style={{ fontSize: "0.83rem", color: "var(--text-secondary)", marginBottom: 0 }}>
+                  {metPrimary ? t("simpleMetSummary") : t("simpleMissingNote")}
+                </p>
+              </div>
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                <button
+                  type="button"
+                  className="btn btn-sm"
+                  onClick={() => onNavigateModule("metabolic")}
+                >
+                  {t("readStoryBtn")}
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-secondary btn-sm"
+                  onClick={() =>
+                    onExploreCircuit3D({
+                      datasetId: "flywire_fafb_v630",
+                      seedIds: "720575940660219265, 720575940645521262",
+                      hops: 1,
+                      direction: "incoming",
+                      minSynapses: 5,
+                      maxNodes: 75,
+                    })
+                  }
+                >
+                  {t("open3dBtn")}
+                </button>
+              </div>
+            </div>
+
+            <div className="story-card">
+              <div>
+                <div className="card-header" style={{ marginBottom: 6 }}>
+                  <h3>{t("simpleBenchTitle")}</h3>
+                  <StatusBadge
+                    label={primaryBench?.overall_passed ? t("stateReproduced") : t("statePlanned")}
+                    tone={primaryBench?.overall_passed ? "ok" : "neutral"}
+                  />
+                </div>
+                <div className="story-card-metric">
+                  {primaryBench
+                    ? `${primaryBench.failed_run_count} failed`
+                    : t("noneDash")}
+                </div>
+                <p style={{ fontSize: "0.83rem", color: "var(--text-secondary)", marginBottom: 0 }}>
+                  {primaryBench ? t("simpleBenchSummary") : t("simpleMissingNote")}
+                </p>
+              </div>
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                <button
+                  type="button"
+                  className="btn btn-sm"
+                  onClick={() => onNavigateModule("shiu2024_benchmark")}
+                >
+                  {t("readStoryBtn")}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="card">
+          <div className="card-header">
+            <h3>{t("glossaryTitle")}</h3>
+            <button
+              type="button"
+              className="btn btn-secondary btn-sm"
+              onClick={onSwitchExpert}
+            >
+              {t("modeExpert")}
+            </button>
+          </div>
+          <div className="pill-group" style={{ marginBottom: 8 }}>
+            {GLOSSARY_KEYS.map((item) => (
+              <button
+                key={item.id}
+                type="button"
+                className="pill-btn"
+                aria-pressed={activeGloss.id === item.id}
+                onClick={() => setSelectedGlossId(item.id)}
+              >
+                {t(item.titleKey)}
+              </button>
+            ))}
+          </div>
+          <div className="glossary-box">
+            <strong>{t(activeGloss.titleKey)}: </strong>
+            <span>{t(activeGloss.defKey)}</span>
+          </div>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section role="tabpanel" aria-label={t("navOverview")}>
@@ -238,6 +439,14 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
             <span>
               {t("apiVersion")}: <strong className="mono">{health?.api_version ?? "v1"}</strong>
             </span>
+            {health?.storage?.disk_free_gb !== null && health?.storage?.disk_free_gb !== undefined && (
+              <span>
+                {t("diskFreeLabel")}:{" "}
+                <strong className="mono">
+                  {health.storage.disk_free_gb} / {health.storage.disk_total_gb} GB
+                </strong>
+              </span>
+            )}
           </div>
           <p style={{ margin: 0, fontSize: "0.82rem", color: "var(--text-secondary)" }}>
             {t("ruoPolicyLabel")}: {health?.ruo_notice ?? t("ruoBadge")}

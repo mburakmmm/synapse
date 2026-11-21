@@ -20,6 +20,12 @@ function createApiFetchMock() {
         api_version: "v1",
         ruo_notice: "Research Use Only",
         bind_host: "127.0.0.1",
+        storage: {
+          data_dir_exists: true,
+          runs_dir_exists: true,
+          disk_free_gb: 128.5,
+          disk_total_gb: 512.0,
+        },
       });
     }
     if (target.endsWith("/api/v1/studies")) {
@@ -160,8 +166,50 @@ function createApiFetchMock() {
             source_neuron_id: "9007199254740996",
             cell_type: "TEST_OUTPUT",
             neurotransmitter: "ACH",
+            confidence: 0.98,
           },
         ],
+      });
+    }
+    if (target.endsWith("/subgraph")) {
+      return mockJsonResponse({
+        metadata: {
+          source_dataset_id: "synthetic_microcircuit_v1",
+          source_graph_sha256: "abc123",
+          subgraph_sha256: "sub123",
+          seed_neuron_ids: ["9007199254740993"],
+          hop_limit: 2,
+          direction: "outgoing",
+          n_selected_neurons: 2,
+          n_selected_edges: 1,
+          omitted_incoming_edge_count: 0,
+          omitted_outgoing_edge_count: 0,
+          omitted_incoming_synapse_count: 0,
+          omitted_outgoing_synapse_count: 0,
+          isolation_limitations: ["Boundary omitted"],
+        },
+        nodes: [
+          {
+            source_neuron_id: "9007199254740993",
+            neurotransmitter: "ACH",
+            is_seed: true,
+            cell_type: "SEED_IN",
+          },
+          {
+            source_neuron_id: "9007199254740996",
+            neurotransmitter: "GABA",
+            is_seed: false,
+            cell_type: "TEST_OUTPUT",
+          },
+        ],
+        edges: [
+          {
+            pre_neuron_id: "9007199254740993",
+            post_neuron_id: "9007199254740996",
+            synapse_count: 12,
+          },
+        ],
+        edges_truncated: false,
       });
     }
     if (target.endsWith("/api/v1/models")) {
@@ -289,7 +337,58 @@ function createApiFetchMock() {
       });
     }
     if (target.endsWith("/api/v1/analyses")) {
-      return mockJsonResponse({ analyses: [] });
+      return mockJsonResponse({
+        analyses: [
+          {
+            analysis_key: "analysis_arm_1",
+            relative_dir: "arm1",
+            target_neuron_id: "720575940660219265",
+            baseline_condition: "base",
+            treatment_condition: "treat1",
+            failed_run_count: 0,
+            provenance: {
+              dataset_id: "flywire_fafb_v630",
+              model_id: "shiu2024_lif",
+              protocol_id: "P4-MET-001",
+              protocol_sha256: "aaa",
+              is_synthetic_fixture: false,
+            },
+            paired_metrics: {
+              n_pairs: 30,
+              mean_difference_hz: 22.0,
+              sd_difference_hz: 7.7,
+              bootstrap_ci95_low_hz: 19.2,
+              bootstrap_ci95_high_hz: 24.7,
+              uncertainty_interpretation: "conditional",
+              permutation_test: { method: "monte_carlo_sign_flip", two_sided_p_value: 9.999e-5 },
+            },
+          },
+          {
+            analysis_key: "analysis_arm_2",
+            relative_dir: "arm2",
+            target_neuron_id: "720575940660219265",
+            baseline_condition: "base",
+            treatment_condition: "treat2",
+            failed_run_count: 0,
+            provenance: {
+              dataset_id: "flywire_fafb_v630",
+              model_id: "shiu2024_lif",
+              protocol_id: "P4-MET-001",
+              protocol_sha256: "bbb",
+              is_synthetic_fixture: false,
+            },
+            paired_metrics: {
+              n_pairs: 30,
+              mean_difference_hz: 30.9,
+              sd_difference_hz: 7.1,
+              bootstrap_ci95_low_hz: 28.2,
+              bootstrap_ci95_high_hz: 33.4,
+              uncertainty_interpretation: "conditional",
+              permutation_test: { method: "monte_carlo_sign_flip", two_sided_p_value: 9.999e-5 },
+            },
+          },
+        ],
+      });
     }
     if (target.endsWith("/api/v1/exports")) {
       return mockJsonResponse({ exports: [] });
@@ -331,7 +430,7 @@ describe("SYNAPSE Research Workbench UI", () => {
     installMemoryStorage();
   });
 
-  it("preserves 64-bit string neuron IDs, renders RUO/synthetic badges, enforces freeze confirm, and cancels jobs", async () => {
+  it("opens in Simple Mode by default, then switches to Expert Mode and preserves all scientific safety invariants", async () => {
     const fetchMock = createApiFetchMock();
     vi.stubGlobal("fetch", fetchMock);
     render(
@@ -344,6 +443,17 @@ describe("SYNAPSE Research Workbench UI", () => {
       1,
     );
 
+    // Default startup is Simple Mode with 4 friendly tabs + plain glossary
+    expect(screen.getByText("Understand Connectome Simulations Without Jargon")).toBeInTheDocument();
+    expect(screen.getByText("Plain-Language Scientific Glossary")).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: /3D Brain Circuit/ })).toBeInTheDocument();
+    expect(screen.queryByRole("tab", { name: /Models & Protocols/ })).not.toBeInTheDocument();
+
+    // Switch to Expert Mode
+    fireEvent.click(screen.getAllByRole("button", { name: "Expert" })[0]);
+    expect(window.localStorage.getItem("synapse.uiMode")).toBe("expert");
+    expect(await screen.findByText(/128\.5 \/ 512 GB/)).toBeInTheDocument();
+
     // Modules tab: real Pain, Metabolic, and Planned modules
     fireEvent.click(screen.getByRole("tab", { name: /Research Modules/ }));
     expect(await screen.findByText("120 / 120")).toBeInTheDocument();
@@ -353,20 +463,23 @@ describe("SYNAPSE Research Workbench UI", () => {
     fireEvent.click(screen.getByRole("button", { name: /Planned Modules/ }));
     expect(screen.getByText(/Sleep & Circadian Regulation/)).toBeInTheDocument();
 
-    // Datasets & Circuits tab: 64-bit integer precision preserved as string + 3D/2D view toggle
+    // Datasets & Circuits tab: 64-bit string ID + confidence column + 3D/2D controls
     fireEvent.click(screen.getByRole("tab", { name: /Datasets & Circuits/ }));
     expect(screen.getByRole("button", { name: "3D WebGL (Three.js)" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "2D SVG" })).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Load Neurons" }));
     expect(await screen.findByText("9007199254740996")).toBeInTheDocument();
+    expect(screen.getByText("0.98")).toBeInTheDocument();
     expect(screen.getByText("SYNTHETIC FIXTURE — NOT BIOLOGICAL DATA")).toBeInTheDocument();
 
-    // Models & Protocols tab: freeze button remains disabled until confirmation checkbox checked
+    // Models & Protocols tab: Quick Form -> Draft YAML Builder + Validate + disabled freeze button
     fireEvent.click(screen.getByRole("tab", { name: /Models & Protocols/ }));
-    const freezeBtn = screen.getByRole("button", { name: "Freeze Protocol Revision" });
-    expect(freezeBtn).toBeDisabled();
+    fireEvent.click(screen.getByRole("button", { name: "Generate Draft YAML" }));
     fireEvent.click(screen.getByRole("button", { name: "Validate Draft YAML" }));
     expect(await screen.findByText(/DRAFT-TEST-001/)).toBeInTheDocument();
+
+    const freezeBtn = screen.getByRole("button", { name: "Freeze Protocol Revision" });
+    expect(freezeBtn).toBeDisabled();
     const checkboxes = screen.getAllByRole("checkbox");
     fireEvent.click(checkboxes[0]);
     expect(freezeBtn).toBeEnabled();
@@ -380,8 +493,11 @@ describe("SYNAPSE Research Workbench UI", () => {
     fireEvent.click(screen.getByRole("button", { name: /Inspect YAML/ }));
     expect(await screen.findByText(/protocol_id: P0-SYNTH-001/)).toBeInTheDocument();
 
-    // Jobs & Runs tab: job cancellation action
+    // Jobs & Runs tab: Auto-Refresh + pagination + job cancel
     fireEvent.click(screen.getByRole("tab", { name: /Jobs & Runs/ }));
+    expect(screen.getByRole("button", { name: "Auto-Refresh (5s)" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Prev 50" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Next 50" })).toBeInTheDocument();
     fireEvent.click(await screen.findByRole("button", { name: "Cancel" }));
     await waitFor(() =>
       expect(fetchMock).toHaveBeenCalledWith(
@@ -390,12 +506,13 @@ describe("SYNAPSE Research Workbench UI", () => {
       ),
     );
 
-    // Results & Exports tab: exact 64-bit string ID preserved in benchmark table
+    // Results & Exports tab: 64-bit string ID + Side-by-Side Analysis Comparison
     fireEvent.click(screen.getByRole("tab", { name: /Results & Exports/ }));
-    expect(await screen.findByText("720575940660219265")).toBeInTheDocument();
+    expect((await screen.findAllByText("720575940660219265")).length).toBeGreaterThanOrEqual(1);
+    expect(screen.getByText("Side-by-Side Analysis Comparison")).toBeInTheDocument();
   });
 
-  it("supports live Turkish/English switching with localStorage persistence and dark/light theme toggling", async () => {
+  it("supports live Turkish/English switching in Simple & Expert modes plus dark/light themes", async () => {
     const fetchMock = createApiFetchMock();
     vi.stubGlobal("fetch", fetchMock);
     render(
@@ -409,20 +526,27 @@ describe("SYNAPSE Research Workbench UI", () => {
     );
     expect(document.documentElement.dataset.theme).toBe("dark");
 
-    // Switch to Turkish
+    // Switch to Turkish while in Simple Mode
     fireEvent.click(screen.getByRole("button", { name: "TR" }));
     expect(
       (await screen.findAllByText("YALNIZCA ARAŞTIRMA AMAÇLIDIR (RUO)")).length,
     ).toBeGreaterThanOrEqual(1);
-    expect(screen.getByRole("tab", { name: /Araştırma Modülleri/ })).toBeInTheDocument();
-    expect(screen.getByRole("tab", { name: /Veri Setleri ve Devreler/ })).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: /Başlangıç/ })).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: /Deney Özetleri/ })).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: /3B Beyin Devresi/ })).toBeInTheDocument();
+    expect(screen.getByText("Sade Bilimsel Terimler Sözlüğü")).toBeInTheDocument();
     expect(document.documentElement.lang).toBe("tr");
     expect(window.localStorage.getItem("synapse.lang")).toBe("tr");
 
-    // Verify Turkish 3D & 2D labels on Datasets & Circuits tab
-    fireEvent.click(screen.getByRole("tab", { name: /Veri Setleri ve Devreler/ }));
-    expect(screen.getByRole("button", { name: "3B WebGL (Three.js)" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "2B SVG" })).toBeInTheDocument();
+    // Open 3B Beyin Devresi in Simple Mode and confirm auto-loaded 3D controls
+    fireEvent.click(screen.getByRole("tab", { name: /3B Beyin Devresi/ }));
+    expect(await screen.findByRole("button", { name: "3B WebGL (Three.js)" })).toBeInTheDocument();
+    expect(screen.getByText(/Hızlı 3B Renk Rehberi/)).toBeInTheDocument();
+
+    // Switch to Uzman Modu in Turkish
+    fireEvent.click(screen.getByRole("button", { name: "Uzman Modu" }));
+    expect(window.localStorage.getItem("synapse.uiMode")).toBe("expert");
+    expect(screen.getByRole("tab", { name: /Modeller ve Protokoller/ })).toBeInTheDocument();
 
     // Toggle theme to Light Ivory
     fireEvent.click(screen.getByRole("button", { name: /Açık Fildişi temasına geç/ }));

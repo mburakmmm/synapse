@@ -36,7 +36,10 @@ import { ModulesView, type ModuleSectionTab } from "./views/ModulesView";
 import { OverviewView, type WorkspaceTabId } from "./views/OverviewView";
 import { ResultsExportsView } from "./views/ResultsExportsView";
 
+export type UiMode = "simple" | "expert";
+
 const THEME_STORAGE_KEY = "synapse.theme";
+const MODE_STORAGE_KEY = "synapse.uiMode";
 
 function resolveInitialTheme(): "dark" | "light" {
   try {
@@ -50,9 +53,22 @@ function resolveInitialTheme(): "dark" | "light" {
   return "dark";
 }
 
+function resolveInitialUiMode(): UiMode {
+  try {
+    const saved = window.localStorage.getItem(MODE_STORAGE_KEY);
+    if (saved === "expert" || saved === "simple") {
+      return saved;
+    }
+  } catch {
+    // Ignore storage restriction errors.
+  }
+  return "simple";
+}
+
 export const App: React.FC = () => {
   const { locale, setLocale, t } = useI18n();
   const [theme, setTheme] = useState<"dark" | "light">(resolveInitialTheme);
+  const [uiMode, setUiModeState] = useState<UiMode>(resolveInitialUiMode);
   const [tab, setTab] = useState<WorkspaceTabId>("overview");
   const [moduleSubTab, setModuleSubTab] = useState<ModuleSectionTab>("pain");
   const [loading, setLoading] = useState<boolean>(false);
@@ -84,6 +100,18 @@ export const App: React.FC = () => {
       // Ignore storage errors.
     }
   }, [theme]);
+
+  const setUiMode = useCallback((next: UiMode) => {
+    setUiModeState(next);
+    if (next === "simple") {
+      setTab((prev) => (prev === "models" || prev === "jobs" ? "overview" : prev));
+    }
+    try {
+      window.localStorage.setItem(MODE_STORAGE_KEY, next);
+    } catch {
+      // Ignore storage errors.
+    }
+  }, []);
 
   const refreshAll = useCallback(async () => {
     setErrorMsg(null);
@@ -150,44 +178,72 @@ export const App: React.FC = () => {
     label: string;
     sub: string;
     icon: React.ReactNode;
-  }> = [
-    {
-      id: "overview",
-      label: t("navOverview"),
-      sub: t("navOverviewSub"),
-      icon: <OverviewIcon />,
-    },
-    {
-      id: "modules",
-      label: t("navModules"),
-      sub: t("navModulesSub"),
-      icon: <ModulesIcon />,
-    },
-    {
-      id: "datasets",
-      label: t("navDatasets"),
-      sub: t("navDatasetsSub"),
-      icon: <DatasetsIcon />,
-    },
-    {
-      id: "models",
-      label: t("navModels"),
-      sub: t("navModelsSub"),
-      icon: <ModelsIcon />,
-    },
-    {
-      id: "jobs",
-      label: t("navJobs"),
-      sub: t("navJobsSub"),
-      icon: <JobsIcon />,
-    },
-    {
-      id: "results",
-      label: t("navResults"),
-      sub: t("navResultsSub"),
-      icon: <ResultsIcon />,
-    },
-  ];
+  }> =
+    uiMode === "simple"
+      ? [
+          {
+            id: "overview",
+            label: t("navHomeSimple"),
+            sub: t("navHomeSimpleSub"),
+            icon: <OverviewIcon />,
+          },
+          {
+            id: "modules",
+            label: t("navStoriesSimple"),
+            sub: t("navStoriesSimpleSub"),
+            icon: <ModulesIcon />,
+          },
+          {
+            id: "datasets",
+            label: t("navCircuitSimple"),
+            sub: t("navCircuitSimpleSub"),
+            icon: <DatasetsIcon />,
+          },
+          {
+            id: "results",
+            label: t("navReportsSimple"),
+            sub: t("navReportsSimpleSub"),
+            icon: <ResultsIcon />,
+          },
+        ]
+      : [
+          {
+            id: "overview",
+            label: t("navOverview"),
+            sub: t("navOverviewSub"),
+            icon: <OverviewIcon />,
+          },
+          {
+            id: "modules",
+            label: t("navModules"),
+            sub: t("navModulesSub"),
+            icon: <ModulesIcon />,
+          },
+          {
+            id: "datasets",
+            label: t("navDatasets"),
+            sub: t("navDatasetsSub"),
+            icon: <DatasetsIcon />,
+          },
+          {
+            id: "models",
+            label: t("navModels"),
+            sub: t("navModelsSub"),
+            icon: <ModelsIcon />,
+          },
+          {
+            id: "jobs",
+            label: t("navJobs"),
+            sub: t("navJobsSub"),
+            icon: <JobsIcon />,
+          },
+          {
+            id: "results",
+            label: t("navResults"),
+            sub: t("navResultsSub"),
+            icon: <ResultsIcon />,
+          },
+        ];
 
   const handleNavigateModule = (moduleId: string) => {
     if (moduleId === "pain") setModuleSubTab("pain");
@@ -217,7 +273,12 @@ export const App: React.FC = () => {
             </div>
           </div>
 
-          <nav className="sidebar-nav" role="tablist" aria-label={t("navLabel")} style={{ marginTop: 14 }}>
+          <nav
+            className="sidebar-nav"
+            role="tablist"
+            aria-label={t("navLabel")}
+            style={{ marginTop: 14 }}
+          >
             {navItems.map((item) => (
               <button
                 key={item.id}
@@ -238,6 +299,15 @@ export const App: React.FC = () => {
         </div>
 
         <div className="sidebar-footer">
+          {uiMode === "simple" && (
+            <button
+              type="button"
+              className="btn btn-secondary btn-sm"
+              onClick={() => setUiMode("expert")}
+            >
+              {t("modeExpert")} →
+            </button>
+          )}
           <div className="sidebar-host-pill">
             <StatusBadge
               label={health ? t("connected") : t("connecting")}
@@ -259,6 +329,25 @@ export const App: React.FC = () => {
 
           <div className="topbar-controls">
             <StatusBadge label={t("ruoBadge")} tone="ruo" />
+
+            <div className="segmented" role="group" aria-label={t("uiModeLabel")}>
+              <button
+                type="button"
+                className="seg-btn"
+                aria-pressed={uiMode === "simple"}
+                onClick={() => setUiMode("simple")}
+              >
+                {t("modeSimple")}
+              </button>
+              <button
+                type="button"
+                className="seg-btn"
+                aria-pressed={uiMode === "expert"}
+                onClick={() => setUiMode("expert")}
+              >
+                {t("modeExpert")}
+              </button>
+            </div>
 
             <div className="segmented" role="group" aria-label={t("langLabel")}>
               <button
@@ -310,9 +399,11 @@ export const App: React.FC = () => {
 
           {tab === "overview" && (
             <OverviewView
+              uiMode={uiMode}
               health={health}
               datasets={datasets}
               modules={studies?.modules ?? []}
+              studies={studies}
               runs={runs}
               runsTotal={runsTotal}
               benchmarks={benchmarks}
@@ -320,11 +411,14 @@ export const App: React.FC = () => {
               exportsList={exportsList}
               auditEvents={auditEvents}
               onNavigateModule={handleNavigateModule}
+              onExploreCircuit3D={handleExploreCircuit3D}
+              onSwitchExpert={() => setUiMode("expert")}
             />
           )}
 
           {tab === "modules" && (
             <ModulesView
+              uiMode={uiMode}
               studies={studies}
               benchmarks={benchmarks}
               theme={theme}
@@ -337,6 +431,7 @@ export const App: React.FC = () => {
 
           {tab === "datasets" && (
             <DatasetsView
+              uiMode={uiMode}
               datasets={datasets}
               selectedDataset={selectedDataset}
               onSelectDataset={setSelectedDataset}
@@ -373,6 +468,7 @@ export const App: React.FC = () => {
 
           {tab === "results" && (
             <ResultsExportsView
+              uiMode={uiMode}
               benchmarks={benchmarks}
               analyses={analyses}
               exportsList={exportsList}

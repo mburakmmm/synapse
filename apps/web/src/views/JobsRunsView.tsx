@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   api,
   type AuditEventItem,
@@ -41,11 +41,21 @@ export const JobsRunsView: React.FC<JobsRunsViewProps> = ({
   const [jobReplicates, setJobReplicates] = useState<number>(2);
   const [planResult, setPlanResult] = useState<string | null>(null);
   const [jobFilter, setJobFilter] = useState<string>("all");
+  const [autoRefresh, setAutoRefresh] = useState<boolean>(false);
 
   const [protocolFilter, setProtocolFilter] = useState<string>("");
+  const [runsOffset, setRunsOffset] = useState<number>(0);
   const [filteredRuns, setFilteredRuns] = useState<RunSummary[] | null>(null);
   const [filteredTotal, setFilteredTotal] = useState<number>(0);
   const [runDetail, setRunDetail] = useState<RunDetailResponse | null>(null);
+
+  useEffect(() => {
+    if (!autoRefresh) return;
+    const timer = window.setInterval(() => {
+      void onRefresh();
+    }, 5000);
+    return () => window.clearInterval(timer);
+  }, [autoRefresh, onRefresh]);
 
   const visibleJobs = useMemo(
     () => (jobFilter === "all" ? jobs : jobs.filter((j) => j.status === jobFilter)),
@@ -53,7 +63,8 @@ export const JobsRunsView: React.FC<JobsRunsViewProps> = ({
   );
 
   const displayedRuns = filteredRuns ?? initialRuns;
-  const displayedTotal = filteredRuns !== null ? filteredTotal : initialRunsTotal || initialRuns.length;
+  const displayedTotal =
+    filteredRuns !== null ? filteredTotal : initialRunsTotal || initialRuns.length;
 
   const translateStatus = (raw: string): string => {
     switch (raw) {
@@ -125,19 +136,25 @@ export const JobsRunsView: React.FC<JobsRunsViewProps> = ({
     }
   };
 
-  const handleFilterRuns = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const fetchRunsPage = async (nextOffset: number) => {
     onError(null);
     try {
       const res = await api.runs({
         limit: 50,
+        offset: nextOffset,
         protocolId: protocolFilter.trim() || undefined,
       });
+      setRunsOffset(nextOffset);
       setFilteredRuns(res.runs);
       setFilteredTotal(res.total);
     } catch (err) {
       onError(err instanceof Error ? err.message : "Failed to filter runs");
     }
+  };
+
+  const handleFilterRuns = async (e: React.FormEvent) => {
+    e.preventDefault();
+    await fetchRunsPage(0);
   };
 
   const handleInspectRun = async (runId: string) => {
@@ -195,18 +212,27 @@ export const JobsRunsView: React.FC<JobsRunsViewProps> = ({
           <h3>
             {t("jobQueueTitle")} ({visibleJobs.length})
           </h3>
-          <div className="segmented">
-            {["all", "queued", "running", "succeeded", "failed", "cancelled"].map((st) => (
-              <button
-                key={st}
-                type="button"
-                className="seg-btn"
-                aria-pressed={jobFilter === st}
-                onClick={() => setJobFilter(st)}
-              >
-                {st === "all" ? t("filterAll") : translateStatus(st)}
-              </button>
-            ))}
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+            <button
+              type="button"
+              className={`btn btn-sm ${autoRefresh ? "" : "btn-secondary"}`}
+              onClick={() => setAutoRefresh((v) => !v)}
+            >
+              {t("autoRefreshLabel")}
+            </button>
+            <div className="segmented">
+              {["all", "queued", "running", "succeeded", "failed", "cancelled"].map((st) => (
+                <button
+                  key={st}
+                  type="button"
+                  className="seg-btn"
+                  aria-pressed={jobFilter === st}
+                  onClick={() => setJobFilter(st)}
+                >
+                  {st === "all" ? t("filterAll") : translateStatus(st)}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
         <div className="table-wrap">
@@ -267,7 +293,7 @@ export const JobsRunsView: React.FC<JobsRunsViewProps> = ({
           </div>
           <form
             onSubmit={(e) => void handleFilterRuns(e)}
-            style={{ display: "flex", gap: 8, alignItems: "center" }}
+            style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}
           >
             <input
               value={protocolFilter}
@@ -276,6 +302,22 @@ export const JobsRunsView: React.FC<JobsRunsViewProps> = ({
             />
             <button type="submit" className="btn btn-secondary btn-sm">
               {t("applyFilterBtn")}
+            </button>
+            <button
+              type="button"
+              className="btn btn-secondary btn-sm"
+              disabled={runsOffset === 0}
+              onClick={() => void fetchRunsPage(Math.max(0, runsOffset - 50))}
+            >
+              {t("prev50")}
+            </button>
+            <button
+              type="button"
+              className="btn btn-secondary btn-sm"
+              disabled={runsOffset + displayedRuns.length >= displayedTotal}
+              onClick={() => void fetchRunsPage(runsOffset + 50)}
+            >
+              {t("next50")}
             </button>
           </form>
         </div>

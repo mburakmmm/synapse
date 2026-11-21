@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from "react";
 import type { PlotlyTrace } from "plotly.js-basic-dist-min";
 import type { BenchmarkEnvelope, StudiesResponse } from "../api";
+import type { UiMode } from "../App";
 import { PlotlyChart } from "../components/PlotlyChart";
 import { StatusBadge } from "../components/StatusBadge";
 import { useI18n } from "../i18n/LanguageContext";
@@ -10,6 +11,7 @@ import type { CircuitPresetRequest } from "./DatasetsView";
 export type ModuleSectionTab = "pain" | "metabolic" | "benchmark" | "planned";
 
 interface ModulesViewProps {
+  uiMode: UiMode;
   studies: StudiesResponse | null;
   benchmarks: BenchmarkEnvelope[];
   theme: "dark" | "light";
@@ -48,6 +50,7 @@ const PAIN_READOUT_LABELS: Record<string, string> = {
 };
 
 export const ModulesView: React.FC<ModulesViewProps> = ({
+  uiMode,
   studies,
   benchmarks,
   theme,
@@ -374,96 +377,159 @@ export const ModulesView: React.FC<ModulesViewProps> = ({
                 </div>
               )}
 
-              <div className="grid-2">
-                <div className="card">
-                  <div className="card-header">
-                    <h3>{t("painChartDeltaTitle")}</h3>
-                  </div>
-                  <PlotlyChart
-                    theme={theme}
-                    ariaLabel={t("painChartDeltaTitle")}
-                    traces={painContrastTraces}
-                    layout={{
-                      height: 340,
-                      yaxis: { title: t("chartYAxisDeltaHz") },
-                      xaxis: { tickangle: -25 },
-                      margin: { l: 55, r: 20, t: 25, b: 115 },
-                    }}
-                  />
+              {uiMode === "simple" && (
+                <div className="notice-box" style={{ marginBottom: 12 }}>
+                  <strong>{t("simplePainTitle")}: </strong>
+                  {t("simplePainSummary")}
                 </div>
+              )}
 
-                {painRob && (
+              {uiMode === "expert" ? (
+                <>
+                  <div className="grid-2">
+                    <div className="card">
+                      <div className="card-header">
+                        <h3>{t("painChartDeltaTitle")}</h3>
+                      </div>
+                      <PlotlyChart
+                        theme={theme}
+                        ariaLabel={t("painChartDeltaTitle")}
+                        traces={painContrastTraces}
+                        layout={{
+                          height: 340,
+                          yaxis: { title: t("chartYAxisDeltaHz") },
+                          xaxis: { tickangle: -25 },
+                          margin: { l: 55, r: 20, t: 25, b: 115 },
+                        }}
+                      />
+                    </div>
+
+                    {painRob && (
+                      <div className="card">
+                        <div className="card-header">
+                          <h3>{t("painChartRobustTitle")}</h3>
+                        </div>
+                        <PlotlyChart
+                          theme={theme}
+                          ariaLabel={t("painChartRobustTitle")}
+                          traces={painRobustTraces}
+                          layout={{
+                            barmode: "group",
+                            height: 340,
+                            yaxis: { title: t("chartYAxisDeltaHz"), rangemode: "tozero" },
+                            margin: { l: 55, r: 20, t: 25, b: 60 },
+                          }}
+                        />
+                      </div>
+                    )}
+                  </div>
+
                   <div className="card">
                     <div className="card-header">
-                      <h3>{t("painChartRobustTitle")}</h3>
+                      <h3>{t("painDissocTitle")}</h3>
+                    </div>
+                    <div className="table-wrap">
+                      <table>
+                        <thead>
+                          <tr>
+                            <th>{t("colContrast")}</th>
+                            <th>{t("colNeuron")}</th>
+                            <th>{t("colBaseMean")}</th>
+                            <th>{t("colTreatMean")}</th>
+                            <th>{t("colDelta")}</th>
+                            <th>{t("colCi95")}</th>
+                            <th>{t("colPval")}</th>
+                            <th>{t("colQval")}</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {[...painConf.primary_contrasts, ...painConf.secondary_contrasts].map(
+                            (row) => (
+                              <tr key={row.contrast_name}>
+                                <td className="mono">{row.contrast_name}</td>
+                                <td className="mono">{row.neuron_id}</td>
+                                <td>
+                                  {row.baseline_summary.mean_hz.toFixed(3)} ±{" "}
+                                  {row.baseline_summary.sd_hz.toFixed(3)}
+                                </td>
+                                <td>
+                                  {row.treatment_summary.mean_hz.toFixed(3)} ±{" "}
+                                  {row.treatment_summary.sd_hz.toFixed(3)}
+                                </td>
+                                <td>
+                                  <strong>
+                                    {row.mean_difference_hz >= 0 ? "+" : ""}
+                                    {row.mean_difference_hz.toFixed(3)}
+                                  </strong>{" "}
+                                  ± {row.sd_difference_hz.toFixed(3)}
+                                </td>
+                                <td className="mono">
+                                  [{row.bootstrap_ci95_low_hz.toFixed(3)},{" "}
+                                  {row.bootstrap_ci95_high_hz.toFixed(3)}]
+                                </td>
+                                <td className="mono">{row.permutation_p.toExponential(3)}</td>
+                                <td className="mono">
+                                  {row.bh_fdr_q !== undefined
+                                    ? row.bh_fdr_q.toExponential(3)
+                                    : t("noneDash")}
+                                </td>
+                              </tr>
+                            ),
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <details className="tech-details">
+                  <summary>{t("showTechDetails")}</summary>
+                  <div className="card">
+                    <div className="card-header">
+                      <h3>{t("painChartDeltaTitle")}</h3>
                     </div>
                     <PlotlyChart
                       theme={theme}
-                      ariaLabel={t("painChartRobustTitle")}
-                      traces={painRobustTraces}
+                      ariaLabel={t("painChartDeltaTitle")}
+                      traces={painContrastTraces}
                       layout={{
-                        barmode: "group",
-                        height: 340,
-                        yaxis: { title: t("chartYAxisDeltaHz"), rangemode: "tozero" },
-                        margin: { l: 55, r: 20, t: 25, b: 60 },
+                        height: 320,
+                        yaxis: { title: t("chartYAxisDeltaHz") },
+                        xaxis: { tickangle: -25 },
+                        margin: { l: 55, r: 20, t: 25, b: 115 },
                       }}
                     />
                   </div>
-                )}
-              </div>
-
-              <div className="card">
-                <div className="card-header">
-                  <h3>{t("painDissocTitle")}</h3>
-                </div>
-                <div className="table-wrap">
-                  <table>
-                    <thead>
-                      <tr>
-                        <th>{t("colContrast")}</th>
-                        <th>{t("colNeuron")}</th>
-                        <th>{t("colBaseMean")}</th>
-                        <th>{t("colTreatMean")}</th>
-                        <th>{t("colDelta")}</th>
-                        <th>{t("colCi95")}</th>
-                        <th>{t("colPval")}</th>
-                        <th>{t("colQval")}</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {[...painConf.primary_contrasts, ...painConf.secondary_contrasts].map((row) => (
-                        <tr key={row.contrast_name}>
-                          <td className="mono">{row.contrast_name}</td>
-                          <td className="mono">{row.neuron_id}</td>
-                          <td>
-                            {row.baseline_summary.mean_hz.toFixed(3)} ±{" "}
-                            {row.baseline_summary.sd_hz.toFixed(3)}
-                          </td>
-                          <td>
-                            {row.treatment_summary.mean_hz.toFixed(3)} ±{" "}
-                            {row.treatment_summary.sd_hz.toFixed(3)}
-                          </td>
-                          <td>
-                            <strong>
-                              {row.mean_difference_hz >= 0 ? "+" : ""}
-                              {row.mean_difference_hz.toFixed(3)}
-                            </strong>{" "}
-                            ± {row.sd_difference_hz.toFixed(3)}
-                          </td>
-                          <td className="mono">
-                            [{row.bootstrap_ci95_low_hz.toFixed(3)},{" "}
-                            {row.bootstrap_ci95_high_hz.toFixed(3)}]
-                          </td>
-                          <td className="mono">{row.permutation_p.toExponential(3)}</td>
-                          <td className="mono">
-                            {row.bh_fdr_q !== undefined ? row.bh_fdr_q.toExponential(3) : t("noneDash")}
-                          </td>
+                  <div className="table-wrap">
+                    <table>
+                      <thead>
+                        <tr>
+                          <th>{t("colContrast")}</th>
+                          <th>{t("colNeuron")}</th>
+                          <th>{t("colDelta")}</th>
+                          <th>{t("colQval")}</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
+                      </thead>
+                      <tbody>
+                        {painConf.primary_contrasts.map((row) => (
+                          <tr key={row.contrast_name}>
+                            <td className="mono">{row.contrast_name}</td>
+                            <td className="mono">{row.neuron_id}</td>
+                            <td>
+                              <strong>+{row.mean_difference_hz.toFixed(3)}</strong>
+                            </td>
+                            <td className="mono">
+                              {row.bh_fdr_q !== undefined
+                                ? row.bh_fdr_q.toExponential(3)
+                                : t("noneDash")}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </details>
+              )}
 
               <div className="notice-box">
                 <strong>{t("painLimitsTitle")}: </strong>
@@ -548,54 +614,95 @@ export const ModulesView: React.FC<ModulesViewProps> = ({
                 </div>
               </div>
 
-              <div className="card">
-                <div className="table-wrap">
-                  <table>
-                    <thead>
-                      <tr>
-                        <th>{t("colContrast")}</th>
-                        <th>{t("colNeuron")}</th>
-                        <th>{t("colBaseMean")}</th>
-                        <th>{t("colTreatMean")}</th>
-                        <th>{t("colDelta")}</th>
-                        <th>{t("colCi95")}</th>
-                        <th>{t("colPval")}</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {metConf.map((m) => {
-                        const base = m.condition_summaries[m.baseline_condition];
-                        const treat = m.condition_summaries[m.treatment_condition];
-                        return (
+              {uiMode === "simple" && (
+                <div className="notice-box" style={{ marginBottom: 12 }}>
+                  <strong>{t("simpleMetTitle")}: </strong>
+                  {t("simpleMetSummary")}
+                </div>
+              )}
+
+              {uiMode === "expert" ? (
+                <div className="card">
+                  <div className="table-wrap">
+                    <table>
+                      <thead>
+                        <tr>
+                          <th>{t("colContrast")}</th>
+                          <th>{t("colNeuron")}</th>
+                          <th>{t("colBaseMean")}</th>
+                          <th>{t("colTreatMean")}</th>
+                          <th>{t("colDelta")}</th>
+                          <th>{t("colCi95")}</th>
+                          <th>{t("colPval")}</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {metConf.map((m) => {
+                          const base = m.condition_summaries[m.baseline_condition];
+                          const treat = m.condition_summaries[m.treatment_condition];
+                          return (
+                            <tr key={m.analysis_key}>
+                              <td className="mono">{m.analysis_key}</td>
+                              <td className="mono">{m.target_neuron_id}</td>
+                              <td>
+                                {base
+                                  ? `${base.mean_hz.toFixed(3)} ± ${base.sd_hz.toFixed(3)}`
+                                  : t("noneDash")}
+                              </td>
+                              <td>
+                                {treat
+                                  ? `${treat.mean_hz.toFixed(3)} ± ${treat.sd_hz.toFixed(3)}`
+                                  : t("noneDash")}
+                              </td>
+                              <td>
+                                <strong>+{m.paired_metrics.mean_difference_hz.toFixed(3)}</strong> ±{" "}
+                                {m.paired_metrics.sd_difference_hz.toFixed(3)}
+                              </td>
+                              <td className="mono">
+                                [{m.paired_metrics.bootstrap_ci95_low_hz.toFixed(3)},{" "}
+                                {m.paired_metrics.bootstrap_ci95_high_hz.toFixed(3)}]
+                              </td>
+                              <td className="mono">
+                                {m.paired_metrics.permutation_test
+                                  ? m.paired_metrics.permutation_test.two_sided_p_value.toExponential(
+                                      3,
+                                    )
+                                  : t("noneDash")}
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              ) : (
+                <details className="tech-details">
+                  <summary>{t("showTechDetails")}</summary>
+                  <div className="table-wrap">
+                    <table>
+                      <thead>
+                        <tr>
+                          <th>{t("colContrast")}</th>
+                          <th>{t("colNeuron")}</th>
+                          <th>{t("colDelta")}</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {metConf.map((m) => (
                           <tr key={m.analysis_key}>
                             <td className="mono">{m.analysis_key}</td>
                             <td className="mono">{m.target_neuron_id}</td>
                             <td>
-                              {base ? `${base.mean_hz.toFixed(3)} ± ${base.sd_hz.toFixed(3)}` : t("noneDash")}
-                            </td>
-                            <td>
-                              {treat ? `${treat.mean_hz.toFixed(3)} ± ${treat.sd_hz.toFixed(3)}` : t("noneDash")}
-                            </td>
-                            <td>
-                              <strong>+{m.paired_metrics.mean_difference_hz.toFixed(3)}</strong> ±{" "}
-                              {m.paired_metrics.sd_difference_hz.toFixed(3)}
-                            </td>
-                            <td className="mono">
-                              [{m.paired_metrics.bootstrap_ci95_low_hz.toFixed(3)},{" "}
-                              {m.paired_metrics.bootstrap_ci95_high_hz.toFixed(3)}]
-                            </td>
-                            <td className="mono">
-                              {m.paired_metrics.permutation_test
-                                ? m.paired_metrics.permutation_test.two_sided_p_value.toExponential(3)
-                                : t("noneDash")}
+                              <strong>+{m.paired_metrics.mean_difference_hz.toFixed(3)}</strong>
                             </td>
                           </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </details>
+              )}
             </>
           )}
         </>

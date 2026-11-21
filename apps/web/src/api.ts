@@ -8,6 +8,12 @@ export interface HealthResponse {
   api_version: string;
   ruo_notice: string;
   bind_host: string;
+  storage?: {
+    data_dir_exists: boolean;
+    runs_dir_exists: boolean;
+    disk_free_gb: number | null;
+    disk_total_gb: number | null;
+  };
 }
 
 export interface DatasetSummary {

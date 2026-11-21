@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import shutil
 import uuid
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
@@ -134,11 +135,25 @@ def create_app(settings: Settings | None = None, *, run_migrations: bool = True)
 
     @v1.get("/health")
     def health() -> dict[str, Any]:
+        storage: dict[str, Any] = {
+            "data_dir_exists": cfg.data_root.is_dir(),
+            "runs_dir_exists": cfg.runs_root.is_dir(),
+            "disk_free_gb": None,
+            "disk_total_gb": None,
+        }
+        try:
+            probe = cfg.runs_root if cfg.runs_root.exists() else cfg.repo_root
+            usage = shutil.disk_usage(probe)
+            storage["disk_free_gb"] = round(usage.free / (1024**3), 2)
+            storage["disk_total_gb"] = round(usage.total / (1024**3), 2)
+        except OSError:
+            pass
         return {
             "status": "ok",
             "api_version": "v1",
             "ruo_notice": "Research Use Only (RUO) - not for clinical or diagnostic use",
             "bind_host": cfg.bind_host,
+            "storage": storage,
         }
 
     @v1.get("/datasets")

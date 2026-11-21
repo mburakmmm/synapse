@@ -8,11 +8,13 @@ import {
   type BenchmarkEnvelope,
   type ExportBundleItem,
 } from "../api";
+import type { UiMode } from "../App";
 import { PlotlyChart } from "../components/PlotlyChart";
 import { StatusBadge } from "../components/StatusBadge";
 import { useI18n } from "../i18n/LanguageContext";
 
 interface ResultsExportsViewProps {
+  uiMode: UiMode;
   benchmarks: BenchmarkEnvelope[];
   analyses: AnalysisSummaryItem[];
   exportsList: ExportBundleItem[];
@@ -28,6 +30,7 @@ interface PreviewArtifactState {
 }
 
 export const ResultsExportsView: React.FC<ResultsExportsViewProps> = ({
+  uiMode,
   benchmarks,
   analyses,
   exportsList,
@@ -39,6 +42,50 @@ export const ResultsExportsView: React.FC<ResultsExportsViewProps> = ({
   const [selectedAnalysisDetail, setSelectedAnalysisDetail] =
     useState<AnalysisDetailResponse | null>(null);
   const [previewArtifact, setPreviewArtifact] = useState<PreviewArtifactState | null>(null);
+
+  const [compareKeyA, setCompareKeyA] = useState<string>("");
+  const [compareKeyB, setCompareKeyB] = useState<string>("");
+
+  const activeCompareA = useMemo(
+    () => analyses.find((a) => a.analysis_key === compareKeyA) ?? analyses[0] ?? null,
+    [analyses, compareKeyA],
+  );
+  const activeCompareB = useMemo(
+    () =>
+      analyses.find((a) => a.analysis_key === compareKeyB) ?? analyses[1] ?? analyses[0] ?? null,
+    [analyses, compareKeyB],
+  );
+
+  const compareTraces = useMemo<PlotlyTrace[]>(() => {
+    if (!activeCompareA || !activeCompareB || analyses.length < 2) return [];
+    const items = [activeCompareA, activeCompareB];
+    return [
+      {
+        type: "bar",
+        name: t("meanDeltaLabel"),
+        x: items.map((item) => item.analysis_key),
+        y: items.map((item) => item.paired_metrics.mean_difference_hz),
+        error_y: {
+          type: "data",
+          symmetric: false,
+          array: items.map((item) =>
+            Math.max(
+              0,
+              item.paired_metrics.bootstrap_ci95_high_hz - item.paired_metrics.mean_difference_hz,
+            ),
+          ),
+          arrayminus: items.map((item) =>
+            Math.max(
+              0,
+              item.paired_metrics.mean_difference_hz - item.paired_metrics.bootstrap_ci95_low_hz,
+            ),
+          ),
+          visible: true,
+        },
+        marker: { color: ["#38bdf8", "#10b981"] },
+      },
+    ];
+  }, [activeCompareA, activeCompareB, analyses.length, t]);
 
   const primaryBenchmark = benchmarks[0]?.report;
   const benchmarkTraces = useMemo<PlotlyTrace[]>(() => {
@@ -136,6 +183,149 @@ export const ResultsExportsView: React.FC<ResultsExportsViewProps> = ({
     );
   };
 
+  const analysesCard = (
+    <div className="card">
+      <div className="card-header">
+        <h3>
+          {t("analysesTitle")} ({filteredAnalyses.length})
+        </h3>
+        <input
+          value={analysisSearch}
+          onChange={(e) => setAnalysisSearch(e.target.value)}
+          placeholder={t("searchAnalysesPlaceholder")}
+        />
+      </div>
+      {filteredAnalyses.map((an) => (
+        <div
+          key={an.analysis_key}
+          style={{
+            marginBottom: 12,
+            padding: 12,
+            borderRadius: 9,
+            background: "var(--bg-panel-subtle)",
+            border: "1px solid var(--border-subtle)",
+          }}
+        >
+          <div className="card-header" style={{ marginBottom: 6 }}>
+            <strong className="mono">{an.analysis_key}</strong>
+            <StatusBadge
+              label={an.provenance.is_synthetic_fixture ? t("synthBadge") : t("bioRuoBadge")}
+              tone={an.provenance.is_synthetic_fixture ? "synth" : "warn"}
+            />
+          </div>
+          <p style={{ margin: "4px 0", fontSize: "0.82rem" }}>
+            {t("targetNeuronLabel")}: <span className="mono">{an.target_neuron_id}</span> |{" "}
+            {t("pairsLabel")}: <strong>{an.paired_metrics.n_pairs}</strong> |{" "}
+            {t("meanDeltaLabel")}:{" "}
+            <strong>{an.paired_metrics.mean_difference_hz.toFixed(3)} Hz</strong> (95% CI [
+            {an.paired_metrics.bootstrap_ci95_low_hz.toFixed(3)},{" "}
+            {an.paired_metrics.bootstrap_ci95_high_hz.toFixed(3)}] Hz)
+          </p>
+          <div
+            style={{
+              display: "flex",
+              flexWrap: "wrap",
+              justifyContent: "space-between",
+              alignItems: "center",
+              gap: 8,
+              marginTop: 6,
+            }}
+          >
+            {an.paired_metrics.permutation_test && (
+              <span className="mono" style={{ color: "var(--text-secondary)" }}>
+                {t("permTestLabel")} ({an.paired_metrics.permutation_test.method}): p ={" "}
+                {an.paired_metrics.permutation_test.two_sided_p_value.toExponential(3)}
+              </span>
+            )}
+            <button
+              type="button"
+              className="btn btn-secondary btn-sm"
+              onClick={() => void handleLoadAnalysisDetail(an.analysis_key)}
+            >
+              {t("inspectPairsBtn")}
+            </button>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+
+  const exportsCard = (
+    <div className="card">
+      <div className="card-header">
+        <h3>
+          {t("exportsTitle")} ({exportsList.length})
+        </h3>
+      </div>
+      {exportsList.length === 0 ? (
+        <div className="empty-state">{t("noExportsMsg")}</div>
+      ) : (
+        exportsList.map((ex) => (
+          <div
+            key={ex.export_key}
+            style={{
+              marginBottom: 12,
+              padding: 12,
+              borderRadius: 9,
+              background: "var(--bg-panel-subtle)",
+              border: "1px solid var(--border-subtle)",
+            }}
+          >
+            <p style={{ margin: "0 0 8px" }}>
+              <strong className="mono">{ex.export_key}</strong>{" "}
+              {ex.is_synthetic_fixture && <StatusBadge label={t("synthBadge")} tone="synth" />}
+            </p>
+            <ul
+              style={{
+                margin: 0,
+                paddingLeft: 0,
+                listStyle: "none",
+                display: "flex",
+                flexDirection: "column",
+                gap: 6,
+              }}
+            >
+              {ex.files.map((relFile) => (
+                <li
+                  key={relFile}
+                  style={{
+                    display: "flex",
+                    flexWrap: "wrap",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    gap: 8,
+                    fontSize: "0.79rem",
+                  }}
+                >
+                  <span className="mono">{relFile}</span>
+                  <span style={{ display: "inline-flex", gap: 6 }}>
+                    {isPreviewable(relFile) && (
+                      <button
+                        type="button"
+                        className="btn btn-secondary btn-sm"
+                        onClick={() => void handlePreviewBundleFile(ex.export_key, relFile)}
+                      >
+                        {t("previewBtn")}
+                      </button>
+                    )}
+                    <a
+                      className="btn btn-secondary btn-sm"
+                      href={`${API_BASE}/api/v1/exports/${encodeURIComponent(ex.export_key)}/files/${relFile}`}
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      {t("openRawBtn")}
+                    </a>
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ))
+      )}
+    </div>
+  );
+
   return (
     <section role="tabpanel" aria-label={t("navResults")}>
       <div className="kpi-grid">
@@ -202,45 +392,47 @@ export const ResultsExportsView: React.FC<ResultsExportsViewProps> = ({
             }}
           />
 
-          <div className="table-wrap" style={{ marginTop: 12 }}>
-            <table>
-              <thead>
-                <tr>
-                  <th>{t("colConditionShort")}</th>
-                  <th>{t("colNeuron")}</th>
-                  <th>{t("colLabel")}</th>
-                  <th>N</th>
-                  <th>{t("colSynMeanSd")}</th>
-                  <th>{t("colRefMeanSd")}</th>
-                  <th>{t("colAbsDiff")}</th>
-                  <th>{t("colGate")}</th>
-                </tr>
-              </thead>
-              <tbody>
-                {primaryBenchmark.target_comparisons.map((row) => (
-                  <tr key={`${row.condition_id}-${row.neuron_id}`}>
-                    <td className="mono">{row.condition_id}</td>
-                    <td className="mono">{row.neuron_id}</td>
-                    <td>{row.label}</td>
-                    <td>{row.n_replicates}</td>
-                    <td>
-                      {row.observed_mean_hz.toFixed(3)} ± {row.observed_sd_pop_hz.toFixed(3)}
-                    </td>
-                    <td>
-                      {row.reference_mean_hz.toFixed(3)} ± {row.reference_sd_pop_hz.toFixed(3)}
-                    </td>
-                    <td>{row.abs_diff_from_ref_hz.toFixed(3)}</td>
-                    <td>
-                      <StatusBadge
-                        label={row.passed ? t("statusPass") : t("statusFail")}
-                        tone={row.passed ? "ok" : "synth"}
-                      />
-                    </td>
+          {uiMode === "expert" && (
+            <div className="table-wrap" style={{ marginTop: 12 }}>
+              <table>
+                <thead>
+                  <tr>
+                    <th>{t("colConditionShort")}</th>
+                    <th>{t("colNeuron")}</th>
+                    <th>{t("colLabel")}</th>
+                    <th>N</th>
+                    <th>{t("colSynMeanSd")}</th>
+                    <th>{t("colRefMeanSd")}</th>
+                    <th>{t("colAbsDiff")}</th>
+                    <th>{t("colGate")}</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody>
+                  {primaryBenchmark.target_comparisons.map((row) => (
+                    <tr key={`${row.condition_id}-${row.neuron_id}`}>
+                      <td className="mono">{row.condition_id}</td>
+                      <td className="mono">{row.neuron_id}</td>
+                      <td>{row.label}</td>
+                      <td>{row.n_replicates}</td>
+                      <td>
+                        {row.observed_mean_hz.toFixed(3)} ± {row.observed_sd_pop_hz.toFixed(3)}
+                      </td>
+                      <td>
+                        {row.reference_mean_hz.toFixed(3)} ± {row.reference_sd_pop_hz.toFixed(3)}
+                      </td>
+                      <td>{row.abs_diff_from_ref_hz.toFixed(3)}</td>
+                      <td>
+                        <StatusBadge
+                          label={row.passed ? t("statusPass") : t("statusFail")}
+                          tone={row.passed ? "ok" : "synth"}
+                        />
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
       ) : (
         <div className="card">
@@ -312,141 +504,112 @@ export const ResultsExportsView: React.FC<ResultsExportsViewProps> = ({
         </div>
       )}
 
-      <div className="grid-2">
+      {uiMode === "expert" && (
         <div className="card">
           <div className="card-header">
-            <h3>
-              {t("analysesTitle")} ({filteredAnalyses.length})
-            </h3>
-            <input
-              value={analysisSearch}
-              onChange={(e) => setAnalysisSearch(e.target.value)}
-              placeholder={t("searchAnalysesPlaceholder")}
-            />
+            <h3>{t("compareTitle")}</h3>
           </div>
-          {filteredAnalyses.map((an) => (
-            <div
-              key={an.analysis_key}
-              style={{
-                marginBottom: 12,
-                padding: 12,
-                borderRadius: 9,
-                background: "var(--bg-panel-subtle)",
-                border: "1px solid var(--border-subtle)",
-              }}
-            >
-              <div className="card-header" style={{ marginBottom: 6 }}>
-                <strong className="mono">{an.analysis_key}</strong>
-                <StatusBadge
-                  label={
-                    an.provenance.is_synthetic_fixture ? t("synthBadge") : t("bioRuoBadge")
-                  }
-                  tone={an.provenance.is_synthetic_fixture ? "synth" : "warn"}
-                />
-              </div>
-              <p style={{ margin: "4px 0", fontSize: "0.82rem" }}>
-                {t("targetNeuronLabel")}: <span className="mono">{an.target_neuron_id}</span> |{" "}
-                {t("pairsLabel")}: <strong>{an.paired_metrics.n_pairs}</strong> |{" "}
-                {t("meanDeltaLabel")}:{" "}
-                <strong>{an.paired_metrics.mean_difference_hz.toFixed(3)} Hz</strong> (95% CI [
-                {an.paired_metrics.bootstrap_ci95_low_hz.toFixed(3)},{" "}
-                {an.paired_metrics.bootstrap_ci95_high_hz.toFixed(3)}] Hz)
-              </p>
-              <div
-                style={{
-                  display: "flex",
-                  flexWrap: "wrap",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                  gap: 8,
-                  marginTop: 6,
-                }}
-              >
-                {an.paired_metrics.permutation_test && (
-                  <span className="mono" style={{ color: "var(--text-secondary)" }}>
-                    {t("permTestLabel")} ({an.paired_metrics.permutation_test.method}): p ={" "}
-                    {an.paired_metrics.permutation_test.two_sided_p_value.toExponential(3)}
-                  </span>
-                )}
-                <button
-                  type="button"
-                  className="btn btn-secondary btn-sm"
-                  onClick={() => void handleLoadAnalysisDetail(an.analysis_key)}
-                >
-                  {t("inspectPairsBtn")}
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
-
-        <div className="card">
-          <div className="card-header">
-            <h3>
-              {t("exportsTitle")} ({exportsList.length})
-            </h3>
-          </div>
-          {exportsList.length === 0 ? (
-            <div className="empty-state">{t("noExportsMsg")}</div>
+          {analyses.length < 2 || !activeCompareA || !activeCompareB ? (
+            <div className="empty-state">{t("compareNeedTwo")}</div>
           ) : (
-            exportsList.map((ex) => (
-              <div
-                key={ex.export_key}
-                style={{
-                  marginBottom: 12,
-                  padding: 12,
-                  borderRadius: 9,
-                  background: "var(--bg-panel-subtle)",
-                  border: "1px solid var(--border-subtle)",
-                }}
-              >
-                <p style={{ margin: "0 0 8px" }}>
-                  <strong className="mono">{ex.export_key}</strong>{" "}
-                  {ex.is_synthetic_fixture && (
-                    <StatusBadge label={t("synthBadge")} tone="synth" />
-                  )}
-                </p>
-                <ul style={{ margin: 0, paddingLeft: 0, listStyle: "none", display: "flex", flexDirection: "column", gap: 6 }}>
-                  {ex.files.map((relFile) => (
-                    <li
-                      key={relFile}
-                      style={{
-                        display: "flex",
-                        flexWrap: "wrap",
-                        justifyContent: "space-between",
-                        alignItems: "center",
-                        gap: 8,
-                        fontSize: "0.79rem",
-                      }}
-                    >
-                      <span className="mono">{relFile}</span>
-                      <span style={{ display: "inline-flex", gap: 6 }}>
-                        {isPreviewable(relFile) && (
-                          <button
-                            type="button"
-                            className="btn btn-secondary btn-sm"
-                            onClick={() => void handlePreviewBundleFile(ex.export_key, relFile)}
-                          >
-                            {t("previewBtn")}
-                          </button>
-                        )}
-                        <a
-                          className="btn btn-secondary btn-sm"
-                          href={`${API_BASE}/api/v1/exports/${encodeURIComponent(ex.export_key)}/files/${relFile}`}
-                          target="_blank"
-                          rel="noreferrer"
-                        >
-                          {t("openRawBtn")}
-                        </a>
-                      </span>
-                    </li>
-                  ))}
-                </ul>
+            <>
+              <div className="form-row">
+                <label className="field" style={{ flex: "1 1 240px" }}>
+                  {t("compareSelectA")}
+                  <select
+                    value={activeCompareA.analysis_key}
+                    onChange={(e) => setCompareKeyA(e.target.value)}
+                  >
+                    {analyses.map((a) => (
+                      <option key={a.analysis_key} value={a.analysis_key}>
+                        {a.analysis_key}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label className="field" style={{ flex: "1 1 240px" }}>
+                  {t("compareSelectB")}
+                  <select
+                    value={activeCompareB.analysis_key}
+                    onChange={(e) => setCompareKeyB(e.target.value)}
+                  >
+                    {analyses.map((a) => (
+                      <option key={a.analysis_key} value={a.analysis_key}>
+                        {a.analysis_key}
+                      </option>
+                    ))}
+                  </select>
+                </label>
               </div>
-            ))
+              <div className="grid-2">
+                <PlotlyChart
+                  theme={theme}
+                  ariaLabel={t("compareTitle")}
+                  traces={compareTraces}
+                  layout={{
+                    height: 290,
+                    yaxis: { title: t("chartYAxisDeltaHz") },
+                    margin: { l: 55, r: 20, t: 25, b: 85 },
+                  }}
+                />
+                <div className="table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>{t("colContrast")}</th>
+                        <th>{t("colNeuron")}</th>
+                        <th>{t("pairsLabel")}</th>
+                        <th>{t("colDelta")}</th>
+                        <th>{t("colCi95")}</th>
+                        <th>{t("colPval")}</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {[activeCompareA, activeCompareB].map((item, idx) => (
+                        <tr key={`${item.analysis_key}-${idx}`}>
+                          <td className="mono">{item.analysis_key}</td>
+                          <td className="mono">{item.target_neuron_id}</td>
+                          <td>{item.paired_metrics.n_pairs}</td>
+                          <td>
+                            <strong>{item.paired_metrics.mean_difference_hz.toFixed(3)}</strong> ±{" "}
+                            {item.paired_metrics.sd_difference_hz.toFixed(3)}
+                          </td>
+                          <td className="mono">
+                            [{item.paired_metrics.bootstrap_ci95_low_hz.toFixed(3)},{" "}
+                            {item.paired_metrics.bootstrap_ci95_high_hz.toFixed(3)}]
+                          </td>
+                          <td className="mono">
+                            {item.paired_metrics.permutation_test
+                              ? item.paired_metrics.permutation_test.two_sided_p_value.toExponential(
+                                  3,
+                                )
+                              : t("noneDash")}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </>
           )}
         </div>
-      </div>
+      )}
+
+      {uiMode === "expert" ? (
+        <div className="grid-2">
+          {analysesCard}
+          {exportsCard}
+        </div>
+      ) : (
+        <>
+          {exportsCard}
+          <details className="tech-details">
+            <summary>{t("showTechDetails")}</summary>
+            {analysesCard}
+          </details>
+        </>
+      )}
     </section>
   );
 };

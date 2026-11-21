@@ -324,6 +324,85 @@ export const TRANSLATIONS = {
     qcShamZero: "Pain Sham Max Spikes",
     qcSpecimenIso: "Specimen Isolation",
     qcIsolated: "STRICTLY SEPARATED",
+
+    // View Mode & Guided Simple Mode
+    uiModeLabel: "View Mode",
+    modeSimple: "Simple",
+    modeExpert: "Expert",
+    switchToExpertHint: "Need YAML, SHA-256 hashes, Job Queue & Audit? Switch to Expert Mode.",
+    navHomeSimple: "Home",
+    navHomeSimpleSub: "Plain summary & glossary",
+    navStoriesSimple: "Research Stories",
+    navStoriesSimpleSub: "Key findings explained",
+    navCircuitSimple: "3D Brain Circuit",
+    navCircuitSimpleSub: "Interactive 3D view",
+    navReportsSimple: "Reports & Figures",
+    navReportsSimpleSub: "Charts & visual exports",
+    simpleHeroTitle: "Understand Connectome Simulations Without Jargon",
+    simpleHeroBody:
+      "SYNAPSE runs digital brain circuit experiments on mapped fruit-fly connectomes so researchers can test how inhibitory brakes or sensory inputs change signal flow before testing in the lab.",
+    simpleRuoPlain:
+      "Important note (RUO): These are computer simulations of fruit-fly neurons, NOT medical tests, diagnoses, or clinical advice for humans.",
+    simpleStoriesTitle: "What Did the Experiments Find?",
+    simplePainTitle: "Pain Circuit Story (Male VNC Network)",
+    simplePainSummary:
+      "Temporarily loosening inhibitory GABA brakes boosted ascending signal neuron firing, whereas ablating unrelated control cells had zero effect.",
+    simpleMetTitle: "Feeding Circuit Story (Female Brain)",
+    simpleMetSummary:
+      "Boosting sugar sensor signal gain strongly excited the MN9 feeding motor neuron compared to matched unrelated neurons.",
+    simpleBenchTitle: "Published Benchmark Check (Shiu et al. 2024)",
+    simpleBenchSummary:
+      "Computer simulation accuracy check against the reference Nature 2024 Drosophila feeding benchmark.",
+    readStoryBtn: "Read Summary",
+    open3dBtn: "View in 3D",
+    showTechDetails: "Show Technical Statistics & Tables",
+    simpleMissingNote: "Run results are stored locally outside Git; none loaded yet.",
+    glossaryTitle: "Plain-Language Scientific Glossary",
+    glossConnectomeTitle: "Connectome",
+    glossConnectomeDef:
+      "A complete wiring map showing every neuron and how many synapses connect them together.",
+    glossGabaTitle: "GABA (Inhibitory Brake)",
+    glossGabaDef:
+      "A chemical signal that calms or blocks downstream neurons from firing too strongly.",
+    glossAchTitle: "ACH (Excitatory Accelerator)",
+    glossAchDef:
+      "The main fast excitatory signal in insects that encourages connected neurons to fire.",
+    glossCtrlTitle: "Matched Control Neurons",
+    glossCtrlDef:
+      "Unrelated neurons chosen with the same wiring size to verify changes are specific, not random.",
+    glossShamTitle: "Sham (Empty Control)",
+    glossShamDef:
+      "A zero-input simulation run verifying neurons stay completely silent (0 spikes) without input.",
+    glossHzTitle: "Firing Rate (Hz)",
+    glossHzDef:
+      "How many electrical spikes a neuron sends per second; higher Hz means stronger activation.",
+    plainColorLegendTitle: "Quick 3D Color Guide",
+    plainColorAch: "Blue (ACH) = Excitatory relay neuron",
+    plainColorGaba: "Red (GABA) = Inhibitory brake neuron",
+    plainColorGlut: "Amber (GLUT) = Glutamatergic interneuron",
+    plainColorSeed: "Gold Halo = Main target neuron",
+    simpleCircuitIntro:
+      "Pick one of the mapped brain circuits below to spin, zoom, and click individual neurons in 3D.",
+    showAdvancedTools: "Show Advanced Query Form, Dataset Registry & Neuron Tables",
+
+    // Expert Mode Audit Additions
+    storageTitle: "Local Storage",
+    diskFreeLabel: "Disk Free",
+    colConfidence: "Confidence",
+    formBuilderTitle: "Quick Form -> Draft YAML Builder",
+    generateDraftYamlBtn: "Generate Draft YAML",
+    formProtoId: "Protocol ID",
+    formDataset: "Dataset",
+    formModel: "Model",
+    formCondition: "Condition ID",
+    formQuestion: "Research Question",
+    autoRefreshLabel: "Auto-Refresh (5s)",
+    prev50: "Prev 50",
+    next50: "Next 50",
+    compareTitle: "Side-by-Side Analysis Comparison",
+    compareSelectA: "Analysis A",
+    compareSelectB: "Analysis B",
+    compareNeedTwo: "At least two analyses are required to compare side by side.",
   },
   tr: {
     // Document & Branding
@@ -651,6 +730,85 @@ export const TRANSLATIONS = {
     qcShamZero: "Ağrı Sham Maks Spike",
     qcSpecimenIso: "Örnek İzolasyonu",
     qcIsolated: "KESİN OLARAK AYRI",
+
+    // View Mode & Guided Simple Mode
+    uiModeLabel: "Görünüm Modu",
+    modeSimple: "Kolay Mod",
+    modeExpert: "Uzman Modu",
+    switchToExpertHint: "YAML, SHA-256, İş Kuyruğu ve Denetim için Uzman Modu'na geçin.",
+    navHomeSimple: "Başlangıç",
+    navHomeSimpleSub: "Sade özet ve terim sözlüğü",
+    navStoriesSimple: "Deney Özetleri",
+    navStoriesSimpleSub: "Anlaşılır deney bulguları",
+    navCircuitSimple: "3B Beyin Devresi",
+    navCircuitSimpleSub: "Etkileşimli 3B görünüm",
+    navReportsSimple: "Raporlar ve Grafikler",
+    navReportsSimpleSub: "Şekiller ve dışa aktarımlar",
+    simpleHeroTitle: "Teknik Terimlere Boğulmadan Beyin Devresi Simülasyonlarını Keşfedin",
+    simpleHeroBody:
+      "SYNAPSE, haritalanmış meyve sineği bağlantı şemaları üzerinde dijital devre deneyleri koşturarak frenleyici veya uyarıcı sinyallerin ağ akışını nasıl değiştirdiğini test eder.",
+    simpleRuoPlain:
+      "Önemli bilgilendirme (RUO): Bu sonuçlar meyve sineği nöronları üzerindeki bilgisayar simülasyonlarıdır; insanlar için tıbbi test, tanı veya tedavi tavsiyesi değildir.",
+    simpleStoriesTitle: "Deneylerde Neler Görüldü?",
+    simplePainTitle: "Ağrı Devresi Hikayesi (Erkek VNC Ağı)",
+    simplePainSummary:
+      "Frenleyici GABA bağlantıları geçici olarak maskelendiğinde yükselen uyarı nöronu hızlandı; alakasız kontrol hücrelerini kapatmak ise fark oluşturmadı.",
+    simpleMetTitle: "Beslenme Devresi Hikayesi (Dişi Beyin)",
+    simpleMetSummary:
+      "Şeker algılayan nöronların sinyal kazancı artırıldığında beslenme motor nöronu (MN9) eşleştirilmiş kontrollere kıyasla belirgin biçimde hızlandı.",
+    simpleBenchTitle: "Yayınlanan Referans Doğrulaması (Shiu vd. 2024)",
+    simpleBenchSummary:
+      "Nature 2024 meyve sineği beslenme devresi kıyaslamasına karşı bilgisayar modeli doğruluk kontrolü.",
+    readStoryBtn: "Özeti Oku",
+    open3dBtn: "3B Gör",
+    showTechDetails: "Teknik İstatistik ve Tabloları Göster",
+    simpleMissingNote: "Yerel koşu sonuçları Git dışında saklanır; henüz dosya bulunamadı.",
+    glossaryTitle: "Sade Bilimsel Terimler Sözlüğü",
+    glossConnectomeTitle: "Konnektom",
+    glossConnectomeDef:
+      "Bir beyin veya sinir sistemindeki tüm nöronları ve aralarındaki sinaps bağlantı sayılarını gösteren eksiksiz kablo haritasıdır.",
+    glossGabaTitle: "GABA (Frenleyici Fren)",
+    glossGabaDef:
+      "Bağlı olduğu sonraki nöronları sakinleştirerek aşırı ateşlemelerini engelleyen kimyasal fren sinyalidir.",
+    glossAchTitle: "ACH (Uyarıcı Hızlandırıcı)",
+    glossAchDef:
+      "Böcek sinir sisteminde sonraki nöronları ateşlemeye teşvik eden temel hızlı uyarıcı sinyaldir.",
+    glossCtrlTitle: "Eşleştirilmiş Kontrol",
+    glossCtrlDef:
+      "Etkinin rastgele bağlantı kaybından mı yoksa hedefli yoldan mı geldiğini ölçmek için seçilen aynı büyüklükteki ilgisiz nöron grubudur.",
+    glossShamTitle: "Sham (Boş Kontrol Deneyi)",
+    glossShamDef:
+      "Dışarıdan hiçbir uyaran verilmediğinde nöronların tamamen sessiz (0 spike) kaldığını doğrulayan sıfır deneyi.",
+    glossHzTitle: "Ateşleme Hızı (Hz)",
+    glossHzDef:
+      "Bir nöronun saniyede ürettiği elektriksel sinyal (spike) sayısıdır; yüksek Hz daha güçlü uyarım demektir.",
+    plainColorLegendTitle: "Hızlı 3B Renk Rehberi",
+    plainColorAch: "Mavi (ACH) = Uyarıcı aktarım nöronu",
+    plainColorGaba: "Kırmızı (GABA) = Frenleyici durdurma nöronu",
+    plainColorGlut: "Amber (GLUT) = Glutamaterjik ara nöron",
+    plainColorSeed: "Altın Halka = Ana incelenen hedef nöron",
+    simpleCircuitIntro:
+      "Aşağıdaki haritalanmış beyin devrelerinden birini seçerek 3B sahneyi döndürebilir, yakınlaştırabilir ve tek tek nöronlara tıklayabilirsiniz.",
+    showAdvancedTools: "Gelişmiş Sorgu Formu, Veri Seti Kaydı ve Nöron Tablolarını Göster",
+
+    // Expert Mode Audit Additions
+    storageTitle: "Yerel Depolama",
+    diskFreeLabel: "Boş Disk",
+    colConfidence: "Güven",
+    formBuilderTitle: "Hızlı Form -> Taslak YAML Oluşturucu",
+    generateDraftYamlBtn: "Taslak YAML Üret",
+    formProtoId: "Protokol Kimliği",
+    formDataset: "Veri Seti",
+    formModel: "Model",
+    formCondition: "Koşul Kimliği",
+    formQuestion: "Araştırma Sorusu",
+    autoRefreshLabel: "Otomatik Yenile (5sn)",
+    prev50: "Önceki 50",
+    next50: "Sonraki 50",
+    compareTitle: "Yan Yana Analiz Karşılaştırması",
+    compareSelectA: "Analiz A",
+    compareSelectB: "Analiz B",
+    compareNeedTwo: "Yan yana karşılaştırma için en az iki analiz gereklidir.",
   },
 } as const;
 
