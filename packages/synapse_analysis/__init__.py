@@ -6,10 +6,12 @@ from synapse_analysis.stats import (
     local_sensitivity_summary,
     paired_permutation_test,
 )
+from synapse_analysis.windows import compute_windowed_response_metrics
 
 __all__ = [
     "AnalysisError",
     "bh_fdr_adjust",
+    "compute_windowed_response_metrics",
     "local_sensitivity_summary",
     "paired_permutation_test",
     "run_paired_analysis",

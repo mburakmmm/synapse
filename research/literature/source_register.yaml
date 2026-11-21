@@ -118,3 +118,32 @@ sources:
         citation_short: "Munch D, Goldschmidt D, Ribeiro C (2022) Nature 607:747-755"
         doi: "10.1038/s41586-022-04909-5"
         claim_scope: "Internal nutritional state modulates feeding motor selection dynamics"
+
+  - id: phase5_pain_sources
+    purpose: "Verified literature basis for adult Drosophila VNC GABAergic disinhibition and ascending nociception/escape pathways"
+    retrieved_at_utc: "2026-11-20"
+    references:
+      - ref_id: khuong2019_sciadv
+        citation_short: "Khuong TM, Wang QP, Manion J, Oyston LJ, Lau MT, Towler H, Lin YQ, Neely GG (2019) Sci Adv 5(7):eaaw4099"
+        doi: "10.1126/sciadv.aaw4099"
+        pmid: "31309148"
+        pmcid: "PMC6620091"
+        url: "https://doi.org/10.1126/sciadv.aaw4099"
+        peer_review_status: "peer_reviewed"
+        claim_scope: "Right middle-leg (MesoLN/T2) nerve injury drives nAChRa1-dependent caspase cell death of VNC GABAergic neurons and thermal escape allodynia (38 C); VNC GABA disruption suffices without physical injury"
+      - ref_id: cheong2026_elife
+        citation_short: "Cheong HSJ, Eichler K, Sturner T, Asinof SK, Champion AS, Marin EC, Oram TB, Sumathipala M, Venkatasubramanian L, Namiki S, Siwanowicz I, Costa M, Berg S, FlyEM Project Team, Jefferis GSXE, Card GM (2026) eLife"
+        doi: "10.7554/eLife.96084"
+        pmid: "42474298"
+        pmcid: "PMC13384506"
+        url: "https://doi.org/10.7554/eLife.96084"
+        peer_review_status: "peer_reviewed"
+        claim_scope: "Connectome organization linking descending inputs, VNC hemilineages, and escape/jump motor outputs (TTMn, DNp01 Giant Fiber) in Male Adult Nerve Cord"
+      - ref_id: jones2025_biorxiv
+        citation_short: "Jones JM, Sustar A, Mamiya A, Walling-Bell S, Chou GM, Cook AP, Tuthill JC (2025-10-29) bioRxiv"
+        doi: "10.1101/2025.10.28.684868"
+        pmid: "41280033"
+        url: "https://doi.org/10.1101/2025.10.28.684868"
+        license: "cc_by_nd"
+        peer_review_status: "preprint_not_peer_reviewed"
+        claim_scope: "Adult Drosophila abdominal multidendritic (md) thermal nociceptors (>40 C) form strongest synaptic connections onto VNC-to-brain ascending interneurons mediating rapid escape and sustained place avoidance"

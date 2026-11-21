@@ -169,6 +169,23 @@ class NeuronSilencing(BaseModel):
     mode: Literal["outgoing_zero", "incoming_zero", "both_zero"] = "outgoing_zero"
 
 
+class EdgeMaskModulation(BaseModel):
+    """Non-mutating pathway multiplier on edges from pre_neuron_ids to post_neuron_ids."""
+
+    model_config = ConfigDict(frozen=True)
+
+    kind: Literal["edge_mask"] = "edge_mask"
+    pre_neuron_ids: tuple[str, ...] = Field(min_length=1)
+    post_neuron_ids: tuple[str, ...] = Field(min_length=1)
+    factor: float = 0.0
+
+    @model_validator(mode="after")
+    def _validate_factor(self) -> EdgeMaskModulation:
+        if not math.isfinite(self.factor) or self.factor < 0.0:
+            raise ValueError("factor must be finite and non-negative")
+        return self
+
+
 class ShamIntervention(BaseModel):
     """Explicit no-op sham control intervention."""
 
@@ -182,6 +199,7 @@ InterventionSpec = (
     ConstantCurrentStimulus
     | PoissonRateStimulus
     | EdgeGainModulation
+    | EdgeMaskModulation
     | NeuronSilencing
     | ShamIntervention
 )

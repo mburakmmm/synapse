@@ -80,8 +80,8 @@ class WorkerRunner:
         job_file.write_text(json.dumps(spec, indent=2, sort_keys=True), encoding="utf-8")
 
         popen_kwargs: dict[str, Any] = {}
-        if os.name == "nt":
-            popen_kwargs["creationflags"] = subprocess.CREATE_NEW_PROCESS_GROUP
+        if sys.platform == "win32":
+            popen_kwargs["creationflags"] = getattr(subprocess, "CREATE_NEW_PROCESS_GROUP", 0)
         else:
             popen_kwargs["start_new_session"] = True
 

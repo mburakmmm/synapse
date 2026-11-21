@@ -13,6 +13,7 @@ from synapse_core.brian2_backend import Brian2CPUBackend
 from synapse_core.models import (
     ConstantCurrentStimulus,
     EdgeGainModulation,
+    EdgeMaskModulation,
     InterventionSpec,
     LIFParameters,
     NeuronSilencing,
@@ -43,6 +44,7 @@ __all__ = [
     "DirectedConnectomeGraph",
     "DirectedEdge",
     "EdgeGainModulation",
+    "EdgeMaskModulation",
     "InterventionSpec",
     "LIFParameters",
     "NeuronNamespaceKey",

@@ -1,0 +1,278 @@
+schema_version: '1.0'
+protocol_id: P5-PAIN-001
+revision: 1
+status: approved
+analysis_intent: confirmatory
+question: In adult male Drosophila MaleCNS v1.0, does pathway-specific acute GABAergic
+  disinhibition (edge_mask) or GABAergic silencing (neuron_silencing) of the 26 feedforward
+  VNC GABA interneurons elevate MesoLN tactile-driven firing in ascending relays ANXXX027_L
+  (523539) and AN08B012_R (558778) relative to matched baseline and structurally matched
+  VNC GABA controls?
+hypothesis: Under 40 Hz R-MesoLN tactile drive, acute edge_mask (26 VNC GABA -> 6
+  ascending relays) increases firing in both 523539 and 558778 relative to 40 Hz baseline
+  and matched VNC GABA ablation; global gaba_cell_death increases 523539 beyond both
+  40 Hz baseline and matched controls, and under 20 Hz low drive raises 523539 and
+  558778 sensitivity relative to 20 Hz baseline.
+biological_unit: malecns_v1_0_single_male_specimen
+simulation_unit: paired_seed_run
+prior_exploratory_protocol:
+  protocol_id: P5-PAIN-001-PILOT
+  protocol_sha256: 4938436d7f1a63b2588a48ccbf038927246273cdea3dcca0a43cb269cb1ca8c2
+  replicates: 3
+  master_seed: 20261130
+  measured_mean_run_wall_s: 184.36
+  estimated_confirmatory_wall_hours_workers_3: 2.1
+sources:
+- dataset_id: malecns_v1_0
+  release: v1.0
+  manifest_sha256: 6df05f9f76e98e55f5e4f13e195ebd604ec41c644751c47a79f9855a92d5f496
+model:
+  id: synapse_lif_v1
+  revision: '1.0'
+  parameter_manifest_sha256: 33d49431529574cddc721a3628ed1c65ad2e36890e2720fe6ef921837348bece
+  backend: brian2_cpu
+  parameters:
+    v_rest_v: -0.052
+    v_reset_v: -0.052
+    v_threshold_v: -0.045
+    tau_m_s: 0.02
+    tau_syn_s: 0.005
+    t_ref_s: 0.0022
+    delay_s: 0.0018
+    w_syn_v: 0.000275
+    r_m_ohm: 10000000.0
+    dt_s: 0.0001
+    solver: exact
+    dg_unless_refractory: false
+    unknown_nt_policy: zero_effect
+    parameter_source: Reference Drosophila LIF defaults (Kakaria & de Bivort 2017;
+      Jurgensen et al. 2021; Lazar et al. 2021; Paul et al. 2015; Shiu et al. 2024)
+conditions:
+- id: sham_zero_stimulus
+  interventions:
+  - kind: sham
+    description: zero_stimulus_negative_control
+- id: mesoln_20hz_baseline
+  interventions:
+  - kind: poisson_rate
+    target_neuron_ids: &id001
+    - '803882'
+    - '905611'
+    - '808678'
+    - '810360'
+    - '807667'
+    - '809687'
+    - '805181'
+    - '813513'
+    - '813710'
+    - '812579'
+    - '813176'
+    - '816275'
+    - '812772'
+    - '813045'
+    - '813519'
+    - '807995'
+    - '808495'
+    - '812260'
+    - '813166'
+    - '813574'
+    - '813828'
+    - '813895'
+    - '813815'
+    - '814863'
+    - '816909'
+    - '902813'
+    - '909772'
+    - '912333'
+    - '813756'
+    - '814236'
+    rate_hz: 20.0
+    weight_v: 0.06875
+    start_s: 0.1
+    end_s: 0.6
+    disable_refractory: true
+- id: mesoln_20hz_gaba_cell_death
+  interventions:
+  - kind: poisson_rate
+    target_neuron_ids: *id001
+    rate_hz: 20.0
+    weight_v: 0.06875
+    start_s: 0.1
+    end_s: 0.6
+    disable_refractory: true
+  - kind: neuron_silencing
+    target_neuron_ids: &id002
+    - '902566'
+    - '811380'
+    - '800671'
+    - '800098'
+    - '800433'
+    - '800826'
+    - '800092'
+    - '804356'
+    - '800532'
+    - '801256'
+    - '812816'
+    - '802800'
+    - '800320'
+    - '907619'
+    - '802758'
+    - '903623'
+    - '805844'
+    - '804006'
+    - '800281'
+    - '905022'
+    - '911616'
+    - '800763'
+    - '803586'
+    - '808960'
+    - '800717'
+    - '806693'
+    mode: both_zero
+- id: mesoln_40hz_baseline
+  interventions:
+  - kind: poisson_rate
+    target_neuron_ids: *id001
+    rate_hz: 40.0
+    weight_v: 0.06875
+    start_s: 0.1
+    end_s: 0.6
+    disable_refractory: true
+- id: mesoln_40hz_acute_edge_mask
+  interventions:
+  - kind: poisson_rate
+    target_neuron_ids: *id001
+    rate_hz: 40.0
+    weight_v: 0.06875
+    start_s: 0.1
+    end_s: 0.6
+    disable_refractory: true
+  - kind: edge_mask
+    pre_neuron_ids: *id002
+    post_neuron_ids:
+    - '10592'
+    - '13166'
+    - '15070'
+    - '558778'
+    - '523539'
+    - '14994'
+    factor: 0.0
+- id: mesoln_40hz_gaba_atten_50pct
+  interventions:
+  - kind: poisson_rate
+    target_neuron_ids: *id001
+    rate_hz: 40.0
+    weight_v: 0.06875
+    start_s: 0.1
+    end_s: 0.6
+    disable_refractory: true
+  - kind: edge_gain_modulation
+    target_neuron_ids: *id002
+    scope: outgoing
+    factor: 0.5
+- id: mesoln_40hz_gaba_cell_death
+  interventions:
+  - kind: poisson_rate
+    target_neuron_ids: *id001
+    rate_hz: 40.0
+    weight_v: 0.06875
+    start_s: 0.1
+    end_s: 0.6
+    disable_refractory: true
+  - kind: neuron_silencing
+    target_neuron_ids: *id002
+    mode: both_zero
+- id: mesoln_40hz_matched_ctrl_ablation
+  interventions:
+  - kind: poisson_rate
+    target_neuron_ids: *id001
+    rate_hz: 40.0
+    weight_v: 0.06875
+    start_s: 0.1
+    end_s: 0.6
+    disable_refractory: true
+  - kind: neuron_silencing
+    target_neuron_ids:
+    - '800077'
+    - '813896'
+    - '800455'
+    - '800035'
+    - '800378'
+    - '903727'
+    - '802181'
+    - '804158'
+    - '912294'
+    - '801162'
+    - '811884'
+    - '802183'
+    - '800145'
+    - '802162'
+    - '804453'
+    - '802987'
+    - '803614'
+    - '808742'
+    - '800477'
+    - '902275'
+    - '804500'
+    - '22709'
+    - '803227'
+    - '801254'
+    - '803186'
+    - '808787'
+    mode: both_zero
+stimulus_schedule:
+  duration_s: 0.8
+  pre_window_s:
+  - 0.0
+  - 0.1
+  stim_window_s:
+  - 0.1
+  - 0.6
+  post_window_s:
+  - 0.6
+  - 0.8
+  stimuli: []
+measurement_window:
+  start_s: 0.0
+  end_s: 0.8
+seeds:
+  strategy: paired
+  master: 20261131
+  replicates: 15
+analysis:
+  primary_endpoint: anxxx027l_523539_and_an08b012r_558778_mean_firing_rate_hz
+  estimand: paired_condition_difference_hz_N15
+  primary_contrasts:
+  - neuron_id: '523539'
+    baseline: mesoln_40hz_baseline
+    treatment: mesoln_40hz_acute_edge_mask
+  - neuron_id: '523539'
+    baseline: mesoln_40hz_matched_ctrl_ablation
+    treatment: mesoln_40hz_acute_edge_mask
+  - neuron_id: '523539'
+    baseline: mesoln_40hz_baseline
+    treatment: mesoln_40hz_gaba_cell_death
+  - neuron_id: '523539'
+    baseline: mesoln_40hz_matched_ctrl_ablation
+    treatment: mesoln_40hz_gaba_cell_death
+  - neuron_id: '558778'
+    baseline: mesoln_40hz_baseline
+    treatment: mesoln_40hz_acute_edge_mask
+  - neuron_id: '558778'
+    baseline: mesoln_40hz_matched_ctrl_ablation
+    treatment: mesoln_40hz_acute_edge_mask
+  secondary_endpoints:
+  - '10592'
+  - '804642'
+  - '800146'
+  - post_stimulus_persistence_s
+  uncertainty_method: percentile_bootstrap_2000_paired_permutation_10000
+  multiplicity_policy: benjamini_hochberg_fdr_across_6_primary_contrasts_q_lt_0.01
+  exclusion_policy: zero_posthoc_filtering_all_failed_runs_reported_explicitly
+  acceptance_criteria: 120/120 succeeded runs (failed_run_count == 0), sham == 0 total
+    spikes, primary BH-FDR q < 0.01 with positive disinhibition vs baseline & matched
+    controls, and honest reporting of secondary AN08B012_L / TTMn / post-stimulus
+    persistence
+resources:
+  max_wall_seconds: 600.0
+  max_output_bytes: 1073741824

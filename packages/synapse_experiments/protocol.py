@@ -159,7 +159,20 @@ def load_and_validate_protocol(
                 raise ProtocolValidationError(
                     f"Condition {cid!r} intervention[{idx}] must be a dict with 'kind'"
                 )
-            if iv["kind"] != "sham":
+            if iv["kind"] == "edge_mask":
+                pre_ids = iv.get("pre_neuron_ids")
+                post_ids = iv.get("post_neuron_ids")
+                if not isinstance(pre_ids, list) or len(pre_ids) == 0:
+                    raise ProtocolValidationError(
+                        f"edge_mask intervention[{idx}] in condition {cid!r} requires non-empty "
+                        "pre_neuron_ids"
+                    )
+                if not isinstance(post_ids, list) or len(post_ids) == 0:
+                    raise ProtocolValidationError(
+                        f"edge_mask intervention[{idx}] in condition {cid!r} requires non-empty "
+                        "post_neuron_ids"
+                    )
+            elif iv["kind"] != "sham":
                 targets = iv.get("target_neuron_ids")
                 if not isinstance(targets, list) or len(targets) == 0:
                     raise ProtocolValidationError(

@@ -23,6 +23,7 @@ from synapse_core import (
     ConstantCurrentStimulus,
     DirectedConnectomeGraph,
     EdgeGainModulation,
+    EdgeMaskModulation,
     InterventionSpec,
     LIFParameters,
     NeuronSilencing,
@@ -189,6 +190,14 @@ def parse_interventions(raw_items: Sequence[dict[str, Any]]) -> list[Interventio
                     target_neuron_ids=tuple(str(x) for x in item["target_neuron_ids"]),
                     scope=item.get("scope", "outgoing"),
                     factor=float(item["factor"]),
+                )
+            )
+        elif kind == "edge_mask":
+            parsed.append(
+                EdgeMaskModulation(
+                    pre_neuron_ids=tuple(str(x) for x in item["pre_neuron_ids"]),
+                    post_neuron_ids=tuple(str(x) for x in item["post_neuron_ids"]),
+                    factor=float(item.get("factor", 0.0)),
                 )
             )
         elif kind == "neuron_silencing":
@@ -682,7 +691,11 @@ def plan_protocol_experiment(
         cond_interventions = base_interventions + parse_interventions(cond["interventions"])
         missing_targets: set[str] = set()
         for iv in cond_interventions:
-            if not isinstance(iv, ShamIntervention):
+            if isinstance(iv, EdgeMaskModulation):
+                for nid in (*iv.pre_neuron_ids, *iv.post_neuron_ids):
+                    if nid not in known_ids:
+                        missing_targets.add(nid)
+            elif not isinstance(iv, ShamIntervention):
                 for nid in iv.target_neuron_ids:
                     if nid not in known_ids:
                         missing_targets.add(nid)

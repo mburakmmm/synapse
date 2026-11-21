@@ -1,31 +1,30 @@
 # SYNAPSE Project Status
 
-- **Active Phase:** Phase 4 — First Investigation: Metabolic (**Confirmatory `P4-MET-001` + Robustness Complete**); Phase 5 — Module Expansion: Pain / Sleep / Addiction (**Next**)
-- **Last Updated:** 2026-11-20
+- **Active Phase:** Phase 5A — Pain Module (**`P5-PAIN-001.frozen.yaml` Frozen & Pushed; Executing `120` Confirmatory + `36` Robustness Runs**); Phases 0–4 Complete
+- **Last Updated:** 2026-11-21
 - **Environment:** Windows 11 CPU + Docker `29.9.3` (`linux/x86_64`), Python `3.12.11`, `brian2 2.10.1`, Node `v26.0.0`, `graphifyy` (dev tool)
 
-## Verified Gates (Phase 0 – Phase 4)
+## Verified Gates (Phase 0 – Phase 5A)
 
 | Check | Outcome | Evidence / Observed Metrics |
 |---|---|---|
-| Phase 0–2 Foundation & Reproduction | Passed | `flywire_fafb_v630` & `malecns_v1_0` verified; `SHIU2024` `90/90` passed (`MN9_right` `68.833 ± 4.243 Hz`) |
-| Phase 3 Lab Stack + Docker/PostgreSQL | Passed | Healthy `postgres`/`api`/`worker`/`web`; PostgreSQL `SKIP LOCKED` jobs & `pg_dump`/`pg_restore` verified |
-| Phase 4 Confirmatory `P4-MET-001` (`N=30`, frozen) | Passed | `180/180` runs (`3449.42 s`, `0` failed, sham `0` spikes); `MN9_right` `1.50x` Δ `+30.900 Hz`, specificity Δ `+30.900 Hz`, $q=9.999\times 10^{-5}$ |
-| Phase 4 Robustness & Sensitivity (`N=6` arms) | Complete | `36/36` runs (`811.89 s`); positive `1.50x` Δ holds in `synapse_lif_v1` (`+34.667 Hz`) & `±10% w_syn_v` (`+31.500`/`+23.500 Hz`) |
-| MaleCNS Structural Check (`malecns_v1_0`) | Audited | `MN9` (`16949`/`10331`) + `60` `tpGRN` found; `0` sugar-GRN tags -> cross-specimen run deferred per integrity rules |
+| Phases 0–4 (`flywire_fafb_v630`, `SHIU2024`, Lab, `MET-001`) | Passed | `SHIU2024` `90/90` passed; `P4-MET-001` frozen confirmatory `180/180` + robustness `36/36` passed |
+| Linux CI `mypy` Portability Fix | Passed | Guarded `CREATE_NEW_PROCESS_GROUP` (`job_control.py`, `executor.py`); `mypy --platform linux` 0 errors |
+| Phase 5A Core Extensions (`EdgeMaskModulation`, `windows.py`) | Passed | Pathway-specific edge masking + pre/stim/post persistence tests (`test_edge_mask_and_windows.py`) |
+| Phase 5A Pain Pilot (`P5-PAIN-001-PILOT`, `malecns_v1_0`, `N=3`) | Complete | `24/24` runs (`1507.23 s`, `0` failed, sham `0` spikes); `523539` `40 Hz` stim `18.0 -> 51.3 Hz` (`edge_mask`), `43.3 Hz` (`cell_death`), `16.7 Hz` (`matched_ctrl`) |
 
 ## Scientific Scope & Limitations
 
-- **Computational Investigation Only (`RUO`):** Confirmatory simulation & robustness do not substitute for wet-lab biological validation or human clinical claims.
-- **L1 Model Constraints:** Zero spontaneous noise leaves un-driven matched controls silent (`0.000 Hz`); baseline firing rate depends sharply on global `w_syn_v` (`4.500–38.833 Hz`). `brian2_cuda` remains unverified (`verified=false`).
+- **Research Use Only (`RUO`):** Exploratory VNC disinhibition findings are conditional on `malecns_v1_0` connectivity and L1 `synapse_lif_v1`; `malecns_v1_0` lacks `ppk`/`TrpA1` nociceptor subtype tags and gap junctions.
+- **Preprint Separation:** `Jones et al. (2025)` (`doi:10.1101/2025.10.28.684868`) is a non-peer-reviewed bioRxiv preprint used solely for anatomical circuit framing.
 
 ## Next 1–3 Tasks
 
-1. **Human Review of [`confirmatory_report.md`](../research/modules/metabolic/confirmatory_report.md) & [`met001_outline.md`](../research/manuscripts/met001_outline.md):** Complete CRediT authorship and decide archival/DOI scope (`Zenodo`/preprint requires explicit approval).
-2. **Phase 5 — Pain Module Gate (`AGENTS.md` §10, §15):** Review Khuong et al. (`10.1126/sciadv.aaw4099`) & adult nociceptive connectivity before scoping inhibitory-disruption protocols.
+1. **Execute Frozen Confirmatory [`P5-PAIN-001.frozen.yaml`](../research/protocols/P5-PAIN-001.frozen.yaml) (`120` runs, `N=15`) & Robustness (`36` runs):** Publish confirmatory findings and reports.
+2. **Phase 5B — Sleep / Addiction Planning (`AGENTS.md` §10, §15):** Begin only after Pain confirmatory gate closes.
 
 ## Authoritative References
 
-- Contract & Ops: [AGENTS.md](../AGENTS.md), [operations_and_backup.md](security/operations_and_backup.md)
-- Decisions & Validation: [ADR-0004](adr/ADR-0004-shiu2024-reproduction-fidelity.md), [ADR-0005](adr/ADR-0005-phase3-research-laboratory-architecture.md), [shiu2024_reproduction_report.md](validation/shiu2024_reproduction_report.md)
-- Metabolic Reports: [README.md](../research/modules/metabolic/README.md), [pilot_report.md](../research/modules/metabolic/pilot_report.md), [confirmatory_report.md](../research/modules/metabolic/confirmatory_report.md)
+- Contract & Decisions: [AGENTS.md](../AGENTS.md), [ADR-0006](adr/ADR-0006-phase5-pain-vnc-disinhibition.md), [operations_and_backup.md](security/operations_and_backup.md)
+- Pain Module: [README.md](../research/modules/pain/README.md), [evidence_register.md](../research/modules/pain/evidence_register.md), [pilot_report.md](../research/modules/pain/pilot_report.md)
+- Prior Modules: [shiu2024_reproduction_report.md](validation/shiu2024_reproduction_report.md), [confirmatory_report.md](../research/modules/metabolic/confirmatory_report.md)

@@ -35,6 +35,7 @@ from synapse_core.backend import (
 from synapse_core.models import (
     ConstantCurrentStimulus,
     EdgeGainModulation,
+    EdgeMaskModulation,
     NeuronSilencing,
     PoissonRateStimulus,
     ResolvedInterventionRecord,
@@ -167,6 +168,34 @@ class Brian2CPUBackend:
                         affected_edge_count=0,
                         parameter_delta={"description": intervention.description},
                         units="none",
+                        start_s=0.0,
+                        end_s=request.duration_s,
+                    )
+                )
+                continue
+
+            if isinstance(intervention, EdgeMaskModulation):
+                pre_indices = tuple(graph.index_of(nid) for nid in intervention.pre_neuron_ids)
+                post_indices = tuple(graph.index_of(nid) for nid in intervention.post_neuron_ids)
+                mask = np.isin(pre_idx, list(set(pre_indices))) & np.isin(
+                    post_idx, list(set(post_indices))
+                )
+                edge_weights_v[mask] *= intervention.factor
+                resolved_ids = tuple(
+                    dict.fromkeys((*intervention.pre_neuron_ids, *intervention.post_neuron_ids))
+                )
+                resolved_records.append(
+                    ResolvedInterventionRecord(
+                        order_index=order_idx,
+                        kind=intervention.kind,
+                        resolved_target_ids=resolved_ids,
+                        affected_edge_count=int(np.count_nonzero(mask)),
+                        parameter_delta={
+                            "factor": intervention.factor,
+                            "n_pre": len(pre_indices),
+                            "n_post": len(post_indices),
+                        },
+                        units="dimensionless_multiplier",
                         start_s=0.0,
                         end_s=request.duration_s,
                     )
