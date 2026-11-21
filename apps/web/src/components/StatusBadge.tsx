@@ -1,6 +1,6 @@
 import React from "react";
 
-export type BadgeTone = "ruo" | "synth" | "ok" | "warn" | "neutral";
+export type BadgeTone = "ruo" | "synth" | "ok" | "warn" | "info" | "neutral";
 
 interface StatusBadgeProps {
   label: string;
@@ -8,5 +8,10 @@ interface StatusBadgeProps {
 }
 
 export const StatusBadge: React.FC<StatusBadgeProps> = ({ label, tone = "neutral" }) => {
-  return <span className={`badge badge-${tone}`}>{label}</span>;
+  return (
+    <span className={`badge badge-${tone}`}>
+      <span className="badge-dot" aria-hidden="true" />
+      <span>{label}</span>
+    </span>
+  );
 };

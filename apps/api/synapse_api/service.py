@@ -214,6 +214,21 @@ def query_dataset_subgraph(
         min_synapse_threshold=min_synapses,
         max_nodes=max_nodes,
     )
+    meta_by_id: dict[str, dict[str, Any]] = {}
+    neurons_pq = ds_dir / "curated" / "neurons.parquet"
+    if neurons_pq.is_file() and sub.neuron_ids:
+        scan = pl.scan_parquet(neurons_pq)
+        avail_cols = set(scan.collect_schema().names())
+        wanted = [c for c in ("cell_type", "region", "soma_side", "superclass") if c in avail_cols]
+        if wanted:
+            rows = (
+                scan.filter(pl.col("source_neuron_id").is_in(sub.neuron_ids))
+                .select(["source_neuron_id", *wanted])
+                .collect()
+            )
+            for row in rows.iter_rows(named=True):
+                meta_by_id[str(row["source_neuron_id"])] = row
+
     pre_idx, post_idx, counts = sub.edge_arrays()
     edges_preview = [
         {
@@ -232,11 +247,39 @@ def query_dataset_subgraph(
                 "source_neuron_id": nid,
                 "neurotransmitter": nt,
                 "is_seed": nid in seed_neuron_ids,
+                "cell_type": meta_by_id.get(nid, {}).get("cell_type"),
+                "region": meta_by_id.get(nid, {}).get("region"),
+                "soma_side": meta_by_id.get(nid, {}).get("soma_side"),
+                "superclass": meta_by_id.get(nid, {}).get("superclass"),
             }
             for nid, nt in zip(sub.neuron_ids, sub.neurotransmitters, strict=True)
         ],
         "edges": edges_preview,
         "edges_truncated": len(counts) > 500,
+    }
+
+
+def _serialize_model_entry(params: LIFParameters) -> dict[str, Any]:
+    return {
+        "model_id": params.model_id,
+        "model_revision": params.model_revision,
+        "parameter_manifest_sha256": params.canonical_sha256(),
+        "solver": params.solver,
+        "dt_s": params.dt_s,
+        "dg_unless_refractory": params.dg_unless_refractory,
+        "parameter_source": params.parameter_source,
+        "parameters": {
+            "v_rest_v": params.v_rest_v,
+            "v_reset_v": params.v_reset_v,
+            "v_threshold_v": params.v_threshold_v,
+            "tau_m_s": params.tau_m_s,
+            "tau_syn_s": params.tau_syn_s,
+            "t_ref_s": params.t_ref_s,
+            "delay_s": params.delay_s,
+            "w_syn_v": params.w_syn_v,
+            "r_m_ohm": params.r_m_ohm,
+            "unknown_nt_policy": params.unknown_nt_policy,
+        },
     }
 
 
@@ -246,24 +289,8 @@ def list_models_and_backends() -> dict[str, Any]:
     cpu_caps = Brian2CPUBackend().capabilities()
     return {
         "models": [
-            {
-                "model_id": default_lif.model_id,
-                "model_revision": default_lif.model_revision,
-                "parameter_manifest_sha256": default_lif.canonical_sha256(),
-                "solver": default_lif.solver,
-                "dt_s": default_lif.dt_s,
-                "dg_unless_refractory": default_lif.dg_unless_refractory,
-                "parameter_source": default_lif.parameter_source,
-            },
-            {
-                "model_id": shiu_lif.model_id,
-                "model_revision": shiu_lif.model_revision,
-                "parameter_manifest_sha256": shiu_lif.canonical_sha256(),
-                "solver": shiu_lif.solver,
-                "dt_s": shiu_lif.dt_s,
-                "dg_unless_refractory": shiu_lif.dg_unless_refractory,
-                "parameter_source": shiu_lif.parameter_source,
-            },
+            _serialize_model_entry(default_lif),
+            _serialize_model_entry(shiu_lif),
         ],
         "backends": [
             {
@@ -290,6 +317,38 @@ def validate_model_payload(spec: dict[str, Any]) -> dict[str, Any]:
     raw_model = spec.get("model")
     target: dict[str, Any] = dict(raw_model) if isinstance(raw_model, dict) else spec
     return validate_model_spec(target)
+
+
+def get_protocol_content(settings: Settings, protocol_path: str) -> dict[str, Any]:
+    """Read YAML text and parsed metadata for an allowlisted protocol file."""
+    resolved = resolve_within_root(settings.protocols_root, protocol_path)
+    if not resolved.is_file():
+        raise ResourceNotFoundError(f"Protocol file not found: {protocol_path!r}")
+    yaml_text = resolved.read_text(encoding="utf-8")
+    rel = resolved.relative_to(settings.protocols_root).as_posix()
+    payload: dict[str, Any] = {
+        "relative_path": rel,
+        "yaml_text": yaml_text,
+        "size_bytes": len(yaml_text.encode("utf-8")),
+    }
+    try:
+        doc, sha = load_and_validate_protocol(resolved, require_executable=False)
+        payload.update(
+            {
+                "protocol_id": doc["protocol_id"],
+                "revision": doc["revision"],
+                "status": doc["status"],
+                "analysis_intent": doc["analysis_intent"],
+                "protocol_sha256": sha,
+                "question": doc.get("question"),
+                "hypothesis": doc.get("hypothesis"),
+                "conditions_count": len(doc.get("conditions", [])),
+                "validation_error": None,
+            }
+        )
+    except Exception as exc:
+        payload["validation_error"] = str(exc)
+    return payload
 
 
 def list_protocols(settings: Settings) -> dict[str, Any]:
@@ -462,20 +521,45 @@ def build_validated_job_payload(
     raise ServiceValidationError(f"Unsupported job kind: {kind!r}")
 
 
+_JSON_STAT_CACHE: dict[Path, tuple[int, int, dict[str, Any]]] = {}
+_PRUNE_COMMON_DIRS = {"_worker_tmp", "logs", "figures", "tables", "dataset", "__pycache__"}
+
+
+def _read_cached_json(path: Path) -> dict[str, Any] | None:
+    try:
+        st = path.stat()
+        cached = _JSON_STAT_CACHE.get(path)
+        if cached is not None and cached[0] == st.st_mtime_ns and cached[1] == st.st_size:
+            return cached[2]
+        parsed = json.loads(path.read_text(encoding="utf-8"))
+        if isinstance(parsed, dict):
+            if len(_JSON_STAT_CACHE) > 2048:
+                _JSON_STAT_CACHE.clear()
+            _JSON_STAT_CACHE[path] = (st.st_mtime_ns, st.st_size, parsed)
+            return parsed
+    except Exception:
+        return None
+    return None
+
+
 def _iter_run_manifests(runs_root: Path) -> dict[str, tuple[Path, dict[str, Any]]]:
     found: dict[str, tuple[Path, dict[str, Any]]] = {}
     if not runs_root.is_dir():
         return found
-    for m_path in sorted(runs_root.rglob("manifest.json")):
-        if "_worker_tmp" in m_path.parts:
+    skip_dirs = _PRUNE_COMMON_DIRS | {"provenance", "evaluation"}
+    for root_str, dirnames, filenames in os.walk(runs_root):
+        if "manifest.json" in filenames:
+            m_path = Path(root_str) / "manifest.json"
+            data = _read_cached_json(m_path)
+            if data is not None:
+                run_id = str(data.get("run_id", "")).strip()
+                if run_id and "protocol_id" in data:
+                    found[run_id] = (Path(root_str), data)
+            dirnames.clear()
             continue
-        try:
-            data = json.loads(m_path.read_text(encoding="utf-8"))
-        except Exception:
-            continue
-        run_id = str(data.get("run_id", "")).strip()
-        if run_id and "protocol_id" in data:
-            found[run_id] = (m_path.parent, data)
+        dirnames[:] = sorted(
+            d for d in dirnames if d not in skip_dirs and not d.startswith(("analysis_", "bundle_"))
+        )
     return found
 
 
@@ -486,6 +570,7 @@ def list_runs(
     offset: int = 0,
     condition_id: str | None = None,
     status: str | None = None,
+    protocol_id: str | None = None,
 ) -> dict[str, Any]:
     all_runs = _iter_run_manifests(settings.runs_root)
     rows: list[dict[str, Any]] = []
@@ -493,6 +578,8 @@ def list_runs(
         if condition_id and m.get("condition_id") != condition_id:
             continue
         if status and m.get("status") != status:
+            continue
+        if protocol_id and m.get("protocol_id") != protocol_id:
             continue
         rows.append(
             {
@@ -552,20 +639,194 @@ def resolve_run_artifact(settings: Settings, run_id: str, artifact_path: str) ->
     return resolved
 
 
+def _read_json_if_file(path: Path) -> dict[str, Any] | None:
+    if not path.is_file():
+        return None
+    try:
+        parsed = json.loads(path.read_text(encoding="utf-8"))
+        return parsed if isinstance(parsed, dict) else None
+    except Exception:
+        return None
+
+
+def list_research_studies(settings: Settings) -> dict[str, Any]:
+    """Summarize real on-disk benchmark and module study outputs strictly as read-only RUO data."""
+    benchmarks = list_benchmarks(settings)["benchmarks"]
+    shiu_available = len(benchmarks) > 0
+    shiu_reproduced = any(bool(item["report"].get("overall_passed")) for item in benchmarks)
+
+    met_conf_dir = settings.runs_root / "phase4_met001_confirmatory"
+    met_conf_list: list[dict[str, Any]] = []
+    if met_conf_dir.is_dir():
+        for analysis_dir in sorted(met_conf_dir.glob("analysis_*")):
+            manifest = _read_json_if_file(analysis_dir / "analysis_manifest.json")
+            if manifest is None:
+                continue
+            met_conf_list.append(
+                {
+                    "analysis_key": analysis_dir.name,
+                    "target_neuron_id": str(manifest.get("target_neuron_id", "")),
+                    "baseline_condition": manifest.get("baseline_condition"),
+                    "treatment_condition": manifest.get("treatment_condition"),
+                    "condition_summaries": manifest.get("condition_summaries", {}),
+                    "paired_metrics": manifest.get("paired_metrics", {}),
+                    "failed_run_count": manifest.get("failed_run_count", 0),
+                    "provenance": manifest.get("provenance", {}),
+                }
+            )
+
+    met_robust_dir = settings.runs_root / "phase4_met001_robustness"
+    met_robust: dict[str, Any] = {}
+    if met_robust_dir.is_dir():
+        for arm_name in ("canonical_lif", "wsyn_low", "wsyn_high"):
+            arm_manifest = _read_json_if_file(
+                met_robust_dir / arm_name / "analysis_mn9r" / "analysis_manifest.json"
+            )
+            if arm_manifest is not None:
+                met_robust[arm_name] = {
+                    "target_neuron_id": str(arm_manifest.get("target_neuron_id", "")),
+                    "baseline_condition": arm_manifest.get("baseline_condition"),
+                    "treatment_condition": arm_manifest.get("treatment_condition"),
+                    "condition_summaries": arm_manifest.get("condition_summaries", {}),
+                    "paired_metrics": arm_manifest.get("paired_metrics", {}),
+                    "provenance": arm_manifest.get("provenance", {}),
+                }
+
+    pain_conf_dir = settings.runs_root / "phase5_pain001_confirmatory"
+    pain_conf = _read_json_if_file(pain_conf_dir / "confirmatory_summary.json")
+    pain_win_raw = _read_json_if_file(pain_conf_dir / "windowed_summary.json")
+    pain_win_trimmed: dict[str, Any] | None = None
+    if pain_win_raw is not None:
+        pain_win_trimmed = {
+            "windows": pain_win_raw.get("windows", {}),
+            "neuron_ids": [str(nid) for nid in pain_win_raw.get("neuron_ids", [])],
+            "succeeded_run_count": pain_win_raw.get("succeeded_run_count", 0),
+            "failed_run_count": pain_win_raw.get("failed_run_count", 0),
+            "per_neuron_condition_summaries": pain_win_raw.get(
+                "per_neuron_condition_summaries", {}
+            ),
+        }
+    pain_rob = _read_json_if_file(
+        settings.runs_root / "phase5_pain001_robustness" / "robustness_summary.json"
+    )
+
+    met_available = len(met_conf_list) > 0
+    pain_available = pain_conf is not None
+
+    modules = [
+        {
+            "module_id": "shiu2024_benchmark",
+            "phase": "phase2",
+            "ui_state": "reproduced" if shiu_reproduced else "experimental",
+            "simulation_phase": "computationally_reproduced" if shiu_reproduced else "planned",
+            "dataset_id": "flywire_fafb_v630",
+            "protocol_id": "P2-BENCH-SHIU2024",
+            "available_on_disk": shiu_available,
+        },
+        {
+            "module_id": "metabolic",
+            "phase": "phase4",
+            "ui_state": "experimental",
+            "simulation_phase": (
+                "confirmatory_simulation_complete" if met_available else "planned"
+            ),
+            "dataset_id": "flywire_fafb_v630",
+            "protocol_id": "P4-MET-001",
+            "available_on_disk": met_available,
+        },
+        {
+            "module_id": "pain",
+            "phase": "phase5a",
+            "ui_state": "experimental",
+            "simulation_phase": (
+                "confirmatory_simulation_complete" if pain_available else "planned"
+            ),
+            "dataset_id": "malecns_v1_0",
+            "protocol_id": "P5-PAIN-001",
+            "available_on_disk": pain_available,
+        },
+        {
+            "module_id": "sleep",
+            "phase": "phase5b",
+            "ui_state": "planned",
+            "simulation_phase": "planned",
+            "dataset_id": None,
+            "protocol_id": None,
+            "available_on_disk": False,
+        },
+        {
+            "module_id": "addiction",
+            "phase": "phase5b",
+            "ui_state": "planned",
+            "simulation_phase": "planned",
+            "dataset_id": None,
+            "protocol_id": None,
+            "available_on_disk": False,
+        },
+        {
+            "module_id": "neuro",
+            "phase": "phase5c",
+            "ui_state": "planned",
+            "simulation_phase": "planned",
+            "dataset_id": None,
+            "protocol_id": None,
+            "available_on_disk": False,
+        },
+        {
+            "module_id": "pharma",
+            "phase": "phase5c",
+            "ui_state": "planned",
+            "simulation_phase": "planned",
+            "dataset_id": None,
+            "protocol_id": None,
+            "available_on_disk": False,
+        },
+        {
+            "module_id": "stress",
+            "phase": "phase5c",
+            "ui_state": "planned",
+            "simulation_phase": "planned",
+            "dataset_id": None,
+            "protocol_id": None,
+            "available_on_disk": False,
+        },
+    ]
+
+    return {
+        "modules": modules,
+        "metabolic": {
+            "confirmatory": met_conf_list,
+            "robustness": met_robust,
+        },
+        "pain": {
+            "confirmatory": pain_conf,
+            "windowed": pain_win_trimmed,
+            "robustness": pain_rob,
+        },
+    }
+
+
 def list_benchmarks(settings: Settings) -> dict[str, Any]:
     reports: list[dict[str, Any]] = []
     if settings.runs_root.is_dir():
-        for b_path in sorted(settings.runs_root.rglob("benchmark_report.json")):
-            try:
-                data = json.loads(b_path.read_text(encoding="utf-8"))
-            except Exception:
-                continue
-            reports.append(
-                {
-                    "relative_path": b_path.relative_to(settings.runs_root).as_posix(),
-                    "report": data,
-                }
+        skip_dirs = _PRUNE_COMMON_DIRS | {"runs", "provenance"}
+        for root_str, dirnames, filenames in os.walk(settings.runs_root):
+            if "benchmark_report.json" in filenames:
+                b_path = Path(root_str) / "benchmark_report.json"
+                data = _read_cached_json(b_path)
+                if data is not None:
+                    reports.append(
+                        {
+                            "relative_path": b_path.relative_to(settings.runs_root).as_posix(),
+                            "report": data,
+                        }
+                    )
+            dirnames[:] = sorted(
+                d
+                for d in dirnames
+                if d not in skip_dirs and not d.startswith(("analysis_", "bundle_"))
             )
+    reports.sort(key=lambda item: str(item["relative_path"]))
     return {"benchmarks": reports}
 
 
@@ -573,15 +834,21 @@ def _iter_analyses(runs_root: Path) -> dict[str, tuple[Path, dict[str, Any]]]:
     found: dict[str, tuple[Path, dict[str, Any]]] = {}
     if not runs_root.is_dir():
         return found
-    for m_path in sorted(runs_root.rglob("analysis_manifest.json")):
-        try:
-            data = json.loads(m_path.read_text(encoding="utf-8"))
-        except Exception:
+    skip_dirs = _PRUNE_COMMON_DIRS | {"runs", "provenance", "evaluation"}
+    for root_str, dirnames, filenames in os.walk(runs_root):
+        if "analysis_manifest.json" in filenames:
+            a_dir = Path(root_str)
+            data = _read_cached_json(a_dir / "analysis_manifest.json")
+            if data is not None:
+                rel = a_dir.relative_to(runs_root).as_posix()
+                key = rel.replace("/", "__")
+                found[key] = (a_dir, data)
+            dirnames.clear()
             continue
-        rel = m_path.parent.relative_to(runs_root).as_posix()
-        key = rel.replace("/", "__")
-        found[key] = (m_path.parent, data)
-    return found
+        dirnames[:] = sorted(
+            d for d in dirnames if d not in skip_dirs and not d.startswith("bundle_")
+        )
+    return dict(sorted(found.items()))
 
 
 def list_analyses(settings: Settings) -> dict[str, Any]:
@@ -628,18 +895,22 @@ def _iter_exports(runs_root: Path) -> dict[str, tuple[Path, dict[str, Any]]]:
     found: dict[str, tuple[Path, dict[str, Any]]] = {}
     if not runs_root.is_dir():
         return found
-    for b_path in sorted(runs_root.rglob("bundle_manifest.json")):
-        if b_path.parent.name != "provenance":
+    skip_dirs = _PRUNE_COMMON_DIRS | {"runs", "evaluation"}
+    for root_str, dirnames, filenames in os.walk(runs_root):
+        cur_dir = Path(root_str)
+        if cur_dir.name == "provenance" and "bundle_manifest.json" in filenames:
+            bundle_root = cur_dir.parent
+            data = _read_cached_json(cur_dir / "bundle_manifest.json")
+            if data is not None:
+                rel = bundle_root.relative_to(runs_root).as_posix()
+                key = rel.replace("/", "__")
+                found[key] = (bundle_root, data)
+            dirnames.clear()
             continue
-        bundle_root = b_path.parent.parent
-        try:
-            data = json.loads(b_path.read_text(encoding="utf-8"))
-        except Exception:
-            continue
-        rel = bundle_root.relative_to(runs_root).as_posix()
-        key = rel.replace("/", "__")
-        found[key] = (bundle_root, data)
-    return found
+        dirnames[:] = sorted(
+            d for d in dirnames if d not in skip_dirs and not d.startswith("analysis_")
+        )
+    return dict(sorted(found.items()))
 
 
 def list_exports(settings: Settings) -> dict[str, Any]:
@@ -747,6 +1018,7 @@ __all__ = [
     "freeze_protocol_request",
     "get_analysis_detail",
     "get_dataset_plan",
+    "get_protocol_content",
     "get_run_detail",
     "inspect_dataset_graph",
     "list_analyses",
@@ -756,6 +1028,7 @@ __all__ = [
     "list_exports",
     "list_models_and_backends",
     "list_protocols",
+    "list_research_studies",
     "list_runs",
     "plan_experiment_request",
     "query_dataset_subgraph",

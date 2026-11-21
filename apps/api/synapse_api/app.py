@@ -34,6 +34,7 @@ from synapse_api.service import (
     freeze_protocol_request,
     get_analysis_detail,
     get_dataset_plan,
+    get_protocol_content,
     get_run_detail,
     inspect_dataset_graph,
     list_analyses,
@@ -43,6 +44,7 @@ from synapse_api.service import (
     list_exports,
     list_models_and_backends,
     list_protocols,
+    list_research_studies,
     list_runs,
     plan_experiment_request,
     query_dataset_subgraph,
@@ -212,6 +214,10 @@ def create_app(settings: Settings | None = None, *, run_migrations: bool = True)
             allow_unresolved=body.allow_unresolved,
         )
 
+    @v1.get("/protocols/content")
+    def protocols_content(protocol_path: str = Query(..., min_length=1)) -> dict[str, Any]:
+        return get_protocol_content(cfg, protocol_path)
+
     @v1.post("/protocols/freeze")
     def protocols_freeze(body: ProtocolFreezeRequest) -> dict[str, Any]:
         frozen_path, doc, frozen_sha = freeze_protocol_request(
@@ -348,8 +354,20 @@ def create_app(settings: Settings | None = None, *, run_migrations: bool = True)
         limit: int = Query(default=50, ge=1, le=200),
         condition_id: str | None = Query(default=None),
         status: str | None = Query(default=None),
+        protocol_id: str | None = Query(default=None),
     ) -> dict[str, Any]:
-        return list_runs(cfg, limit=limit, offset=offset, condition_id=condition_id, status=status)
+        return list_runs(
+            cfg,
+            limit=limit,
+            offset=offset,
+            condition_id=condition_id,
+            status=status,
+            protocol_id=protocol_id,
+        )
+
+    @v1.get("/studies")
+    def studies_list() -> dict[str, Any]:
+        return list_research_studies(cfg)
 
     @v1.get("/runs/{run_id}")
     def runs_detail(run_id: str) -> dict[str, Any]:

@@ -105,7 +105,13 @@ def test_api_and_worker_full_fixture_lifecycle_security_cancel_and_backup(tmp_pa
             },
         )
         assert sub_res.status_code == 200
-        assert sub_res.json()["metadata"]["n_selected_neurons"] >= 2
+        sub_body = sub_res.json()
+        assert sub_body["metadata"]["n_selected_neurons"] >= 2
+        assert all(isinstance(node["source_neuron_id"], str) for node in sub_body["nodes"])
+        assert any(
+            node["is_seed"] and "cell_type" in node and "neurotransmitter" in node
+            for node in sub_body["nodes"]
+        )
 
         # 2. Path traversal and unconfirmed freeze gates
         trav_proto = client.post(
@@ -162,9 +168,44 @@ def test_api_and_worker_full_fixture_lifecycle_security_cancel_and_backup(tmp_pa
             assert sim_detail["status"] == "succeeded"
             assert sim_detail["result"]["n_runs_completed"] == 4
 
-            # Verify run discovery and artifact traversal rejection
+            # Verify protocol YAML content endpoint & traversal rejection
+            proto_yaml_res = client.get(
+                "/api/v1/protocols/content",
+                params={"protocol_path": frozen_rel},
+            )
+            assert proto_yaml_res.status_code == 200
+            assert "protocol_id:" in proto_yaml_res.json()["yaml_text"]
+            bad_proto_res = client.get(
+                "/api/v1/protocols/content",
+                params={"protocol_path": "../../AGENTS.md"},
+            )
+            assert bad_proto_res.status_code == 403
+
+            # Verify /api/v1/studies module UI state taxonomy (§10)
+            studies_res = client.get("/api/v1/studies")
+            assert studies_res.status_code == 200
+            allowed_states = {
+                "planned",
+                "experimental",
+                "reproduced",
+                "validated_for_declared_endpoint",
+            }
+            for mod in studies_res.json()["modules"]:
+                assert mod["ui_state"] in allowed_states
+
+            # Verify run discovery, protocol_id filter, and artifact traversal rejection
             runs_res = client.get("/api/v1/runs").json()
             assert runs_res["total"] == 4
+            filtered_runs = client.get(
+                "/api/v1/runs",
+                params={"protocol_id": runs_res["runs"][0]["protocol_id"]},
+            ).json()
+            assert filtered_runs["total"] == 4
+            empty_filtered = client.get(
+                "/api/v1/runs",
+                params={"protocol_id": "NONEXISTENT-PROTOCOL"},
+            ).json()
+            assert empty_filtered["total"] == 0
             sample_run_id = runs_res["runs"][0]["run_id"]
             ok_art = client.get(f"/api/v1/runs/{sample_run_id}/artifacts/metrics.parquet")
             assert ok_art.status_code == 200
