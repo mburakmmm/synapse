@@ -1,0 +1,149 @@
+schema_version: '1.0'
+protocol_id: P5-PAIN-001-ROBUST-WSYN-HIGH
+revision: 1
+status: draft
+analysis_intent: exploratory
+question: How sensitive are baseline firing and edge_mask disinhibition delta to +10%
+  synaptic weight scaling (0.3025 mV)?
+hypothesis: Exploratory w_syn_v sensitivity check (+10%, N=6 paired seeds).
+biological_unit: malecns_v1_0_single_male_specimen
+simulation_unit: paired_seed_run
+sources:
+- dataset_id: malecns_v1_0
+  release: v1.0
+  manifest_sha256: 6df05f9f76e98e55f5e4f13e195ebd604ec41c644751c47a79f9855a92d5f496
+model:
+  id: synapse_lif_v1
+  revision: '1.0'
+  parameter_manifest_sha256: c1e05e034514fcfb60e3f0f222a2ce0c32883dbca1ca289af9321b44969c1d95
+  backend: brian2_cpu
+  parameters:
+    v_rest_v: -0.052
+    v_reset_v: -0.052
+    v_threshold_v: -0.045
+    tau_m_s: 0.02
+    tau_syn_s: 0.005
+    t_ref_s: 0.0022
+    delay_s: 0.0018
+    w_syn_v: 0.0003025
+    r_m_ohm: 10000000.0
+    dt_s: 0.0001
+    solver: exact
+    dg_unless_refractory: false
+    unknown_nt_policy: zero_effect
+    parameter_source: Reference Drosophila LIF defaults (Kakaria & de Bivort 2017;
+      Jurgensen et al. 2021; Lazar et al. 2021; Paul et al. 2015; Shiu et al. 2024)
+conditions:
+- id: mesoln_40hz_baseline
+  interventions:
+  - kind: poisson_rate
+    target_neuron_ids: &id001
+    - '803882'
+    - '905611'
+    - '808678'
+    - '810360'
+    - '807667'
+    - '809687'
+    - '805181'
+    - '813513'
+    - '813710'
+    - '812579'
+    - '813176'
+    - '816275'
+    - '812772'
+    - '813045'
+    - '813519'
+    - '807995'
+    - '808495'
+    - '812260'
+    - '813166'
+    - '813574'
+    - '813828'
+    - '813895'
+    - '813815'
+    - '814863'
+    - '816909'
+    - '902813'
+    - '909772'
+    - '912333'
+    - '813756'
+    - '814236'
+    rate_hz: 40.0
+    weight_v: 0.06875
+    start_s: 0.1
+    end_s: 0.6
+    disable_refractory: true
+- id: mesoln_40hz_acute_edge_mask
+  interventions:
+  - kind: poisson_rate
+    target_neuron_ids: *id001
+    rate_hz: 40.0
+    weight_v: 0.06875
+    start_s: 0.1
+    end_s: 0.6
+    disable_refractory: true
+  - kind: edge_mask
+    pre_neuron_ids:
+    - '902566'
+    - '811380'
+    - '800671'
+    - '800098'
+    - '800433'
+    - '800826'
+    - '800092'
+    - '804356'
+    - '800532'
+    - '801256'
+    - '812816'
+    - '802800'
+    - '800320'
+    - '907619'
+    - '802758'
+    - '903623'
+    - '805844'
+    - '804006'
+    - '800281'
+    - '905022'
+    - '911616'
+    - '800763'
+    - '803586'
+    - '808960'
+    - '800717'
+    - '806693'
+    post_neuron_ids:
+    - '10592'
+    - '13166'
+    - '15070'
+    - '558778'
+    - '523539'
+    - '14994'
+    factor: 0.0
+stimulus_schedule:
+  duration_s: 0.8
+  pre_window_s:
+  - 0.0
+  - 0.1
+  stim_window_s:
+  - 0.1
+  - 0.6
+  post_window_s:
+  - 0.6
+  - 0.8
+  stimuli: []
+measurement_window:
+  start_s: 0.0
+  end_s: 0.8
+seeds:
+  strategy: paired
+  master: 20261132
+  replicates: 6
+analysis:
+  primary_endpoint: anxxx027l_523539_and_an08b012r_558778_mean_firing_rate_hz
+  estimand: paired_condition_difference_hz_exploratory_robustness
+  uncertainty_method: exact_sign_flip_p_and_percentile_bootstrap_2000
+  multiplicity_policy: exploratory_robustness_unadjusted
+  exclusion_policy: no_posthoc_filtering
+  acceptance_criteria: All 12 runs per arm succeed; document shift direction & magnitude
+resources:
+  max_wall_seconds: 600.0
+  max_output_bytes: 536870912

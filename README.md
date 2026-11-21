@@ -54,7 +54,8 @@ Key engineering and scientific invariants (see [`AGENTS.md`](AGENTS.md)):
 | **Phase 2 — Simulation Core** | Whole-brain `flywire_fafb_v630` computational reproduction of Shiu et al. (*Nature*, 2024) feeding circuit | **Computationally Reproduced** | `90/90` runs passed (`failed_run_count = 0`, `overall_passed = true`) ([Validation Report](docs/validation/shiu2024_reproduction_report.md)) |
 | **Phase 3 — Research Laboratory** | Protocol freezing, CLI run planner, Alembic/SQLAlchemy DB, FastAPI `/api/v1`, isolated worker, React/Plotly.js UI, Docker Compose + `pg_dump`/`pg_restore` | **Verified** | API/worker/UI suites + live PostgreSQL `SKIP LOCKED` & backup/restore parity verified ([ADR-0005](docs/adr/ADR-0005-phase3-research-laboratory-architecture.md)) |
 | **Phase 4 — Metabolic (`P4-MET-001`)** | Matched-control design, exploratory pilot (`N=3`), frozen confirmatory (`N=30`), robustness sensitivity (`N=6` arms), MaleCNS audit | **Confirmatory Simulation Complete** | `180/180` confirmatory + `36/36` robustness runs (`0` failed); *not* biological wet-lab validation ([Confirmatory Report](research/modules/metabolic/confirmatory_report.md)) |
-| **Phase 5 — Module Expansion** | Pain, Sleep, and Addiction circuit modules | **Planned** | Gated on primary literature review and module-specific controls ([STATUS](docs/STATUS.md)) |
+| **Phase 5A — Pain (`P5-PAIN-001`)** | Adult male `malecns_v1_0` VNC GABAergic disinhibition (`EdgeMaskModulation`) vs. cell death (`N = 15` confirmatory + `N = 6` robustness) | **Confirmatory Simulation Complete** | `120/120` confirmatory (`6/6` primary `q = 9.9990e-05`) + `36/36` robustness runs (`0` failed); *not* biological validation ([Pain Report](research/modules/pain/confirmatory_report.md)) |
+| **Phase 5B+ — Sleep & Addiction** | Remaining translational circuit modules | **Planned** | Gated on primary literature review and module-specific controls ([STATUS](docs/STATUS.md)) |
 
 ---
 
@@ -104,6 +105,23 @@ Pre-registered after an exploratory pilot (`P4-MET-001-pilot.yaml`, `N = 3`, `15
 
 - **Exploratory Robustness & Sensitivity (`36/36` runs, `N = 6` pairs, `811.89 s`):** Positive `1.50x` Δ persisted across `synapse_lif_v1` (`dg_unless_refractory = false`, exact solver: `+34.667 ± 9.026 Hz`, exact sign-flip `p = 0.03125`) and global synaptic scale `w_syn_v ±10%` (`0.2475 mV`: `+31.500 ± 9.503 Hz`; `0.3025 mV`: `+23.500 ± 7.477 Hz`), while baseline `50 Hz` firing rate varied substantially with `w_syn_v` (`4.500` to `38.833 Hz`). See [`confirmatory_report.md`](research/modules/metabolic/confirmatory_report.md).
 - **MaleCNS Cross-Specimen Audit (`malecns_v1_0`):** Structural query identified bilateral `MN9` (`16949`, `10331`) and `60` `tpGRN` cells (`50` `claw_tpGRN`, `10` `dorsal_tpGRN`), with `0` sugar-receptor (`Gr5a`/`Gr64`/sugar) modality annotations; cross-specimen simulation was intentionally deferred rather than fabricated.
+
+### 4. Pain Circuit Investigation `P5-PAIN-001` (Phase 5A)
+
+Executed on adult male `malecns_v1_0` (`synapse_lif_v1`, `brian2_cpu`, `exact` solver) after an exploratory pilot (`P5-PAIN-001-pilot.yaml`, `N = 3`, `24/24` runs) and immutable freeze at [`P5-PAIN-001.frozen.yaml`](research/protocols/P5-PAIN-001.frozen.yaml) (`protocol_sha256 = a379c7e1c7b264859fe777730464cd8d34807dc1772818b5c4bb4b978ed683cf`, `master_seed = 20261131`, `N = 15` paired seeds × `8` conditions = `120/120` succeeded runs, `failed_run_count = 0`, `8271.70 s`). Top `30` right middle-leg (`R-MesoLN`) mechanosensory afferents drove feedforward VNC `GABA` disinhibition vs. `26` degree/synapse/NT-matched VNC `GABA` negative controls (`|SMD| <= 0.0970`).
+
+| Endpoint | Condition / Contrast (`N = 15` pairs, `0.0–0.8 s`) | Result / Mean Δ (Hz) | 95% Bootstrap CI (Hz) | Statistical / Multiplicity Check |
+|---|---|---|---|---|
+| Control Check | `sham_zero_stimulus` | `0.000 ± 0.000 Hz` (`sham_max_spikes = 0`, `15/15`) | — | Negative control PASS |
+| `523539` (`ANXXX027_L`) | `acute_edge_mask` (`32.583 Hz`) − `40hz_baseline` (`11.917 Hz`) | `+20.667 Hz` (SD `2.907`; stim `[0.1,0.6) s`: `51.467 Hz`) | `[+19.331, +22.167]` | BH-FDR `q = 9.9990e-05` |
+| `523539` (`ANXXX027_L`) | `acute_edge_mask` − `matched_ctrl_ablation` (`11.917 Hz`) | `+20.667 Hz` (SD `2.209`) | `[+19.500, +21.750]` | BH-FDR `q = 9.9990e-05` |
+| `523539` (`ANXXX027_L`) | `gaba_cell_death` (`27.917 Hz`) − `40hz_baseline` & `matched_ctrl` | `+16.000 Hz` (SD `2.639` / `2.175`) | `[+14.667, +17.333]` | BH-FDR `q = 9.9990e-05` |
+| `558778` (`AN08B012_R`) | `acute_edge_mask` (`17.333 Hz`) − `40hz_baseline` (`13.500 Hz`) | `+3.833 Hz` (SD `1.858`) | `[+3.000, +4.833]` | BH-FDR `q = 9.9990e-05` |
+| `558778` (`AN08B012_R`) | `acute_edge_mask` − `matched_ctrl_ablation` (`14.000 Hz`) | `+3.333 Hz` (SD `1.391`) | `[+2.667, +4.000]` | BH-FDR `q = 9.9990e-05` |
+| Matched Control Null | `matched_ctrl_ablation` − `40hz_baseline` (`523539` / `558778`) | `0.000 Hz` / `+0.500 Hz` | `[-0.919, +1.000]` / `[-0.250, +1.333]` | `p = 1.0000` / `p = 0.3544` |
+| Mechanism Dissociation | `10592` (`AN08B012_L`): `acute_edge_mask` vs. `gaba_cell_death` | `+1.417 Hz` vs. `-4.500 Hz` | `[+0.500, +2.417]` vs. `[-5.667, -3.167]` | `p = 0.0213` vs. `p = 2.9997e-04` |
+
+- **Exploratory Structural & Parametric Robustness (`36/36` runs, `N = 6` pairs, `2269.22 s`):** Positive `acute_edge_mask` amplification persisted on `523539` (`+17.083 Hz` under `shiu2024_lif`; `+20.833 Hz` at `-10% w_syn_v = 0.2475 mV`; `+15.208 Hz` at `+10% w_syn_v = 0.3025 mV`, exact sign-flip `p = 0.03125` across all `3` arms) and `558778` (`+2.708` to `+3.750 Hz`, `p = 0.03125`), while post-stimulus `[0.6, 0.8] s` persistence stayed `<= 1.667 Hz` (`<= 10.76 ms`) under L1 LIF kinetics. See [`pain/confirmatory_report.md`](research/modules/pain/confirmatory_report.md) and [`ADR-0006`](docs/adr/ADR-0006-phase5-pain-vnc-disinhibition.md).
 
 ---
 
@@ -219,12 +237,14 @@ GRAPHIFY_QUERY_LOG_DISABLE=1 graphify query "Where is RunManifest created and pe
 | [`AGENTS.md`](AGENTS.md) | Authoritative repository engineering, reproducibility, and scientific integrity contract |
 | [`docs/STATUS.md`](docs/STATUS.md) | Current phase gates, verified checks, limitations, and immediate next tasks |
 | [`docs/architecture/repository_boundaries.md`](docs/architecture/repository_boundaries.md) | Package import DAG and separation rules |
-| [`docs/adr/`](docs/adr/ADR-0001-bootstrap-architecture-and-licensing.md) | Architecture Decision Records (`ADR-0001` through `ADR-0005`) |
+| [`docs/adr/`](docs/adr/ADR-0001-bootstrap-architecture-and-licensing.md) | Architecture Decision Records (`ADR-0001` through `ADR-0006`) |
 | [`docs/data-cards/`](docs/data-cards/flywire_fafb_v630.md) | Checksum-verified dataset cards (`flywire_fafb_v630.md`, `malecns_v1_0.md`) |
 | [`docs/model-cards/shiu2024_lif.md`](docs/model-cards/shiu2024_lif.md) | Parameter manifest and dynamical limits of `shiu2024_lif` |
 | [`docs/validation/shiu2024_reproduction_report.md`](docs/validation/shiu2024_reproduction_report.md) | Phase 2 `90/90` Shiu et al. (2024) reproduction benchmark report |
 | [`research/modules/metabolic/confirmatory_report.md`](research/modules/metabolic/confirmatory_report.md) | Phase 4 `P4-MET-001` confirmatory (`180/180`), robustness (`36/36`), and MaleCNS audit report |
-| [`research/modules/metabolic/evidence_register.md`](research/modules/metabolic/evidence_register.md) | Primary literature register anchored in `research/literature/source_register.yaml` |
+| [`research/modules/metabolic/evidence_register.md`](research/modules/metabolic/evidence_register.md) | Phase 4 literature register anchored in `research/literature/source_register.yaml` |
+| [`research/modules/pain/confirmatory_report.md`](research/modules/pain/confirmatory_report.md) | Phase 5A `P5-PAIN-001` confirmatory (`120/120`) and robustness (`36/36`) report on `malecns_v1_0` |
+| [`research/modules/pain/evidence_register.md`](research/modules/pain/evidence_register.md) | Phase 5A adult VNC pain/disinhibition literature register (`source_register.yaml`) |
 | [`docs/security/operations_and_backup.md`](docs/security/operations_and_backup.md) | Loopback security boundaries, container hardening, and SQLite/PostgreSQL backup/restore procedures |
 | [`CONTRIBUTING.md`](CONTRIBUTING.md) · [`SECURITY.md`](SECURITY.md) | Contribution checklist and vulnerability disclosure policy |
 

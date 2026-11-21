@@ -10,6 +10,7 @@ import signal
 import subprocess
 import sys
 import tempfile
+import time
 import uuid
 from datetime import UTC, datetime
 from pathlib import Path
@@ -39,6 +40,31 @@ def _read_json(path: Path) -> dict[str, Any]:
     return data
 
 
+def _proc_stat_is_dead(stat_line: str) -> bool:
+    """Return True if a Linux /proc/<pid>/stat line reports a zombie or dead task."""
+    rparen = stat_line.rfind(")")
+    if rparen == -1:
+        return False
+    rest = stat_line[rparen + 1 :].lstrip()
+    if not rest:
+        return False
+    return rest[0] in {"Z", "X", "x"}
+
+
+def _is_linux_zombie(pid: int, *, proc_root: Path | None = None) -> bool:
+    """Check /proc/<pid>/stat on Linux so un-reaped zombie children do not appear alive."""
+    if proc_root is None:
+        if not sys.platform.startswith("linux"):
+            return False
+        proc_root = Path("/proc")
+    stat_path = proc_root / str(pid) / "stat"
+    try:
+        stat_line = stat_path.read_text(encoding="utf-8", errors="replace")
+    except OSError:
+        return False
+    return _proc_stat_is_dead(stat_line)
+
+
 def _pid_is_alive(pid: int | None) -> bool:
     if pid is None or pid <= 0:
         return False
@@ -52,9 +78,11 @@ def _pid_is_alive(pid: int | None) -> bool:
         return str(pid) in proc.stdout
     try:
         os.kill(pid, 0)
+    except PermissionError:
+        return True
     except OSError:
         return False
-    return True
+    return not _is_linux_zombie(pid)
 
 
 def _terminate_process_tree(pid: int | None) -> None:
@@ -68,14 +96,55 @@ def _terminate_process_tree(pid: int | None) -> None:
         )
         return
     killpg_fn = getattr(os, "killpg", None)
+    sent = False
     if killpg_fn is not None:
         try:
             killpg_fn(pid, signal.SIGTERM)
-            return
+            sent = True
         except OSError:
             pass
-    with contextlib.suppress(OSError):
-        os.kill(pid, signal.SIGTERM)
+    if not sent:
+        with contextlib.suppress(OSError):
+            os.kill(pid, signal.SIGTERM)
+
+    term_deadline = time.monotonic() + 0.5
+    while time.monotonic() < term_deadline and _pid_is_alive(pid):
+        time.sleep(0.02)
+
+    sigkill = getattr(signal, "SIGKILL", None)
+    if sigkill is not None and _pid_is_alive(pid):
+        killed = False
+        if killpg_fn is not None:
+            try:
+                killpg_fn(pid, sigkill)
+                killed = True
+            except OSError:
+                pass
+        if not killed:
+            with contextlib.suppress(OSError):
+                os.kill(pid, sigkill)
+        kill_deadline = time.monotonic() + 0.25
+        while time.monotonic() < kill_deadline and _pid_is_alive(pid):
+            time.sleep(0.02)
+
+
+def _reap_detached_child(pid: int | None) -> None:
+    """Reap a direct detached child on POSIX without affecting non-child or Windows PIDs."""
+    if pid is None or pid <= 0 or os.name == "nt":
+        return
+    waitpid_fn = getattr(os, "waitpid", None)
+    wnohang = getattr(os, "WNOHANG", 1)
+    if waitpid_fn is None:
+        return
+    deadline = time.monotonic() + 0.25
+    while True:
+        try:
+            waited_pid, _ = waitpid_fn(pid, wnohang)
+        except OSError:
+            return
+        if waited_pid != 0 or time.monotonic() >= deadline:
+            return
+        time.sleep(0.01)
 
 
 def mark_incomplete_runs_cancelled(runs_dir: Path, *, reason: str) -> list[str]:
@@ -252,7 +321,9 @@ def cancel_local_job(
     _write_json_atomic(state_path, state)
 
     pid = state.get("pid")
-    _terminate_process_tree(int(pid) if pid is not None else None)
+    pid_int = int(pid) if pid is not None else None
+    _terminate_process_tree(pid_int)
+    _reap_detached_child(pid_int)
 
     runs_dir = Path(state["runs_dir"])
     cancelled_runs = mark_incomplete_runs_cancelled(runs_dir, reason=reason)

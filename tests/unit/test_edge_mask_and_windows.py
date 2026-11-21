@@ -235,3 +235,23 @@ def test_compute_windowed_response_metrics_and_failed_run_accounting(tmp_path: P
     assert cond["stim_rate_hz"]["mean"] == pytest.approx(4.0 / 0.5)
     assert cond["post_rate_hz"]["mean"] == pytest.approx(2.0 / 0.3)
     assert cond["persistence_duration_s"]["mean"] == pytest.approx(np.float64(0.85 - 0.7))
+
+
+def test_linux_proc_stat_zombie_detection(tmp_path: Path) -> None:
+    from synapse_experiments.job_control import _is_linux_zombie, _proc_stat_is_dead
+
+    assert _proc_stat_is_dead("1234 (python 3.12 (venv)) Z 1 2 3") is True
+    assert _proc_stat_is_dead("1234 (worker) X 1 2 3") is True
+    assert _proc_stat_is_dead("1234 (worker) x 1 2 3") is True
+    assert _proc_stat_is_dead("1234 (python (venv)) S 1 2 3") is False
+    assert _proc_stat_is_dead("1234 (worker) R 1 2 3") is False
+    assert _proc_stat_is_dead("malformed_without_paren") is False
+
+    pid_dir = tmp_path / "4242"
+    pid_dir.mkdir(parents=True)
+    (pid_dir / "stat").write_text("4242 (synapse worker) Z 1 2 3", encoding="utf-8")
+    assert _is_linux_zombie(4242, proc_root=tmp_path) is True
+
+    (pid_dir / "stat").write_text("4242 (synapse worker) S 1 2 3", encoding="utf-8")
+    assert _is_linux_zombie(4242, proc_root=tmp_path) is False
+    assert _is_linux_zombie(99999, proc_root=tmp_path) is False

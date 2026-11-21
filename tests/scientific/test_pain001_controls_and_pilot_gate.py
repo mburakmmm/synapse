@@ -18,6 +18,8 @@ PILOT_YAML = REPO_ROOT / "research" / "protocols" / "P5-PAIN-001-pilot.yaml"
 CONFIRMATORY_APPROVED_YAML = REPO_ROOT / "research" / "protocols" / "P5-PAIN-001.yaml"
 CONFIRMATORY_FROZEN_YAML = REPO_ROOT / "research" / "protocols" / "P5-PAIN-001.frozen.yaml"
 PILOT_ROOT = REPO_ROOT / "runs" / "phase5_pain001_exploratory_pilot"
+CONFIRMATORY_ROOT = REPO_ROOT / "runs" / "phase5_pain001_confirmatory"
+ROBUSTNESS_ROOT = REPO_ROOT / "runs" / "phase5_pain001_robustness"
 
 
 @pytest.mark.scientific
@@ -107,3 +109,64 @@ def test_pain001_exploratory_pilot_artifacts_when_present() -> None:
         / "figures"
         / "firing_rate_comparison.svg"
     ).is_file()
+
+
+def test_pain001_confirmatory_and_robustness_artifacts_when_present() -> None:
+    """Verify confirmatory (120/120) and robustness (36/36) artifacts when present locally."""
+    import json
+
+    if not CONFIRMATORY_ROOT.is_dir() or not ROBUSTNESS_ROOT.is_dir():
+        pytest.skip("Gitignored local Phase 5A confirmatory/robustness artifacts not present")
+
+    runs_dir = CONFIRMATORY_ROOT / "runs"
+    run_dirs = sorted(p for p in runs_dir.iterdir() if p.is_dir())
+    assert len(run_dirs) == 120
+
+    sham_count = 0
+    for run_dir in run_dirs:
+        assert (run_dir / "COMPLETE").is_file()
+        manifest = json.loads((run_dir / "manifest.json").read_text(encoding="utf-8"))
+        assert manifest["status"] == "succeeded"
+        assert manifest["source_provenance"]["git_dirty"] is False
+        if manifest["condition_id"] == "sham_zero_stimulus":
+            sham_count += 1
+            qc = json.loads((run_dir / "qc.json").read_text(encoding="utf-8"))
+            assert qc["total_spikes_in_window"] == 0
+    assert sham_count == 15
+
+    summary = json.loads(
+        (CONFIRMATORY_ROOT / "confirmatory_summary.json").read_text(encoding="utf-8")
+    )
+    assert summary["total_runs"] == 120
+    assert summary["failed_run_count"] == 0
+    assert summary["sham_count"] == 15
+    assert summary["sham_max_spikes"] == 0
+    assert summary["git_dirty_values"] == [False]
+    assert len(summary["primary_contrasts"]) == 6
+    assert all(c["bh_fdr_q"] < 0.01 for c in summary["primary_contrasts"])
+
+    for bundle_name in (
+        "bundle_523539_edge_mask",
+        "bundle_523539_edge_mask_spec",
+        "bundle_523539_cell_death",
+        "bundle_523539_cell_death_spec",
+        "bundle_558778_edge_mask",
+        "bundle_558778_edge_mask_spec",
+    ):
+        bundle_dir = CONFIRMATORY_ROOT / bundle_name
+        assert (bundle_dir / "REPRODUCIBILITY.md").is_file()
+        assert (bundle_dir / "figures" / "firing_rate_comparison.svg").is_file()
+
+    robust = json.loads((ROBUSTNESS_ROOT / "robustness_summary.json").read_text(encoding="utf-8"))
+    assert robust["total_runs"] == 36
+    assert robust["failed_run_count"] == 0
+    for arm_name in ("shiu_lif", "wsyn_low", "wsyn_high"):
+        arm_runs = sorted(p for p in (ROBUSTNESS_ROOT / arm_name / "runs").iterdir() if p.is_dir())
+        assert len(arm_runs) == 12
+        assert all((p / "COMPLETE").is_file() for p in arm_runs)
+        arm = robust["arms"][arm_name]
+        assert arm["failed_run_count"] == 0
+        assert arm["neurons"]["523539"]["mean_difference_hz"] > 0.0
+        assert arm["neurons"]["558778"]["mean_difference_hz"] > 0.0
+        assert arm["neurons"]["523539"]["p_value"] == pytest.approx(0.03125)
+        assert arm["neurons"]["558778"]["p_value"] == pytest.approx(0.03125)

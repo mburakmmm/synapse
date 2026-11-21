@@ -1,10 +1,10 @@
 # Model Card: `pain` Module (`synapse_lif_v1` on `malecns_v1_0`)
 
-> **Research Use Only (RUO):** Mechanistic L1 connectome-grounded Leaky Integrate-and-Fire simulation on `malecns_v1_0`. Status: `experimental` (exploratory pilot complete; confirmatory protocol awaiting human approval). **Not** validated for biological injury equivalence or human pain physiology.
+> **Research Use Only (RUO):** Mechanistic L1 connectome-grounded Leaky Integrate-and-Fire simulation on `malecns_v1_0`. Status: `confirmatory_simulation_complete` (`120/120` frozen `P5-PAIN-001` runs + `36/36` exploratory robustness runs passed software checks; `RUO`). **Not** validated for biological injury equivalence or human pain physiology.
 
 ## 1. Model & Graph Identity
 
-- **Dynamical Model:** `synapse_lif_v1` (`revision: 1.0`, canonical manifest SHA-256 `4938436d7f1a63b2588a48ccbf038927246273cdea3dcca0a43cb269cb1ca8c2` protocol-bound; exact `LIFParameters()` manifest hash verified by `synapse model list --json`)
+- **Dynamical Model:** `synapse_lif_v1` (`revision: 1.0`, canonical parameter manifest SHA-256 `33d49431529574cddc721a3628ed1c65ad2e36890e2720fe6ef921837348bece`; exploratory `shiu2024_lif` arm manifest SHA-256 `12bc0160d0476aa4c65e8276d077e7e51afc45724e17eb667f6256763c9fa2e5`, exact hashes verified by `synapse model list --json`)
 - **Backend & Numerics:** `brian2_cpu` (`numpy` target, `float64`), `solver="exact"`, `dt = 0.1 ms` (`0.0001 s`), `dg_unless_refractory = false`, `delay = 1.8 ms`, `tau_m = 20 ms`, `tau_syn = 5 ms`, `t_ref = 2.2 ms`, `v_rest = v_reset = -52 mV`, `v_threshold = -45 mV`, `w_syn_v = 0.275 mV`.
 - **Neurotransmitter Sign Mapping (`unknown_nt_policy = "zero_effect"`):**
   - `ACH`: `+1.0 * w_syn_v`
