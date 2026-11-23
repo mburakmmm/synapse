@@ -61,11 +61,11 @@ function createApiFetchMock() {
           {
             module_id: "sleep",
             phase: "phase5b",
-            ui_state: "planned",
-            simulation_phase: "planned",
-            dataset_id: null,
-            protocol_id: null,
-            available_on_disk: false,
+            ui_state: "experimental",
+            simulation_phase: "l3_verified_and_l1_pilot_complete",
+            dataset_id: "malecns_v1_0",
+            protocol_id: "P5-SLEEP-001-PILOT",
+            available_on_disk: true,
           },
           {
             module_id: "addiction",
@@ -137,6 +137,112 @@ function createApiFetchMock() {
           },
           windowed: null,
           robustness: null,
+        },
+        sleep: {
+          l3_gate: {
+            model_id: "leloup_goldbeter_1998_two_process_v1",
+            model_level: "L3",
+            parameter_manifest_sha256: "l3sha",
+            overall_passed: true,
+            gates: {
+              dd_free_running_and_convergence: {
+                passed: true,
+                tau_dd_coarse_h: 24.1346,
+                tau_dd_sd_h: 1e-5,
+                tau_dd_fine_h: 24.1346,
+                convergence_abs_diff_h: 0.0,
+              },
+              ld12_12_entrainment: {
+                passed: true,
+                tau_ld_h: 24.0171,
+                zt_peak_mean_h: 21.4539,
+                zt_peak_sd_h: 0.0295,
+              },
+              light_pulse_prc: {
+                passed: true,
+                max_abs_daytime_dead_zone_h: 0.0035,
+                max_early_night_delay_h: -2.3591,
+                late_night_ct21_advance_h: 2.3431,
+                curve: [
+                  {
+                    ct_hours: 15,
+                    pulse_start_h: 39.08,
+                    pulse_end_h: 41.08,
+                    phase_shift_h: -2.3591,
+                    direction: "delay",
+                  },
+                  {
+                    ct_hours: 21,
+                    pulse_start_h: 45.12,
+                    pulse_end_h: 47.12,
+                    phase_shift_h: 2.3431,
+                    direction: "advance",
+                  },
+                ],
+              },
+              homeostatic_deprivation_rebound: {
+                passed: true,
+                baseline_s_peak: 0.7425,
+                deprivation_s_peak: 0.9283,
+                baseline_24h_recovery_rest_fraction: 0.5021,
+                deprivation_24h_recovery_rest_fraction: 0.6646,
+                recovery_rest_fraction_delta: 0.1625,
+                day9_washout_rest_fraction_delta: -0.0042,
+              },
+            },
+          },
+          l3_shift_work: {
+            model_id: "leloup_goldbeter_1998_two_process_v1",
+            parameter_manifest_sha256: "l3sha",
+            gate_overall_passed: true,
+            arms: {
+              rotating_shift_8h: {
+                arm_id: "rotating_shift_8h",
+                duration_h: 384,
+                s_peak_overall: 0.7419,
+                s_mean_post_onset: 0.5116,
+                modeled_rest_fraction_post_onset: 0.4991,
+                max_abs_phase_error_h: 10.814,
+                days_to_reentrain: null,
+              },
+            },
+          },
+          pilot: {
+            protocol_id: "P5-SLEEP-001-PILOT",
+            dataset_id: "malecns_v1_0",
+            total_runs: 24,
+            succeeded_run_count: 24,
+            failed_run_count: 0,
+            sham_count: 3,
+            sham_max_spikes: 0,
+            wall_total_s: 4700.87,
+            run_wall_mean_s: 195.87,
+            git_commits: ["b752e87"],
+            cohort_stim_mean_hz: {
+              tutub_b_interneuron: { light_day_baseline: 160.33, light_plus_clock_dn1p_drive: 141.67 },
+              tubu01_relay: { light_day_baseline: 2.07, shift_light_misaligned_clock_debt: 9.87 },
+              exr1_helicon: { light_day_baseline: 0.0, shift_light_misaligned_clock_debt: 3.83 },
+              er5_sleep_homeostat: { light_day_baseline: 0.0, shift_light_misaligned_clock_debt: 2.83 },
+            },
+            contrasts: [
+              {
+                contrast_name: "analysis_22794_clock_vs_base",
+                neuron_id: "22794",
+                baseline_condition: "light_day_baseline",
+                treatment_condition: "light_plus_clock_dn1p_drive",
+                n_pairs: 3,
+                failed_run_count: 0,
+                baseline_mean_hz: 102.083,
+                baseline_sd_hz: 2.602,
+                treatment_mean_hz: 89.167,
+                treatment_sd_hz: 2.602,
+                mean_difference_hz: -12.917,
+                sd_difference_hz: 4.507,
+                bootstrap_ci95_low_hz: -18.75,
+                bootstrap_ci95_high_hz: -8.75,
+              },
+            ],
+          },
         },
       });
     }
@@ -218,12 +324,23 @@ function createApiFetchMock() {
           {
             model_id: "shiu2024_lif",
             model_revision: "1.0",
+            model_level: "L1",
             parameter_manifest_sha256: "abc",
             solver: "linear",
             dt_s: 0.0001,
             dg_unless_refractory: true,
             parameter_source: "Shiu 2024",
             parameters: { v_rest_v: -0.052, w_syn_v: 0.000275 },
+          },
+          {
+            model_id: "leloup_goldbeter_1998_two_process_v1",
+            model_revision: "1.0",
+            model_level: "L3",
+            parameter_manifest_sha256: "l3sha",
+            solver: "RK45",
+            dt_s: 180.0,
+            parameter_source: "Leloup & Goldbeter 1998",
+            parameters: { tau_i_h: 8.76, tau_d_h: 9.51 },
           },
         ],
         backends: [
@@ -454,14 +571,17 @@ describe("SYNAPSE Research Workbench UI", () => {
     expect(window.localStorage.getItem("synapse.uiMode")).toBe("expert");
     expect(await screen.findByText(/128\.5 \/ 512 GB/)).toBeInTheDocument();
 
-    // Modules tab: real Pain, Metabolic, and Planned modules
+    // Modules tab: real Sleep, Pain, Metabolic, and Planned modules
     fireEvent.click(screen.getByRole("tab", { name: /Research Modules/ }));
     expect(await screen.findByText("120 / 120")).toBeInTheDocument();
     expect(screen.getByText("+20.667")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /Sleep · P5-SLEEP-001/ }));
+    expect(await screen.findByText(/24\.13/)).toBeInTheDocument();
+    expect(screen.getByText("-12.917")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: /Metabolic · P4-MET-001/ }));
     expect(await screen.findByText("+30.900")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: /Planned Modules/ }));
-    expect(screen.getByText(/Sleep & Circadian Regulation/)).toBeInTheDocument();
+    expect(screen.getByText(/Addiction & Reward Learning/)).toBeInTheDocument();
 
     // Datasets & Circuits tab: 64-bit string ID + confidence column + 3D/2D controls
     fireEvent.click(screen.getByRole("tab", { name: /Datasets & Circuits/ }));
@@ -472,8 +592,10 @@ describe("SYNAPSE Research Workbench UI", () => {
     expect(screen.getByText("0.98")).toBeInTheDocument();
     expect(screen.getByText("SYNTHETIC FIXTURE — NOT BIOLOGICAL DATA")).toBeInTheDocument();
 
-    // Models & Protocols tab: Quick Form -> Draft YAML Builder + Validate + disabled freeze button
+    // Models & Protocols tab: Quick Form -> Draft YAML Builder + L3 badge + Validate + disabled freeze button
     fireEvent.click(screen.getByRole("tab", { name: /Models & Protocols/ }));
+    expect(screen.getByText(/L3 ODE · solver: RK45/)).toBeInTheDocument();
+    expect(screen.queryByText(/dg=undefined/)).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Generate Draft YAML" }));
     fireEvent.click(screen.getByRole("button", { name: "Validate Draft YAML" }));
     expect(await screen.findByText(/DRAFT-TEST-001/)).toBeInTheDocument();
@@ -534,7 +656,9 @@ describe("SYNAPSE Research Workbench UI", () => {
     expect(screen.getByRole("tab", { name: /Başlangıç/ })).toBeInTheDocument();
     expect(screen.getByRole("tab", { name: /Deney Özetleri/ })).toBeInTheDocument();
     expect(screen.getByRole("tab", { name: /3B Beyin Devresi/ })).toBeInTheDocument();
+    expect(screen.getByText("Uyku ve Biyolojik Saat Hikayesi (L3 + Erkek Beyin)")).toBeInTheDocument();
     expect(screen.getByText("Sade Bilimsel Terimler Sözlüğü")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Sirkadiyen Saat/ })).toBeInTheDocument();
     expect(document.documentElement.lang).toBe("tr");
     expect(window.localStorage.getItem("synapse.lang")).toBe("tr");
 

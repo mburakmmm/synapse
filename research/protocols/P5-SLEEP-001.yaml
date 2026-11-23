@@ -1,0 +1,931 @@
+schema_version: '1.0'
+protocol_id: P5-SLEEP-001
+revision: 1
+status: draft
+analysis_intent: confirmatory
+question: In adult male Drosophila MaleCNS v1.0, does dorsal clock DN1p driving suppress
+  anterior visual pathway TuTuB_b interneurons (22794, 520699) via DN1pB->TuBu01/TuTuB_b
+  glutamatergic edges beyond baseline and structurally matched cb_intrinsic GLUT controls,
+  and does misaligned 50 Hz light + DN1p drive recruit TuBu01 (114115), ExR1 (11886),
+  and ER5 (10043)?
+hypothesis: 'Confirmatory protocol (N=15 paired seeds, 120 runs) grounded in P5-SLEEP-001-PILOT:
+  DN1p activation suppresses bilateral TuTuB_b (22794, 520699) relative to baseline
+  and matched controls, masking DN1pB->TuBu01/TuTuB_b edges rescues TuTuB_b firing,
+  and 50 Hz light + DN1p drive elevates TuBu01 (114115), ExR1 (11886), and ER5 (10043);
+  30 Hz ER5-gain and ER5->ExR1 edge-mask remain null/secondary while EB inputs stay
+  sub-threshold at 30 Hz.'
+biological_unit: malecns_v1_0_single_male_specimen
+simulation_unit: paired_seed_run
+prior_exploratory_protocol:
+  protocol_id: P5-SLEEP-001-PILOT
+  protocol_sha256: e842943affc6fc854b1e5d8353f1b06c99cd9321046af872d8748d182c619715
+  replicates: 3
+  master_seed: 20261140
+  measured_mean_run_wall_s: 195.87
+  estimated_confirmatory_wall_hours_workers_3: 2.18
+sources:
+- dataset_id: malecns_v1_0
+  release: v1.0
+  manifest_sha256: 6df05f9f76e98e55f5e4f13e195ebd604ec41c644751c47a79f9855a92d5f496
+model:
+  id: synapse_lif_v1
+  revision: '1.0'
+  parameter_manifest_sha256: 33d49431529574cddc721a3628ed1c65ad2e36890e2720fe6ef921837348bece
+  backend: brian2_cpu
+  parameters:
+    v_rest_v: -0.052
+    v_reset_v: -0.052
+    v_threshold_v: -0.045
+    tau_m_s: 0.02
+    tau_syn_s: 0.005
+    t_ref_s: 0.0022
+    delay_s: 0.0018
+    w_syn_v: 0.000275
+    r_m_ohm: 10000000.0
+    dt_s: 0.0001
+    solver: exact
+    dg_unless_refractory: false
+    unknown_nt_policy: zero_effect
+    parameter_source: Reference Drosophila LIF defaults (Kakaria & de Bivort 2017;
+      Jurgensen et al. 2021; Lazar et al. 2021; Paul et al. 2015; Shiu et al. 2024)
+conditions:
+- id: sham_zero_stimulus
+  interventions:
+  - kind: sham
+    description: zero_stimulus_negative_control
+- id: light_day_baseline
+  interventions:
+  - kind: poisson_rate
+    target_neuron_ids:
+    - '100539'
+    - '103726'
+    - '105429'
+    - '109349'
+    - '118422'
+    - '135412'
+    - '138690'
+    - '146041'
+    - '166910'
+    - '169700'
+    - '176189'
+    - '176374'
+    - '182783'
+    - '184249'
+    - '188896'
+    - '27602'
+    - '32635'
+    - '46132'
+    - '49764'
+    - '514217'
+    - '53000'
+    - '542767'
+    - '55472'
+    - '55491'
+    - '57232'
+    - '57333'
+    - '57913'
+    - '580433'
+    - '580945'
+    - '58400'
+    - '58509'
+    - '59101'
+    - '59537'
+    - '60277'
+    - '60548'
+    - '60659'
+    - '61793'
+    - '62565'
+    - '62723'
+    - '62804'
+    - '62946'
+    - '63044'
+    - '63769'
+    - '65028'
+    - '65847'
+    - '65887'
+    - '66080'
+    - '66504'
+    - '67604'
+    - '68630'
+    - '69551'
+    - '69764'
+    - '69932'
+    - '70034'
+    - '70229'
+    - '70790'
+    - '71221'
+    - '73968'
+    - '77001'
+    - '78507'
+    - '79514'
+    - '81408'
+    - '82467'
+    - '82909'
+    - '84592'
+    - '86375'
+    - '87861'
+    - '88947'
+    - '92853'
+    - '99123'
+    rate_hz: 30.0
+    weight_v: 0.06875
+    start_s: 0.1
+    end_s: 0.6
+    disable_refractory: true
+  - kind: poisson_rate
+    target_neuron_ids:
+    - '12211'
+    - '12517'
+    - '12737'
+    - '12740'
+    - '13190'
+    - '532334'
+    rate_hz: 40.0
+    weight_v: 0.06875
+    start_s: 0.1
+    end_s: 0.6
+    disable_refractory: true
+- id: light_plus_clock_dn1p_drive
+  interventions:
+  - kind: poisson_rate
+    target_neuron_ids:
+    - '100539'
+    - '103726'
+    - '105429'
+    - '109349'
+    - '118422'
+    - '135412'
+    - '138690'
+    - '146041'
+    - '166910'
+    - '169700'
+    - '176189'
+    - '176374'
+    - '182783'
+    - '184249'
+    - '188896'
+    - '27602'
+    - '32635'
+    - '46132'
+    - '49764'
+    - '514217'
+    - '53000'
+    - '542767'
+    - '55472'
+    - '55491'
+    - '57232'
+    - '57333'
+    - '57913'
+    - '580433'
+    - '580945'
+    - '58400'
+    - '58509'
+    - '59101'
+    - '59537'
+    - '60277'
+    - '60548'
+    - '60659'
+    - '61793'
+    - '62565'
+    - '62723'
+    - '62804'
+    - '62946'
+    - '63044'
+    - '63769'
+    - '65028'
+    - '65847'
+    - '65887'
+    - '66080'
+    - '66504'
+    - '67604'
+    - '68630'
+    - '69551'
+    - '69764'
+    - '69932'
+    - '70034'
+    - '70229'
+    - '70790'
+    - '71221'
+    - '73968'
+    - '77001'
+    - '78507'
+    - '79514'
+    - '81408'
+    - '82467'
+    - '82909'
+    - '84592'
+    - '86375'
+    - '87861'
+    - '88947'
+    - '92853'
+    - '99123'
+    rate_hz: 30.0
+    weight_v: 0.06875
+    start_s: 0.1
+    end_s: 0.6
+    disable_refractory: true
+  - kind: poisson_rate
+    target_neuron_ids:
+    - '12211'
+    - '12517'
+    - '12737'
+    - '12740'
+    - '13190'
+    - '532334'
+    rate_hz: 40.0
+    weight_v: 0.06875
+    start_s: 0.1
+    end_s: 0.6
+    disable_refractory: true
+  - kind: poisson_rate
+    target_neuron_ids:
+    - '110366'
+    - '15016'
+    - '15546'
+    - '16696'
+    - '19151'
+    - '28711'
+    - '31303'
+    - '35381'
+    - '39159'
+    - '41049'
+    - '42491'
+    - '45390'
+    rate_hz: 40.0
+    weight_v: 0.06875
+    start_s: 0.1
+    end_s: 0.6
+    disable_refractory: true
+- id: light_plus_matched_ctrl_clock_drive
+  interventions:
+  - kind: poisson_rate
+    target_neuron_ids:
+    - '100539'
+    - '103726'
+    - '105429'
+    - '109349'
+    - '118422'
+    - '135412'
+    - '138690'
+    - '146041'
+    - '166910'
+    - '169700'
+    - '176189'
+    - '176374'
+    - '182783'
+    - '184249'
+    - '188896'
+    - '27602'
+    - '32635'
+    - '46132'
+    - '49764'
+    - '514217'
+    - '53000'
+    - '542767'
+    - '55472'
+    - '55491'
+    - '57232'
+    - '57333'
+    - '57913'
+    - '580433'
+    - '580945'
+    - '58400'
+    - '58509'
+    - '59101'
+    - '59537'
+    - '60277'
+    - '60548'
+    - '60659'
+    - '61793'
+    - '62565'
+    - '62723'
+    - '62804'
+    - '62946'
+    - '63044'
+    - '63769'
+    - '65028'
+    - '65847'
+    - '65887'
+    - '66080'
+    - '66504'
+    - '67604'
+    - '68630'
+    - '69551'
+    - '69764'
+    - '69932'
+    - '70034'
+    - '70229'
+    - '70790'
+    - '71221'
+    - '73968'
+    - '77001'
+    - '78507'
+    - '79514'
+    - '81408'
+    - '82467'
+    - '82909'
+    - '84592'
+    - '86375'
+    - '87861'
+    - '88947'
+    - '92853'
+    - '99123'
+    rate_hz: 30.0
+    weight_v: 0.06875
+    start_s: 0.1
+    end_s: 0.6
+    disable_refractory: true
+  - kind: poisson_rate
+    target_neuron_ids:
+    - '12211'
+    - '12517'
+    - '12737'
+    - '12740'
+    - '13190'
+    - '532334'
+    rate_hz: 40.0
+    weight_v: 0.06875
+    start_s: 0.1
+    end_s: 0.6
+    disable_refractory: true
+  - kind: poisson_rate
+    target_neuron_ids:
+    - '39966'
+    - '19008'
+    - '22843'
+    - '537659'
+    - '34223'
+    - '69895'
+    - '66895'
+    - '43215'
+    - '62169'
+    - '152959'
+    - '34410'
+    - '45555'
+    rate_hz: 40.0
+    weight_v: 0.06875
+    start_s: 0.1
+    end_s: 0.6
+    disable_refractory: true
+- id: light_plus_dn1p_avp_edge_mask
+  interventions:
+  - kind: poisson_rate
+    target_neuron_ids:
+    - '100539'
+    - '103726'
+    - '105429'
+    - '109349'
+    - '118422'
+    - '135412'
+    - '138690'
+    - '146041'
+    - '166910'
+    - '169700'
+    - '176189'
+    - '176374'
+    - '182783'
+    - '184249'
+    - '188896'
+    - '27602'
+    - '32635'
+    - '46132'
+    - '49764'
+    - '514217'
+    - '53000'
+    - '542767'
+    - '55472'
+    - '55491'
+    - '57232'
+    - '57333'
+    - '57913'
+    - '580433'
+    - '580945'
+    - '58400'
+    - '58509'
+    - '59101'
+    - '59537'
+    - '60277'
+    - '60548'
+    - '60659'
+    - '61793'
+    - '62565'
+    - '62723'
+    - '62804'
+    - '62946'
+    - '63044'
+    - '63769'
+    - '65028'
+    - '65847'
+    - '65887'
+    - '66080'
+    - '66504'
+    - '67604'
+    - '68630'
+    - '69551'
+    - '69764'
+    - '69932'
+    - '70034'
+    - '70229'
+    - '70790'
+    - '71221'
+    - '73968'
+    - '77001'
+    - '78507'
+    - '79514'
+    - '81408'
+    - '82467'
+    - '82909'
+    - '84592'
+    - '86375'
+    - '87861'
+    - '88947'
+    - '92853'
+    - '99123'
+    rate_hz: 30.0
+    weight_v: 0.06875
+    start_s: 0.1
+    end_s: 0.6
+    disable_refractory: true
+  - kind: poisson_rate
+    target_neuron_ids:
+    - '12211'
+    - '12517'
+    - '12737'
+    - '12740'
+    - '13190'
+    - '532334'
+    rate_hz: 40.0
+    weight_v: 0.06875
+    start_s: 0.1
+    end_s: 0.6
+    disable_refractory: true
+  - kind: poisson_rate
+    target_neuron_ids:
+    - '110366'
+    - '15016'
+    - '15546'
+    - '16696'
+    - '19151'
+    - '28711'
+    - '31303'
+    - '35381'
+    - '39159'
+    - '41049'
+    - '42491'
+    - '45390'
+    rate_hz: 40.0
+    weight_v: 0.06875
+    start_s: 0.1
+    end_s: 0.6
+    disable_refractory: true
+  - kind: edge_mask
+    pre_neuron_ids:
+    - '15016'
+    - '15546'
+    - '16696'
+    - '28711'
+    post_neuron_ids:
+    - '114115'
+    - '117471'
+    - '14474'
+    - '22794'
+    - '47208'
+    - '47442'
+    - '49818'
+    - '520699'
+    - '529575'
+    - '544006'
+    - '67782'
+    - '73500'
+    factor: 0.0
+- id: light_plus_er5_high_homeostat_gain
+  interventions:
+  - kind: poisson_rate
+    target_neuron_ids:
+    - '100539'
+    - '103726'
+    - '105429'
+    - '109349'
+    - '118422'
+    - '135412'
+    - '138690'
+    - '146041'
+    - '166910'
+    - '169700'
+    - '176189'
+    - '176374'
+    - '182783'
+    - '184249'
+    - '188896'
+    - '27602'
+    - '32635'
+    - '46132'
+    - '49764'
+    - '514217'
+    - '53000'
+    - '542767'
+    - '55472'
+    - '55491'
+    - '57232'
+    - '57333'
+    - '57913'
+    - '580433'
+    - '580945'
+    - '58400'
+    - '58509'
+    - '59101'
+    - '59537'
+    - '60277'
+    - '60548'
+    - '60659'
+    - '61793'
+    - '62565'
+    - '62723'
+    - '62804'
+    - '62946'
+    - '63044'
+    - '63769'
+    - '65028'
+    - '65847'
+    - '65887'
+    - '66080'
+    - '66504'
+    - '67604'
+    - '68630'
+    - '69551'
+    - '69764'
+    - '69932'
+    - '70034'
+    - '70229'
+    - '70790'
+    - '71221'
+    - '73968'
+    - '77001'
+    - '78507'
+    - '79514'
+    - '81408'
+    - '82467'
+    - '82909'
+    - '84592'
+    - '86375'
+    - '87861'
+    - '88947'
+    - '92853'
+    - '99123'
+    rate_hz: 30.0
+    weight_v: 0.06875
+    start_s: 0.1
+    end_s: 0.6
+    disable_refractory: true
+  - kind: poisson_rate
+    target_neuron_ids:
+    - '12211'
+    - '12517'
+    - '12737'
+    - '12740'
+    - '13190'
+    - '532334'
+    rate_hz: 40.0
+    weight_v: 0.06875
+    start_s: 0.1
+    end_s: 0.6
+    disable_refractory: true
+  - kind: edge_gain_modulation
+    target_neuron_ids:
+    - '10043'
+    - '11605'
+    - '12059'
+    - '14284'
+    - '14963'
+    - '17078'
+    - '17171'
+    - '18633'
+    - '19072'
+    - '20026'
+    - '22001'
+    - '30206'
+    - '39798'
+    - '44909'
+    - '513379'
+    - '516944'
+    - '521528'
+    - '521534'
+    - '521535'
+    - '527297'
+    - '568502'
+    scope: outgoing
+    factor: 1.5
+- id: light_plus_er5_exr1_edge_mask
+  interventions:
+  - kind: poisson_rate
+    target_neuron_ids:
+    - '100539'
+    - '103726'
+    - '105429'
+    - '109349'
+    - '118422'
+    - '135412'
+    - '138690'
+    - '146041'
+    - '166910'
+    - '169700'
+    - '176189'
+    - '176374'
+    - '182783'
+    - '184249'
+    - '188896'
+    - '27602'
+    - '32635'
+    - '46132'
+    - '49764'
+    - '514217'
+    - '53000'
+    - '542767'
+    - '55472'
+    - '55491'
+    - '57232'
+    - '57333'
+    - '57913'
+    - '580433'
+    - '580945'
+    - '58400'
+    - '58509'
+    - '59101'
+    - '59537'
+    - '60277'
+    - '60548'
+    - '60659'
+    - '61793'
+    - '62565'
+    - '62723'
+    - '62804'
+    - '62946'
+    - '63044'
+    - '63769'
+    - '65028'
+    - '65847'
+    - '65887'
+    - '66080'
+    - '66504'
+    - '67604'
+    - '68630'
+    - '69551'
+    - '69764'
+    - '69932'
+    - '70034'
+    - '70229'
+    - '70790'
+    - '71221'
+    - '73968'
+    - '77001'
+    - '78507'
+    - '79514'
+    - '81408'
+    - '82467'
+    - '82909'
+    - '84592'
+    - '86375'
+    - '87861'
+    - '88947'
+    - '92853'
+    - '99123'
+    rate_hz: 30.0
+    weight_v: 0.06875
+    start_s: 0.1
+    end_s: 0.6
+    disable_refractory: true
+  - kind: poisson_rate
+    target_neuron_ids:
+    - '12211'
+    - '12517'
+    - '12737'
+    - '12740'
+    - '13190'
+    - '532334'
+    rate_hz: 40.0
+    weight_v: 0.06875
+    start_s: 0.1
+    end_s: 0.6
+    disable_refractory: true
+  - kind: edge_mask
+    pre_neuron_ids:
+    - '10043'
+    - '11605'
+    - '12059'
+    - '14284'
+    - '14963'
+    - '17078'
+    - '17171'
+    - '18633'
+    - '19072'
+    - '20026'
+    - '22001'
+    - '30206'
+    - '39798'
+    - '44909'
+    - '513379'
+    - '516944'
+    - '521528'
+    - '521534'
+    - '521535'
+    - '527297'
+    - '568502'
+    post_neuron_ids:
+    - '10324'
+    - '11433'
+    - '11886'
+    - '12656'
+    factor: 0.0
+- id: shift_light_misaligned_clock_debt
+  interventions:
+  - kind: poisson_rate
+    target_neuron_ids:
+    - '100539'
+    - '103726'
+    - '105429'
+    - '109349'
+    - '118422'
+    - '135412'
+    - '138690'
+    - '146041'
+    - '166910'
+    - '169700'
+    - '176189'
+    - '176374'
+    - '182783'
+    - '184249'
+    - '188896'
+    - '27602'
+    - '32635'
+    - '46132'
+    - '49764'
+    - '514217'
+    - '53000'
+    - '542767'
+    - '55472'
+    - '55491'
+    - '57232'
+    - '57333'
+    - '57913'
+    - '580433'
+    - '580945'
+    - '58400'
+    - '58509'
+    - '59101'
+    - '59537'
+    - '60277'
+    - '60548'
+    - '60659'
+    - '61793'
+    - '62565'
+    - '62723'
+    - '62804'
+    - '62946'
+    - '63044'
+    - '63769'
+    - '65028'
+    - '65847'
+    - '65887'
+    - '66080'
+    - '66504'
+    - '67604'
+    - '68630'
+    - '69551'
+    - '69764'
+    - '69932'
+    - '70034'
+    - '70229'
+    - '70790'
+    - '71221'
+    - '73968'
+    - '77001'
+    - '78507'
+    - '79514'
+    - '81408'
+    - '82467'
+    - '82909'
+    - '84592'
+    - '86375'
+    - '87861'
+    - '88947'
+    - '92853'
+    - '99123'
+    rate_hz: 50.0
+    weight_v: 0.06875
+    start_s: 0.1
+    end_s: 0.6
+    disable_refractory: true
+  - kind: poisson_rate
+    target_neuron_ids:
+    - '12211'
+    - '12517'
+    - '12737'
+    - '12740'
+    - '13190'
+    - '532334'
+    rate_hz: 50.0
+    weight_v: 0.06875
+    start_s: 0.1
+    end_s: 0.6
+    disable_refractory: true
+  - kind: poisson_rate
+    target_neuron_ids:
+    - '110366'
+    - '15016'
+    - '15546'
+    - '16696'
+    - '19151'
+    - '28711'
+    - '31303'
+    - '35381'
+    - '39159'
+    - '41049'
+    - '42491'
+    - '45390'
+    rate_hz: 40.0
+    weight_v: 0.06875
+    start_s: 0.1
+    end_s: 0.6
+    disable_refractory: true
+  - kind: edge_gain_modulation
+    target_neuron_ids:
+    - '10043'
+    - '11605'
+    - '12059'
+    - '14284'
+    - '14963'
+    - '17078'
+    - '17171'
+    - '18633'
+    - '19072'
+    - '20026'
+    - '22001'
+    - '30206'
+    - '39798'
+    - '44909'
+    - '513379'
+    - '516944'
+    - '521528'
+    - '521534'
+    - '521535'
+    - '527297'
+    - '568502'
+    scope: outgoing
+    factor: 1.5
+stimulus_schedule:
+  duration_s: 0.8
+  pre_window_s:
+  - 0.0
+  - 0.1
+  stim_window_s:
+  - 0.1
+  - 0.6
+  post_window_s:
+  - 0.6
+  - 0.8
+  stimuli: []
+measurement_window:
+  start_s: 0.0
+  end_s: 0.8
+seeds:
+  strategy: paired
+  master: 20261141
+  replicates: 15
+analysis:
+  primary_endpoint: tutubb_22794_520699_tubu01_114115_and_exr1_11886_mean_firing_rate_hz
+  estimand: paired_condition_difference_hz_N15
+  primary_contrasts:
+  - neuron_id: '22794'
+    baseline: light_day_baseline
+    treatment: light_plus_clock_dn1p_drive
+  - neuron_id: '22794'
+    baseline: light_plus_matched_ctrl_clock_drive
+    treatment: light_plus_clock_dn1p_drive
+  - neuron_id: '22794'
+    baseline: light_plus_clock_dn1p_drive
+    treatment: light_plus_dn1p_avp_edge_mask
+  - neuron_id: '520699'
+    baseline: light_day_baseline
+    treatment: light_plus_clock_dn1p_drive
+  - neuron_id: '114115'
+    baseline: light_day_baseline
+    treatment: shift_light_misaligned_clock_debt
+  - neuron_id: '11886'
+    baseline: light_day_baseline
+    treatment: shift_light_misaligned_clock_debt
+  secondary_endpoints:
+  - '10043'
+  - '47208'
+  - '544006'
+  - '10324'
+  - light_plus_er5_high_homeostat_gain_30hz
+  - light_plus_er5_exr1_edge_mask_30hz
+  uncertainty_method: percentile_bootstrap_2000_paired_permutation_10000
+  multiplicity_policy: benjamini_hochberg_fdr_across_6_primary_contrasts_q_lt_0.01
+  exclusion_policy: zero_posthoc_filtering_all_failed_runs_reported_explicitly
+  acceptance_criteria: 120/120 succeeded runs (failed_run_count == 0), sham == 0 total
+    spikes, primary BH-FDR q < 0.01 with bidirectional DN1pB->TuTuB_b gating & 50Hz
+    shift activation, and honest reporting of 30Hz ER5/ExR1 null conditions
+resources:
+  max_wall_seconds: 600.0
+  max_output_bytes: 1073741824

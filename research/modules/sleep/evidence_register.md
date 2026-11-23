@@ -1,0 +1,34 @@
+# Evidence Register: `sleep` (`P5-SLEEP-001`)
+
+> **Research Use Only (RUO):** Every L3 equation, parameter, and L1 `malecns_v1_0` cell-cohort query traces exclusively to peer-reviewed literature (`peer_review_status: peer_reviewed`) and curated local connectome tables. Modeled quiescence states and LIF firing rates are strictly model proxies, not validated behavioral sleep or clinical diagnoses (`AGENTS.md` §1, §2, §10).
+
+## Verified Peer-Reviewed Literature (`research/literature/source_register.yaml`)
+
+| Ref ID | Citation & Identifiers | Review Status | Role in `P5-SLEEP-001` |
+|---|---|---|---|
+| `leloup1998_jbr` | Leloup JC, Goldbeter A (1998), *J Biol Rhythms* 13(1):70–87 · DOI: [`10.1177/074873098128999934`](https://doi.org/10.1177/074873098128999934) · PMID `9486845` · BioModels `BIOMD0000000021` | Peer-reviewed | Exact 10-ODE *Drosophila* `PER/TIM` intracellular circadian pacemaker with light-accelerated `TIM` degradation (`v_dT_light = 4.0 nM/h` vs. `2.0` dark). |
+| `borbely1982_humneurobiol` | Borbély AA (1982), *Hum Neurobiol* 1(3):195–204 · PMID `7185792` | Peer-reviewed | Foundational two-process sleep-wake regulation framework separating homeostatic pressure (`S`) from circadian gating (`C`). |
+| `daan1984_ajpregu` | Daan S, Beersma DGM, Borbély AA (1984), *Am J Physiol* 246(2):R161–R183 · DOI: [`10.1152/ajpregu.1984.246.2.R161`](https://doi.org/10.1152/ajpregu.1984.246.2.R161) · PMID `6696142` | Peer-reviewed | Exponential Process `S` accumulation/dissipation gated between circadian upper (`U`) and lower (`L`) hysteresis thresholds. |
+| `abhilash2024_sleep` | Abhilash L, Shafer OT (2024), *Sleep* 47(1):zsad277 · DOI: [`10.1093/sleep/zsad277`](https://doi.org/10.1093/sleep/zsad277) · PMID `37930351` · PMCID `PMC11275470` | Peer-reviewed | Wild-type *Drosophila* two-process fit supplying LD buildup (`tau_i = 8.76 h`) and dissipation (`tau_d = 9.51 h`) constants. |
+| `shaw2000_science` | Shaw PJ, Cirelli C, Greenspan RJ, Tononi G (2000), *Science* 287(5459):1834–1837 · DOI: [`10.1126/science.287.5459.1834`](https://doi.org/10.1126/science.287.5459.1834) · PMID `10710313` | Peer-reviewed | Establishes homeostatic quiescence rebound after forced wakefulness in adult *Drosophila*. |
+| `liu2016_cell` | Liu S, Liu QL, Tabuchi M, Wu MN (2016), *Cell* 165(6):1347–1360 · DOI: [`10.1016/j.cell.2016.04.013`](https://doi.org/10.1016/j.cell.2016.04.013) · PMID `27212237` | Peer-reviewed | Identifies ellipsoid body `ER5` (`R5`/`R2`) ring neurons as a core sleep-drive integrator circuit. |
+| `donlea2018_neuron` | Donlea JM, Pimentel D, Talbot CB, Kempf A, Omoto JJ, Hartenstein V, Miesenböck G (2018), *Neuron* 97(2):378–389.e4 · DOI: [`10.1016/j.neuron.2017.12.016`](https://doi.org/10.1016/j.neuron.2017.12.016) · PMID `29307711` | Peer-reviewed | Establishes recurrent excitation-inhibition coupling between `ExR1` helicon cells and central sleep-control neurons. |
+| `guo2018_neuron` | Guo F, Holla M, Diaz MM, Rosbash M (2018), *Neuron* 100(3):624–635.e4 · DOI: [`10.1016/j.neuron.2018.09.002`](https://doi.org/10.1016/j.neuron.2018.09.002) · PMID `30269992` | Peer-reviewed | Maps the `DN1p -> TuBu -> EB` circadian arousal output pathway. |
+| `lamaze2018_currbiol` | Lamaze A, Krätschmer P, Chen KH, Lowe S, Jepson JEC (2018), *Curr Biol* 28(19):3098–3105.e3 · DOI: [`10.1016/j.cub.2018.07.024`](https://doi.org/10.1016/j.cub.2018.07.024) · PMID `30270186` | Peer-reviewed | Demonstrates wake-promoting `DN1p -> TuBu01 -> EB` signaling modulating activity timing. |
+| `hulse2021_elife` | Hulse BK et al. (2021), *eLife* 10:e66039 · DOI: [`10.7554/eLife.66039`](https://doi.org/10.7554/eLife.66039) · PMID `34696823` · PMCID `PMC9477501` | Peer-reviewed | Central complex connectome detailing `ER5 <-> ExR1`, `TuBu01`/`06`, and `EPG` compass loops. |
+| `reinhard2024_natcomm` | Reinhard N et al. (2024), *Nat Commun* 15:10398 · DOI: [`10.1038/s41467-024-54694-0`](https://doi.org/10.1038/s41467-024-54694-0) · PMID `39638848` · PMCID `PMC11624233` | Peer-reviewed | Clock connectome establishing `aMe12`, `5thsLNv_LNd6`, `LNd_b`, and `DN1p` synaptic hierarchy. |
+
+## Quantitative Correspondence in `malecns_v1_0` (`sleep001_malecns_v1_targets.json`)
+
+- **Specimen:** Adult male CNS `malecns_v1_0` (`211,577` bodies, `26,028,386` edges; manifest `6df05f9f76e98e55f5e4f13e195ebd604ec41c644751c47a79f9855a92d5f496`, graph `ef5324051bbaaf960cc12754f1017b14700dc725c2c85e5afce75fb5a45256ce`; never pooled with female FlyWire).
+- **Light-Input Pathways:** `MeTu2a` (`70` `ACH`) -> `TuBu01` (`2,884` syn / `147` edges), `TuBu06` (`3,970` syn / `162` edges), and `TuTuB_b` (`4,000` syn / `140` edges); `aMe12` (`6` `ACH`) -> `5thsLNv_LNd6` (`591` syn / `24` edges).
+- **Clock Output Core (`12` `GLUT`):** `DN1pA` (`8` `GLUT`) -> `5thsLNv_LNd6` (`1,212` syn / `32` edges) & `LNd_b` (`409` syn / `32` edges); `DN1pB` (`4` `GLUT`) -> `TuBu01` (`463` syn / `18` edges) & `TuTuB_b` (`474` syn / `8` edges).
+- **EB Sleep-Homeostat / Compass Loops:** `TuBu01 -> ExR1` (`1,046` syn / `40` edges); `TuBu06 -> ER5` (`1,734` syn / `55` edges) & `ExR1` (`779` syn / `40` edges); `ExR1 -> ER5` (`5,624` syn / `84` edges); `ER5 -> ExR1` (`10,044` syn / `84` edges); `ER5 -> ER5` (`15,478` syn / `420` edges); `ExR1 -> EPG` (`6,272` syn / `184` edges); `ER5 -> EPG` (`3,222` syn / `781` edges).
+- **Matched Clock Control (`12` `cb_intrinsic` `GLUT`, seed `20261140`):** `max|SMD| = 0.0304`, with `0` direct edges and `0` synapses onto `TuBu01`, `TuBu06`, `TuTuB_b`, `ExR1`, `ER5`, `5thsLNv_LNd6`, `LNd_b`, or `EPG`.
+
+## Declared Evidence & Model Gaps (`AGENTS.md` §2, §10)
+
+1. **Neuropeptides & Monoamines Carry `0.0` Synaptic Weight in L1:** `l-LNv` (`8` bodies, `UNKNOWN`), `SIFa`/`DNc01`/`DNc02` (`UNKNOWN`), `HBeyelet` (`7` `HIST`), `ExR3` (`2` `SER`), and dopaminergic/octopaminergic inputs carry `0.0` weight under `unknown_nt_policy = "zero_effect"` in `synapse_lif_v1`; peptidergic `PDF`/`DH31`/`AstA` modulation and NMDA-dependent `ER5` potentiation are excluded from L1.
+2. **`dFB` (`FB6*`) Indirect Coupling Only:** Direct `ER5 -> FB6*` structural edges sum to `0` (`ExR1 -> FB6*` = `58` syn), so `P5-SLEEP-001` isolates the verified `DN1p / MeTu2a / aMe12 / TuBu / ExR1 <-> ER5 -> EPG` segment rather than assuming unmodeled neuromodulatory coupling to dorsal fan-shaped body.
+3. **`ER5` Uniqueness Prevents Generic `GABA` Ablation Control:** `ER5` averages `1,923.7` outgoing synapses across `112.1` partners (~`17.2` synapses/edge), yielding `|SMD| > 2.2` against matched `cb_intrinsic` `GABA` or non-`ER5` `ER*` ring neurons; specificity of `ER5` suppression on `ExR1` is therefore tested using pathway-selective `EdgeMaskModulation` alongside matched-control `DN1p` perturbations.
+4. **Modeled Quiescence != Behavioral Sleep:** L3 Process `S` quiescence state and L1 spike-rate changes remain conditional mathematical proxies on a single male connectome.

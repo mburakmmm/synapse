@@ -1,0 +1,533 @@
+{
+  "schema_version": "1.0",
+  "target_set_id": "SLEEP001_MALECNS_V1_CIRCADIAN_AVP_HOME0",
+  "source_dataset_id": "malecns_v1_0",
+  "source_dataset_release": "v1.0",
+  "source_specimen_id": "malecns_male_01",
+  "dataset_manifest_sha256": "6df05f9f76e98e55f5e4f13e195ebd604ec41c644751c47a79f9855a92d5f496",
+  "graph_sha256": "ef5324051bbaaf960cc12754f1017b14700dc725c2c85e5afce75fb5a45256ce",
+  "matched_control_seed": 20261140,
+  "exclude_1hop_downstream_of_targets": false,
+  "candidate_pool_per_target": 200,
+  "target_selection_rule": "All annotated malecns_v1_0 bodies matching canonical circadian clock, AOTU light-relay, and EB sleep-homeostat cell types (MeTu2a ACH, aMe12 ACH, DN1pA GLUT, DN1pB GLUT, TuBu01 ACH, TuBu06 ACH, TuTuB_b GLUT, ExR1 ACH, ER5 GABA, EPG ACH, 5thsLNv_LNd6 ACH, LNd_b ACH)",
+  "control_selection_rule": "1-to-1 Hungarian matching (scipy linear_sum_assignment) on standardized log1p(out_degree, out_synapses, in_degree, in_synapses) among superclass=='cb_intrinsic' NT=='GLUT' excluding sleep/clock core nodes and all 1-hop presynaptic partners of TuBu01, TuBu06, TuTuB_b, ExR1, ER5, 5thsLNv_LNd6, and LNd_b",
+  "metu2a_light_avp": [
+    "100539",
+    "103726",
+    "105429",
+    "109349",
+    "118422",
+    "135412",
+    "138690",
+    "146041",
+    "166910",
+    "169700",
+    "176189",
+    "176374",
+    "182783",
+    "184249",
+    "188896",
+    "27602",
+    "32635",
+    "46132",
+    "49764",
+    "514217",
+    "53000",
+    "542767",
+    "55472",
+    "55491",
+    "57232",
+    "57333",
+    "57913",
+    "580433",
+    "580945",
+    "58400",
+    "58509",
+    "59101",
+    "59537",
+    "60277",
+    "60548",
+    "60659",
+    "61793",
+    "62565",
+    "62723",
+    "62804",
+    "62946",
+    "63044",
+    "63769",
+    "65028",
+    "65847",
+    "65887",
+    "66080",
+    "66504",
+    "67604",
+    "68630",
+    "69551",
+    "69764",
+    "69932",
+    "70034",
+    "70229",
+    "70790",
+    "71221",
+    "73968",
+    "77001",
+    "78507",
+    "79514",
+    "81408",
+    "82467",
+    "82909",
+    "84592",
+    "86375",
+    "87861",
+    "88947",
+    "92853",
+    "99123"
+  ],
+  "ame12_light_clock": [
+    "12211",
+    "12517",
+    "12737",
+    "12740",
+    "13190",
+    "532334"
+  ],
+  "dn1pa_clock": [
+    "110366",
+    "19151",
+    "31303",
+    "35381",
+    "39159",
+    "41049",
+    "42491",
+    "45390"
+  ],
+  "dn1pb_clock": [
+    "15016",
+    "15546",
+    "16696",
+    "28711"
+  ],
+  "dn1p_all_clock": [
+    "110366",
+    "15016",
+    "15546",
+    "16696",
+    "19151",
+    "28711",
+    "31303",
+    "35381",
+    "39159",
+    "41049",
+    "42491",
+    "45390"
+  ],
+  "matched_cb_glut_controls": [
+    "39966",
+    "19008",
+    "22843",
+    "537659",
+    "34223",
+    "69895",
+    "66895",
+    "43215",
+    "62169",
+    "152959",
+    "34410",
+    "45555"
+  ],
+  "tubu01_relay": [
+    "114115",
+    "117471",
+    "14474",
+    "47208",
+    "47442",
+    "49818",
+    "529575",
+    "544006",
+    "67782",
+    "73500"
+  ],
+  "tubu06_relay": [
+    "112789",
+    "114443",
+    "115785",
+    "132110",
+    "158930",
+    "27582",
+    "529576",
+    "530505",
+    "67685",
+    "88849"
+  ],
+  "tutub_b_interneuron": [
+    "22794",
+    "520699"
+  ],
+  "exr1_helicon": [
+    "10324",
+    "11433",
+    "11886",
+    "12656"
+  ],
+  "er5_sleep_homeostat": [
+    "10043",
+    "11605",
+    "12059",
+    "14284",
+    "14963",
+    "17078",
+    "17171",
+    "18633",
+    "19072",
+    "20026",
+    "22001",
+    "30206",
+    "39798",
+    "44909",
+    "513379",
+    "516944",
+    "521528",
+    "521534",
+    "521535",
+    "527297",
+    "568502"
+  ],
+  "epg_compass": [
+    "10539",
+    "107195",
+    "11307",
+    "11503",
+    "11874",
+    "11987",
+    "11989",
+    "12449",
+    "131313",
+    "13217",
+    "14507",
+    "14727",
+    "15616",
+    "15713",
+    "16360",
+    "19125",
+    "19825",
+    "512305",
+    "512513",
+    "512514",
+    "512928",
+    "513033",
+    "513284",
+    "513463",
+    "513464",
+    "513517",
+    "513520",
+    "514126",
+    "515675",
+    "519140",
+    "519144",
+    "519328",
+    "519941",
+    "520581",
+    "520812",
+    "520818",
+    "521409",
+    "521812",
+    "521813",
+    "523786",
+    "524073",
+    "556346",
+    "556347",
+    "84758",
+    "88342",
+    "92188"
+  ],
+  "fifth_slnv_lnd6_evening": [
+    "11901",
+    "12254",
+    "13531",
+    "14633"
+  ],
+  "lnd_b_evening": [
+    "13290",
+    "14287",
+    "16031",
+    "19469"
+  ],
+  "pathway_synapse_counts": {
+    "MeTu2a_to_TuBu01": {
+      "synapses": 2884,
+      "edges": 147
+    },
+    "MeTu2a_to_TuBu06": {
+      "synapses": 3970,
+      "edges": 162
+    },
+    "MeTu2a_to_TuTuB_b": {
+      "synapses": 4000,
+      "edges": 140
+    },
+    "aMe12_to_5thsLNv_LNd6": {
+      "synapses": 591,
+      "edges": 24
+    },
+    "DN1pA_to_5thsLNv_LNd6": {
+      "synapses": 1212,
+      "edges": 32
+    },
+    "DN1pA_to_LNd_b": {
+      "synapses": 409,
+      "edges": 32
+    },
+    "DN1pB_to_TuBu01": {
+      "synapses": 463,
+      "edges": 18
+    },
+    "DN1pB_to_TuTuB_b": {
+      "synapses": 474,
+      "edges": 8
+    },
+    "DN1pB_to_TuBu06": {
+      "synapses": 1,
+      "edges": 1
+    },
+    "TuTuB_b_to_TuBu01": {
+      "synapses": 492,
+      "edges": 20
+    },
+    "TuTuB_b_to_TuBu06": {
+      "synapses": 1307,
+      "edges": 20
+    },
+    "TuBu01_to_ExR1": {
+      "synapses": 1046,
+      "edges": 40
+    },
+    "TuBu06_to_ER5": {
+      "synapses": 1734,
+      "edges": 55
+    },
+    "TuBu06_to_ExR1": {
+      "synapses": 779,
+      "edges": 40
+    },
+    "ExR1_to_ER5": {
+      "synapses": 5624,
+      "edges": 84
+    },
+    "ER5_to_ExR1": {
+      "synapses": 10044,
+      "edges": 84
+    },
+    "ER5_to_ER5": {
+      "synapses": 15478,
+      "edges": 420
+    },
+    "ExR1_to_EPG": {
+      "synapses": 6272,
+      "edges": 184
+    },
+    "ER5_to_EPG": {
+      "synapses": 3222,
+      "edges": 781
+    }
+  },
+  "transparency": {
+    "n_targets_dn1p": 12,
+    "n_controls_matched": 12,
+    "n_controls_edges_to_sleep_clock_readouts": 0,
+    "n_controls_synapses_to_sleep_clock_readouts": 0,
+    "n_controls_edges_to_epg": 0,
+    "n_controls_synapses_to_epg": 0
+  },
+  "residual_imbalance": {
+    "out_degree": {
+      "target_mean": 159.16666666666666,
+      "control_mean": 157.16666666666666,
+      "target_sd": 66.63582619982536,
+      "control_sd": 65.06476959479872,
+      "smd": -0.03036975956019477,
+      "abs_rel_mean_diff": 0.012565445026178011
+    },
+    "out_synapses": {
+      "target_mean": 727.8333333333334,
+      "control_mean": 738.25,
+      "target_sd": 330.6953647126374,
+      "control_sd": 355.20650203917876,
+      "smd": 0.030354260014565235,
+      "abs_rel_mean_diff": 0.014311884588962622
+    },
+    "in_degree": {
+      "target_mean": 163.58333333333334,
+      "control_mean": 163.16666666666666,
+      "target_sd": 57.12101720085705,
+      "control_sd": 53.29477773040557,
+      "smd": -0.007542702000000978,
+      "abs_rel_mean_diff": 0.0025471217524198815
+    },
+    "in_synapses": {
+      "target_mean": 650.1666666666666,
+      "control_mean": 644.1666666666666,
+      "target_sd": 321.38389203662035,
+      "control_sd": 312.8362433470827,
+      "smd": -0.01891915698436994,
+      "abs_rel_mean_diff": 0.009228402973596514
+    }
+  },
+  "pair_matches": [
+    {
+      "target_neuron_id": "110366",
+      "control_neuron_id": "39966",
+      "neurotransmitter": "GLUT",
+      "target_out_degree": 104,
+      "control_out_degree": 101,
+      "target_out_synapses": 427,
+      "control_out_synapses": 414,
+      "target_in_degree": 121,
+      "control_in_degree": 116,
+      "target_in_synapses": 436,
+      "control_in_synapses": 422
+    },
+    {
+      "target_neuron_id": "15016",
+      "control_neuron_id": "19008",
+      "neurotransmitter": "GLUT",
+      "target_out_degree": 261,
+      "control_out_degree": 257,
+      "target_out_synapses": 1236,
+      "control_out_synapses": 1249,
+      "target_in_degree": 230,
+      "control_in_degree": 225,
+      "target_in_synapses": 1081,
+      "control_in_synapses": 1084
+    },
+    {
+      "target_neuron_id": "15546",
+      "control_neuron_id": "22843",
+      "neurotransmitter": "GLUT",
+      "target_out_degree": 248,
+      "control_out_degree": 246,
+      "target_out_synapses": 1223,
+      "control_out_synapses": 1404,
+      "target_in_degree": 261,
+      "control_in_degree": 260,
+      "target_in_synapses": 1091,
+      "control_in_synapses": 1041
+    },
+    {
+      "target_neuron_id": "16696",
+      "control_neuron_id": "537659",
+      "neurotransmitter": "GLUT",
+      "target_out_degree": 254,
+      "control_out_degree": 251,
+      "target_out_synapses": 1199,
+      "control_out_synapses": 1133,
+      "target_in_degree": 244,
+      "control_in_degree": 224,
+      "target_in_synapses": 1091,
+      "control_in_synapses": 1072
+    },
+    {
+      "target_neuron_id": "19151",
+      "control_neuron_id": "34223",
+      "neurotransmitter": "GLUT",
+      "target_out_degree": 128,
+      "control_out_degree": 125,
+      "target_out_synapses": 697,
+      "control_out_synapses": 709,
+      "target_in_degree": 147,
+      "control_in_degree": 149,
+      "target_in_synapses": 531,
+      "control_in_synapses": 546
+    },
+    {
+      "target_neuron_id": "28711",
+      "control_neuron_id": "69895",
+      "neurotransmitter": "GLUT",
+      "target_out_degree": 228,
+      "control_out_degree": 219,
+      "target_out_synapses": 963,
+      "control_out_synapses": 972,
+      "target_in_degree": 220,
+      "control_in_degree": 223,
+      "target_in_synapses": 1061,
+      "control_in_synapses": 1058
+    },
+    {
+      "target_neuron_id": "31303",
+      "control_neuron_id": "66895",
+      "neurotransmitter": "GLUT",
+      "target_out_degree": 111,
+      "control_out_degree": 111,
+      "target_out_synapses": 577,
+      "control_out_synapses": 575,
+      "target_in_degree": 138,
+      "control_in_degree": 136,
+      "target_in_synapses": 474,
+      "control_in_synapses": 451
+    },
+    {
+      "target_neuron_id": "35381",
+      "control_neuron_id": "43215",
+      "neurotransmitter": "GLUT",
+      "target_out_degree": 131,
+      "control_out_degree": 131,
+      "target_out_synapses": 500,
+      "control_out_synapses": 529,
+      "target_in_degree": 130,
+      "control_in_degree": 136,
+      "target_in_synapses": 463,
+      "control_in_synapses": 447
+    },
+    {
+      "target_neuron_id": "39159",
+      "control_neuron_id": "62169",
+      "neurotransmitter": "GLUT",
+      "target_out_degree": 96,
+      "control_out_degree": 95,
+      "target_out_synapses": 417,
+      "control_out_synapses": 405,
+      "target_in_degree": 108,
+      "control_in_degree": 114,
+      "target_in_synapses": 365,
+      "control_in_synapses": 402
+    },
+    {
+      "target_neuron_id": "41049",
+      "control_neuron_id": "152959",
+      "neurotransmitter": "GLUT",
+      "target_out_degree": 104,
+      "control_out_degree": 104,
+      "target_out_synapses": 467,
+      "control_out_synapses": 473,
+      "target_in_degree": 125,
+      "control_in_degree": 132,
+      "target_in_synapses": 390,
+      "control_in_synapses": 386
+    },
+    {
+      "target_neuron_id": "42491",
+      "control_neuron_id": "34410",
+      "neurotransmitter": "GLUT",
+      "target_out_degree": 123,
+      "control_out_degree": 128,
+      "target_out_synapses": 511,
+      "control_out_synapses": 503,
+      "target_in_degree": 121,
+      "control_in_degree": 122,
+      "target_in_synapses": 442,
+      "control_in_synapses": 439
+    },
+    {
+      "target_neuron_id": "45390",
+      "control_neuron_id": "45555",
+      "neurotransmitter": "GLUT",
+      "target_out_degree": 122,
+      "control_out_degree": 118,
+      "target_out_synapses": 517,
+      "control_out_synapses": 493,
+      "target_in_degree": 118,
+      "control_in_degree": 121,
+      "target_in_synapses": 377,
+      "control_in_synapses": 382
+    }
+  ]
+}

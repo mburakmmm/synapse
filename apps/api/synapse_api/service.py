@@ -16,6 +16,7 @@ from synapse_api.models import AuditEventRecord, ExperimentRecord, JobRecord, Pr
 from synapse_api.security import resolve_within_root, validate_identifier
 from synapse_core import (
     Brian2CPUBackend,
+    CircadianHomeostaticParameters,
     DirectedConnectomeGraph,
     LIFParameters,
     extract_bounded_subgraph,
@@ -263,6 +264,7 @@ def _serialize_model_entry(params: LIFParameters) -> dict[str, Any]:
     return {
         "model_id": params.model_id,
         "model_revision": params.model_revision,
+        "model_level": "L1",
         "parameter_manifest_sha256": params.canonical_sha256(),
         "solver": params.solver,
         "dt_s": params.dt_s,
@@ -283,14 +285,43 @@ def _serialize_model_entry(params: LIFParameters) -> dict[str, Any]:
     }
 
 
+def _serialize_circadian_model_entry(params: CircadianHomeostaticParameters) -> dict[str, Any]:
+    return {
+        "model_id": params.model_id,
+        "model_revision": params.model_revision,
+        "model_level": params.model_level,
+        "parameter_manifest_sha256": params.canonical_sha256(),
+        "solver": params.solver,
+        "dt_s": params.dt_eval_h * params.seconds_per_hour,
+        "parameter_source": params.parameter_source,
+        "parameters": {
+            "tau_i_h": params.tau_i_h,
+            "tau_d_h": params.tau_d_h,
+            "v_sP": params.v_sP,
+            "v_sT": params.v_sT,
+            "v_dT_dark": params.v_dT_dark,
+            "v_dT_light": params.v_dT_light,
+            "k1": params.k1,
+            "k2": params.k2,
+            "k3": params.k3,
+            "k4": params.k4,
+            "u_mean": params.u_mean,
+            "l_mean": params.l_mean,
+            "a_c": params.a_c,
+        },
+    }
+
+
 def list_models_and_backends() -> dict[str, Any]:
     default_lif = LIFParameters()
     shiu_lif = LIFParameters.shiu2024_reference()
+    circadian_l3 = CircadianHomeostaticParameters()
     cpu_caps = Brian2CPUBackend().capabilities()
     return {
         "models": [
             _serialize_model_entry(default_lif),
             _serialize_model_entry(shiu_lif),
+            _serialize_circadian_model_entry(circadian_l3),
         ],
         "backends": [
             {
@@ -710,8 +741,58 @@ def list_research_studies(settings: Settings) -> dict[str, Any]:
         settings.runs_root / "phase5_pain001_robustness" / "robustness_summary.json"
     )
 
+    sleep_l3_dir = settings.runs_root / "phase5b_sleep001_l3_oscillator"
+    sleep_l3_gate = _read_json_if_file(sleep_l3_dir / "l3_verification_gate.json")
+    sleep_l3_shift_raw = _read_json_if_file(sleep_l3_dir / "l3_shift_work_summary.json")
+    sleep_l3_shift: dict[str, Any] | None = None
+    if sleep_l3_shift_raw is not None:
+        trimmed_arms: dict[str, Any] = {}
+        for arm_id, arm in (sleep_l3_shift_raw.get("arms") or {}).items():
+            if not isinstance(arm, dict):
+                continue
+            trimmed_arms[str(arm_id)] = {
+                "arm_id": arm.get("arm_id"),
+                "duration_h": arm.get("duration_h"),
+                "s_peak_overall": arm.get("s_peak_overall"),
+                "s_mean_post_onset": arm.get("s_mean_post_onset"),
+                "modeled_rest_fraction_post_onset": arm.get("modeled_rest_fraction_post_onset"),
+                "max_abs_phase_error_h": arm.get("max_abs_phase_error_h"),
+                "days_to_reentrain": arm.get("days_to_reentrain"),
+                "post_onset_phase_errors": arm.get("post_onset_phase_errors", []),
+            }
+        sleep_l3_shift = {
+            "model_id": sleep_l3_shift_raw.get("model_id"),
+            "model_level": sleep_l3_shift_raw.get("model_level"),
+            "parameter_manifest_sha256": sleep_l3_shift_raw.get("parameter_manifest_sha256"),
+            "timescale_coupling_note": sleep_l3_shift_raw.get("timescale_coupling_note"),
+            "gate_overall_passed": sleep_l3_shift_raw.get("gate_overall_passed"),
+            "arms": trimmed_arms,
+            "l3_to_l1_coupling_snapshots": sleep_l3_shift_raw.get(
+                "l3_to_l1_coupling_snapshots", []
+            ),
+        }
+
+    sleep_pilot_dir = settings.runs_root / "phase5b_sleep001_exploratory_pilot"
+    sleep_pilot = _read_json_if_file(sleep_pilot_dir / "pilot_summary.json")
+    sleep_win_raw = _read_json_if_file(sleep_pilot_dir / "windowed_summary.json")
+    sleep_win_trimmed: dict[str, Any] | None = None
+    if sleep_win_raw is not None:
+        sleep_win_trimmed = {
+            "windows": sleep_win_raw.get("windows", {}),
+            "neuron_ids": [str(nid) for nid in sleep_win_raw.get("neuron_ids", [])],
+            "succeeded_run_count": sleep_win_raw.get("succeeded_run_count", 0),
+            "failed_run_count": sleep_win_raw.get("failed_run_count", 0),
+        }
+
     met_available = len(met_conf_list) > 0
     pain_available = pain_conf is not None
+    sleep_available = sleep_l3_gate is not None or sleep_pilot is not None
+    if sleep_l3_gate is not None and sleep_pilot is not None:
+        sleep_phase = "l3_verified_and_l1_pilot_complete"
+    elif sleep_l3_gate is not None:
+        sleep_phase = "l3_verified"
+    else:
+        sleep_phase = "planned"
 
     modules = [
         {
@@ -748,11 +829,11 @@ def list_research_studies(settings: Settings) -> dict[str, Any]:
         {
             "module_id": "sleep",
             "phase": "phase5b",
-            "ui_state": "planned",
-            "simulation_phase": "planned",
-            "dataset_id": None,
-            "protocol_id": None,
-            "available_on_disk": False,
+            "ui_state": "experimental" if sleep_available else "planned",
+            "simulation_phase": sleep_phase,
+            "dataset_id": "malecns_v1_0" if sleep_available else None,
+            "protocol_id": "P5-SLEEP-001-PILOT" if sleep_pilot is not None else None,
+            "available_on_disk": sleep_available,
         },
         {
             "module_id": "addiction",
@@ -802,6 +883,12 @@ def list_research_studies(settings: Settings) -> dict[str, Any]:
             "confirmatory": pain_conf,
             "windowed": pain_win_trimmed,
             "robustness": pain_rob,
+        },
+        "sleep": {
+            "l3_gate": sleep_l3_gate,
+            "l3_shift_work": sleep_l3_shift,
+            "pilot": sleep_pilot,
+            "windowed": sleep_win_trimmed,
         },
     }
 

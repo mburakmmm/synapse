@@ -184,16 +184,25 @@ def test_api_and_worker_full_fixture_lifecycle_security_cancel_and_backup(tmp_pa
             )
             assert bad_proto_res.status_code == 403
 
+            # Verify /api/v1/models exposes both L1 LIF and L3 circadian-homeostatic models
+            models_res = client.get("/api/v1/models")
+            assert models_res.status_code == 200
+            model_ids = {m["model_id"]: m for m in models_res.json()["models"]}
+            assert "leloup_goldbeter_1998_two_process_v1" in model_ids
+            assert model_ids["leloup_goldbeter_1998_two_process_v1"]["model_level"] == "L3"
+
             # Verify /api/v1/studies module UI state taxonomy (§10)
             studies_res = client.get("/api/v1/studies")
             assert studies_res.status_code == 200
+            studies_body = studies_res.json()
+            assert "sleep" in studies_body
             allowed_states = {
                 "planned",
                 "experimental",
                 "reproduced",
                 "validated_for_declared_endpoint",
             }
-            for mod in studies_res.json()["modules"]:
+            for mod in studies_body["modules"]:
                 assert mod["ui_state"] in allowed_states
 
             # Verify run discovery, protocol_id filter, and artifact traversal rejection

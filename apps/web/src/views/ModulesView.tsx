@@ -8,7 +8,29 @@ import { useI18n } from "../i18n/LanguageContext";
 
 import type { CircuitPresetRequest } from "./DatasetsView";
 
-export type ModuleSectionTab = "pain" | "metabolic" | "benchmark" | "planned";
+export type ModuleSectionTab = "sleep" | "pain" | "metabolic" | "benchmark" | "planned";
+
+const SLEEP_CONDITIONS_ORDER = [
+  "sham_zero_stimulus",
+  "light_day_baseline",
+  "light_plus_clock_dn1p_drive",
+  "light_plus_matched_ctrl_clock_drive",
+  "light_plus_dn1p_avp_edge_mask",
+  "light_plus_er5_high_homeostat_gain",
+  "light_plus_er5_exr1_edge_mask",
+  "shift_light_misaligned_clock_debt",
+];
+
+const SLEEP_COND_SHORT: Record<string, string> = {
+  sham_zero_stimulus: "Sham 0",
+  light_day_baseline: "Day Base",
+  light_plus_clock_dn1p_drive: "+DN1p Clock",
+  light_plus_matched_ctrl_clock_drive: "+Matched Ctrl",
+  light_plus_dn1p_avp_edge_mask: "DN1p->AVP Mask",
+  light_plus_er5_high_homeostat_gain: "ER5 Gain 1.5x",
+  light_plus_er5_exr1_edge_mask: "ER5->ExR1 Mask",
+  shift_light_misaligned_clock_debt: "50Hz Shift+Debt",
+};
 
 interface ModulesViewProps {
   uiMode: UiMode;
@@ -65,8 +87,82 @@ export const ModulesView: React.FC<ModulesViewProps> = ({
   const painConf = studies?.pain.confirmatory ?? null;
   const painWin = studies?.pain.windowed ?? null;
   const painRob = studies?.pain.robustness ?? null;
+  const sleepL3Gate = studies?.sleep?.l3_gate ?? null;
+  const sleepShift = studies?.sleep?.l3_shift_work ?? null;
+  const sleepPilot = studies?.sleep?.pilot ?? null;
   const metConf = studies?.metabolic.confirmatory ?? [];
   const metRob = studies?.metabolic.robustness ?? {};
+
+  const sleepPrcTraces = useMemo<PlotlyTrace[]>(() => {
+    const curve = sleepL3Gate?.gates.light_pulse_prc.curve ?? [];
+    if (curve.length === 0) return [];
+    const shifts = curve.map((pt) => pt.phase_shift_h ?? 0);
+    return [
+      {
+        type: "scatter",
+        mode: "lines+markers",
+        name: "Phase Shift (h)",
+        x: curve.map((pt) => `CT ${pt.ct_hours}`),
+        y: shifts,
+        line: { color: "#0072B2", width: 2.5 },
+        marker: {
+          size: 9,
+          color: shifts.map((s) => (s > 0.15 ? "#009E73" : s < -0.15 ? "#D55E00" : "#64748B")),
+        },
+      },
+    ];
+  }, [sleepL3Gate]);
+
+  const sleepShiftTraces = useMemo<PlotlyTrace[]>(() => {
+    if (!sleepShift) return [];
+    const arms = Object.values(sleepShift.arms);
+    if (arms.length === 0) return [];
+    return [
+      {
+        type: "bar",
+        name: t("sleepColMaxErr"),
+        x: arms.map((a) => a.arm_id),
+        y: arms.map((a) => a.max_abs_phase_error_h),
+        marker: {
+          color: arms.map((a) => (a.days_to_reentrain === null ? "#D55E00" : "#0072B2")),
+        },
+      },
+    ];
+  }, [sleepShift, t]);
+
+  const sleepPilotTutubTraces = useMemo<PlotlyTrace[]>(() => {
+    const cohorts = sleepPilot?.cohort_stim_mean_hz;
+    if (!cohorts || !cohorts.tutub_b_interneuron) return [];
+    return [
+      {
+        type: "bar",
+        name: "TuTuB_b (2 GLUT)",
+        x: SLEEP_CONDITIONS_ORDER.map((c) => SLEEP_COND_SHORT[c] ?? c),
+        y: SLEEP_CONDITIONS_ORDER.map((c) => cohorts.tutub_b_interneuron?.[c] ?? 0),
+        marker: { color: "#E69F00" },
+      },
+    ];
+  }, [sleepPilot]);
+
+  const sleepPilotEbTraces = useMemo<PlotlyTrace[]>(() => {
+    const cohorts = sleepPilot?.cohort_stim_mean_hz;
+    if (!cohorts) return [];
+    const xLabels = SLEEP_CONDITIONS_ORDER.map((c) => SLEEP_COND_SHORT[c] ?? c);
+    return [
+      { key: "tubu01_relay", label: "TuBu01 (10 ACH)", color: "#0072B2" },
+      { key: "tubu06_relay", label: "TuBu06 (10 ACH)", color: "#56B4E9" },
+      { key: "exr1_helicon", label: "ExR1 (4 ACH)", color: "#009E73" },
+      { key: "er5_sleep_homeostat", label: "ER5 (21 GABA)", color: "#D55E00" },
+    ]
+      .filter((item) => Boolean(cohorts[item.key]))
+      .map((item) => ({
+        type: "bar" as const,
+        name: item.label,
+        x: xLabels,
+        y: SLEEP_CONDITIONS_ORDER.map((c) => cohorts[item.key]?.[c] ?? 0),
+        marker: { color: item.color },
+      }));
+  }, [sleepPilot]);
 
   const painWindowTraces = useMemo<PlotlyTrace[]>(() => {
     if (!painWin) return [];
@@ -233,6 +329,18 @@ export const ModulesView: React.FC<ModulesViewProps> = ({
         <button
           type="button"
           className="pill-btn"
+          aria-pressed={activeSubTab === "sleep"}
+          onClick={() => onSelectSubTab("sleep")}
+        >
+          <span>{t("tabSleep")}</span>
+          <StatusBadge
+            label={sleepL3Gate || sleepPilot ? t("stateExperimental") : t("statePlanned")}
+            tone={sleepL3Gate || sleepPilot ? "info" : "neutral"}
+          />
+        </button>
+        <button
+          type="button"
+          className="pill-btn"
           aria-pressed={activeSubTab === "pain"}
           onClick={() => onSelectSubTab("pain")}
         >
@@ -270,6 +378,361 @@ export const ModulesView: React.FC<ModulesViewProps> = ({
           <StatusBadge label={t("statePlanned")} tone="neutral" />
         </button>
       </div>
+
+      {activeSubTab === "sleep" && (
+        <>
+          {!sleepL3Gate && !sleepPilot ? (
+            <div className="card">
+              <div className="empty-state">
+                <strong>{t("modulesMissingTitle")}</strong>
+                <p style={{ marginBottom: 0 }}>{t("modulesMissingBody")}</p>
+              </div>
+            </div>
+          ) : (
+            <>
+              <div className="card">
+                <div className="card-header">
+                  <div>
+                    <h2>{t("sleepBannerTitle")}</h2>
+                    <p className="card-subtitle mono">
+                      leloup_goldbeter_1998_two_process_v1 (L3) + malecns_v1_0 · synapse_lif_v1 (L1){" "}
+                      {sleepPilot?.git_commits?.[0]
+                        ? `· git ${sleepPilot.git_commits[0].slice(0, 8)}`
+                        : ""}
+                    </p>
+                  </div>
+                  <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                    <StatusBadge label={t("stateExperimental")} tone="info" />
+                    <StatusBadge label={t("ruoBadge")} tone="ruo" />
+                    <button
+                      type="button"
+                      className="btn btn-sm"
+                      onClick={() =>
+                        onExploreCircuit3D({
+                          datasetId: "malecns_v1_0",
+                          seedIds: "10324, 15016, 114115, 112789, 10043",
+                          hops: 1,
+                          direction: "both",
+                          minSynapses: 25,
+                          maxNodes: 75,
+                        })
+                      }
+                    >
+                      {t("exploreIn3d")}
+                    </button>
+                  </div>
+                </div>
+
+                {sleepL3Gate && (
+                  <div className="kpi-grid">
+                    <div className="kpi-card">
+                      <div className="kpi-label">{t("sleepGateDd")}</div>
+                      <div className="kpi-value">
+                        {sleepL3Gate.gates.dd_free_running_and_convergence.tau_dd_coarse_h?.toFixed(
+                          2,
+                        ) ?? t("noneDash")}{" "}
+                        h
+                      </div>
+                      <div className="kpi-sub">
+                        <StatusBadge
+                          label={
+                            sleepL3Gate.gates.dd_free_running_and_convergence.passed
+                              ? t("statusPass")
+                              : t("statusFail")
+                          }
+                          tone={
+                            sleepL3Gate.gates.dd_free_running_and_convergence.passed
+                              ? "ok"
+                              : "warn"
+                          }
+                        />
+                      </div>
+                    </div>
+                    <div className="kpi-card">
+                      <div className="kpi-label">{t("sleepGateLd")}</div>
+                      <div className="kpi-value">
+                        {sleepL3Gate.gates.ld12_12_entrainment.tau_ld_h?.toFixed(2) ??
+                          t("noneDash")}{" "}
+                        h
+                      </div>
+                      <div className="kpi-sub">
+                        <StatusBadge
+                          label={
+                            sleepL3Gate.gates.ld12_12_entrainment.passed
+                              ? t("statusPass")
+                              : t("statusFail")
+                          }
+                          tone={sleepL3Gate.gates.ld12_12_entrainment.passed ? "ok" : "warn"}
+                        />
+                      </div>
+                    </div>
+                    <div className="kpi-card">
+                      <div className="kpi-label">{t("sleepGatePrc")}</div>
+                      <div className="kpi-value">
+                        {sleepL3Gate.gates.light_pulse_prc.max_early_night_delay_h?.toFixed(2) ??
+                          t("noneDash")}{" "}
+                        / +
+                        {sleepL3Gate.gates.light_pulse_prc.late_night_ct21_advance_h?.toFixed(2) ??
+                          t("noneDash")}{" "}
+                        h
+                      </div>
+                      <div className="kpi-sub">
+                        <StatusBadge
+                          label={
+                            sleepL3Gate.gates.light_pulse_prc.passed
+                              ? t("statusPass")
+                              : t("statusFail")
+                          }
+                          tone={sleepL3Gate.gates.light_pulse_prc.passed ? "ok" : "warn"}
+                        />
+                      </div>
+                    </div>
+                    <div className="kpi-card">
+                      <div className="kpi-label">{t("sleepGateRebound")}</div>
+                      <div className="kpi-value">
+                        +
+                        {sleepL3Gate.gates.homeostatic_deprivation_rebound.recovery_rest_fraction_delta.toFixed(
+                          3,
+                        )}
+                      </div>
+                      <div className="kpi-sub">
+                        <StatusBadge
+                          label={
+                            sleepL3Gate.gates.homeostatic_deprivation_rebound.passed
+                              ? t("statusPass")
+                              : t("statusFail")
+                          }
+                          tone={
+                            sleepL3Gate.gates.homeostatic_deprivation_rebound.passed
+                              ? "ok"
+                              : "warn"
+                          }
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {uiMode === "simple" && (
+                <div className="notice-box" style={{ marginBottom: 12 }}>
+                  <strong>{t("simpleSleepTitle")}: </strong>
+                  {t("simpleSleepSummary")}
+                </div>
+              )}
+
+              {sleepL3Gate && (
+                <div className="grid-2">
+                  <div className="card">
+                    <div className="card-header">
+                      <h3>{t("sleepChartPrcTitle")}</h3>
+                    </div>
+                    <PlotlyChart
+                      theme={theme}
+                      ariaLabel={t("sleepChartPrcTitle")}
+                      traces={sleepPrcTraces}
+                      layout={{
+                        height: 320,
+                        yaxis: { title: "Phase Shift (h)" },
+                        margin: { l: 55, r: 20, t: 25, b: 50 },
+                      }}
+                    />
+                  </div>
+                  {sleepShift && (
+                    <div className="card">
+                      <div className="card-header">
+                        <h3>{t("sleepChartShiftTitle")}</h3>
+                      </div>
+                      <PlotlyChart
+                        theme={theme}
+                        ariaLabel={t("sleepChartShiftTitle")}
+                        traces={sleepShiftTraces}
+                        layout={{
+                          height: 320,
+                          yaxis: { title: t("sleepColMaxErr"), rangemode: "tozero" },
+                          xaxis: { tickangle: -18 },
+                          margin: { l: 55, r: 20, t: 25, b: 85 },
+                        }}
+                      />
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {uiMode === "expert" ? (
+                <>
+                  {sleepShift && (
+                    <div className="card">
+                      <div className="card-header">
+                        <h3>{t("sleepChartShiftTitle")}</h3>
+                      </div>
+                      <div className="table-wrap">
+                        <table>
+                          <thead>
+                            <tr>
+                              <th>{t("sleepColArm")}</th>
+                              <th>{t("sleepColMaxErr")}</th>
+                              <th>{t("sleepColReentrain")}</th>
+                              <th>{t("sleepColSPeak")}</th>
+                              <th>{t("sleepColRestFrac")}</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {Object.values(sleepShift.arms).map((arm) => (
+                              <tr key={arm.arm_id}>
+                                <td className="mono">{arm.arm_id}</td>
+                                <td className="mono">{arm.max_abs_phase_error_h.toFixed(3)}</td>
+                                <td className="mono">
+                                  {arm.days_to_reentrain !== null
+                                    ? arm.days_to_reentrain.toFixed(3)
+                                    : t("sleepNeverReentrained")}
+                                </td>
+                                <td className="mono">{arm.s_peak_overall.toFixed(4)}</td>
+                                <td className="mono">
+                                  {arm.modeled_rest_fraction_post_onset.toFixed(4)}
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  )}
+
+                  {sleepPilot && (
+                    <>
+                      <div className="grid-2">
+                        <div className="card">
+                          <div className="card-header">
+                            <h3>{t("sleepChartPilotTutubTitle")}</h3>
+                          </div>
+                          <PlotlyChart
+                            theme={theme}
+                            ariaLabel={t("sleepChartPilotTutubTitle")}
+                            traces={sleepPilotTutubTraces}
+                            layout={{
+                              height: 330,
+                              yaxis: { title: t("chartYAxisHz"), rangemode: "tozero" },
+                              xaxis: { tickangle: -20 },
+                              margin: { l: 55, r: 20, t: 25, b: 85 },
+                            }}
+                          />
+                        </div>
+                        <div className="card">
+                          <div className="card-header">
+                            <h3>{t("sleepChartPilotEbTitle")}</h3>
+                          </div>
+                          <PlotlyChart
+                            theme={theme}
+                            ariaLabel={t("sleepChartPilotEbTitle")}
+                            traces={sleepPilotEbTraces}
+                            layout={{
+                              barmode: "group",
+                              height: 330,
+                              yaxis: { title: t("chartYAxisHz"), rangemode: "tozero" },
+                              xaxis: { tickangle: -20 },
+                              margin: { l: 55, r: 20, t: 25, b: 85 },
+                            }}
+                          />
+                        </div>
+                      </div>
+
+                      <div className="card">
+                        <div className="card-header">
+                          <h3>{t("sleepL1ContrastsTitle")}</h3>
+                          <span className="mono" style={{ fontSize: "0.78rem" }}>
+                            {sleepPilot.succeeded_run_count}/{sleepPilot.total_runs} succeeded · sham=
+                            {sleepPilot.sham_max_spikes}
+                          </span>
+                        </div>
+                        <div className="table-wrap">
+                          <table>
+                            <thead>
+                              <tr>
+                                <th>{t("colContrast")}</th>
+                                <th>{t("colNeuron")}</th>
+                                <th>{t("colBaseMean")}</th>
+                                <th>{t("colTreatMean")}</th>
+                                <th>{t("colDelta")}</th>
+                                <th>{t("colCi95")}</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {sleepPilot.contrasts.map((row) => (
+                                <tr key={row.contrast_name}>
+                                  <td className="mono">{row.contrast_name}</td>
+                                  <td className="mono">{row.neuron_id}</td>
+                                  <td>
+                                    {row.baseline_mean_hz.toFixed(3)} ±{" "}
+                                    {row.baseline_sd_hz.toFixed(3)}
+                                  </td>
+                                  <td>
+                                    {row.treatment_mean_hz.toFixed(3)} ±{" "}
+                                    {row.treatment_sd_hz.toFixed(3)}
+                                  </td>
+                                  <td>
+                                    <strong>
+                                      {row.mean_difference_hz >= 0 ? "+" : ""}
+                                      {row.mean_difference_hz.toFixed(3)}
+                                    </strong>{" "}
+                                    ± {row.sd_difference_hz.toFixed(3)}
+                                  </td>
+                                  <td className="mono">
+                                    [{row.bootstrap_ci95_low_hz.toFixed(3)},{" "}
+                                    {row.bootstrap_ci95_high_hz.toFixed(3)}]
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                    </>
+                  )}
+
+                  <div className="alert" role="note">
+                    <div>
+                      <strong>{t("sleepLimitsTitle")}: </strong>
+                      <span>{t("sleepLimitsBody")}</span>
+                    </div>
+                  </div>
+                </>
+              ) : (
+                sleepPilot && (
+                  <details className="tech-details">
+                    <summary>{t("showTechDetails")}</summary>
+                    <div className="table-wrap">
+                      <table>
+                        <thead>
+                          <tr>
+                            <th>{t("colContrast")}</th>
+                            <th>{t("colNeuron")}</th>
+                            <th>{t("colDelta")}</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {sleepPilot.contrasts.map((row) => (
+                            <tr key={row.contrast_name}>
+                              <td className="mono">{row.contrast_name}</td>
+                              <td className="mono">{row.neuron_id}</td>
+                              <td>
+                                <strong>
+                                  {row.mean_difference_hz >= 0 ? "+" : ""}
+                                  {row.mean_difference_hz.toFixed(3)} Hz
+                                </strong>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </details>
+                )
+              )}
+            </>
+          )}
+        </>
+      )}
 
       {activeSubTab === "pain" && (
         <>

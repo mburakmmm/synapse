@@ -106,10 +106,11 @@ export interface DatasetPlanResponse {
 export interface ModelSummary {
   model_id: string;
   model_revision: string;
+  model_level?: "L1" | "L3";
   parameter_manifest_sha256: string;
   solver: string;
   dt_s: number;
-  dg_unless_refractory: boolean;
+  dg_unless_refractory?: boolean;
   parameter_source: string;
   parameters?: Record<string, number | string | boolean>;
 }
@@ -411,6 +412,107 @@ export interface MetabolicConfirmatoryAnalysis {
   provenance: Record<string, unknown>;
 }
 
+export interface SleepL3PrcPoint {
+  ct_hours: number;
+  pulse_start_h: number;
+  pulse_end_h: number;
+  phase_shift_h: number | null;
+  direction: string;
+}
+
+export interface SleepL3GateReport {
+  model_id: string;
+  model_level: string;
+  parameter_manifest_sha256: string;
+  overall_passed: boolean;
+  gates: {
+    dd_free_running_and_convergence: {
+      passed: boolean;
+      tau_dd_coarse_h: number | null;
+      tau_dd_sd_h: number | null;
+      tau_dd_fine_h: number | null;
+      convergence_abs_diff_h: number | null;
+    };
+    ld12_12_entrainment: {
+      passed: boolean;
+      tau_ld_h: number | null;
+      zt_peak_mean_h: number | null;
+      zt_peak_sd_h: number | null;
+    };
+    light_pulse_prc: {
+      passed: boolean;
+      max_abs_daytime_dead_zone_h: number | null;
+      max_early_night_delay_h: number | null;
+      late_night_ct21_advance_h: number | null;
+      curve: SleepL3PrcPoint[];
+    };
+    homeostatic_deprivation_rebound: {
+      passed: boolean;
+      baseline_s_peak: number;
+      deprivation_s_peak: number;
+      baseline_24h_recovery_rest_fraction: number;
+      deprivation_24h_recovery_rest_fraction: number;
+      recovery_rest_fraction_delta: number;
+      day9_washout_rest_fraction_delta: number;
+    };
+  };
+}
+
+export interface SleepL3ShiftArm {
+  arm_id: string;
+  duration_h: number;
+  s_peak_overall: number;
+  s_mean_post_onset: number;
+  modeled_rest_fraction_post_onset: number;
+  max_abs_phase_error_h: number;
+  days_to_reentrain: number | null;
+}
+
+export interface SleepL3ShiftWorkSummary {
+  model_id: string;
+  parameter_manifest_sha256: string;
+  gate_overall_passed: boolean;
+  arms: Record<string, SleepL3ShiftArm>;
+}
+
+export interface SleepPilotContrast {
+  contrast_name: string;
+  neuron_id: string;
+  baseline_condition: string;
+  treatment_condition: string;
+  n_pairs: number;
+  failed_run_count: number;
+  baseline_mean_hz: number;
+  baseline_sd_hz: number;
+  treatment_mean_hz: number;
+  treatment_sd_hz: number;
+  mean_difference_hz: number;
+  sd_difference_hz: number;
+  bootstrap_ci95_low_hz: number;
+  bootstrap_ci95_high_hz: number;
+}
+
+export interface SleepPilotSummary {
+  protocol_id: string;
+  dataset_id: string;
+  total_runs: number;
+  succeeded_run_count: number;
+  failed_run_count: number;
+  sham_count: number;
+  sham_max_spikes: number;
+  wall_total_s: number;
+  run_wall_mean_s: number;
+  git_commits: string[];
+  cohort_stim_mean_hz: Record<string, Record<string, number>>;
+  contrasts: SleepPilotContrast[];
+}
+
+export interface SleepStudyData {
+  l3_gate: SleepL3GateReport | null;
+  l3_shift_work: SleepL3ShiftWorkSummary | null;
+  pilot: SleepPilotSummary | null;
+}
+
 export interface StudiesResponse {
   modules: ResearchModuleItem[];
   metabolic: {
@@ -432,6 +534,7 @@ export interface StudiesResponse {
     windowed: PainWindowedSummary | null;
     robustness: PainRobustnessSummary | null;
   };
+  sleep?: SleepStudyData;
 }
 
 async function requestJson<T>(path: string, init?: RequestInit): Promise<T> {

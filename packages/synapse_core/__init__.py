@@ -10,6 +10,18 @@ from synapse_core.backend import (
     UnsupportedBackendOptionError,
 )
 from synapse_core.brian2_backend import Brian2CPUBackend
+from synapse_core.circadian import (
+    DEFAULT_Y0 as CIRCADIAN_DEFAULT_Y0,
+)
+from synapse_core.circadian import (
+    CircadianHomeostaticParameters,
+    TwoProcessTrajectory,
+    detect_oscillation_peaks,
+    run_shift_work_experiment,
+    simulate_two_process,
+    verify_circadian_homeostatic_gates,
+    wrap_phase_hours,
+)
 from synapse_core.models import (
     ConstantCurrentStimulus,
     EdgeGainModulation,
@@ -36,10 +48,12 @@ from synapse_core.types import (
 )
 
 __all__ = [
+    "CIRCADIAN_DEFAULT_Y0",
     "DEFAULT_SIGN_MAP",
     "SEED_ALGORITHM",
     "BackendCapabilities",
     "Brian2CPUBackend",
+    "CircadianHomeostaticParameters",
     "ConstantCurrentStimulus",
     "DirectedConnectomeGraph",
     "DirectedEdge",
@@ -60,8 +74,14 @@ __all__ = [
     "SimulatorBackend",
     "SubgraphBoundExceededError",
     "SubgraphMetadata",
+    "TwoProcessTrajectory",
     "UnsupportedBackendOptionError",
     "derive_seed",
+    "detect_oscillation_peaks",
     "extract_bounded_subgraph",
+    "run_shift_work_experiment",
+    "simulate_two_process",
     "validate_model_spec",
+    "verify_circadian_homeostatic_gates",
+    "wrap_phase_hours",
 ]

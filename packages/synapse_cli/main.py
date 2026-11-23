@@ -8,18 +8,26 @@ import platform
 import shutil
 import sys
 from collections.abc import Sequence
+from datetime import UTC, datetime
 from importlib.metadata import version as pkg_version
 from pathlib import Path
 from typing import Any
 
+import polars as pl
 import yaml
+from matplotlib.backends.backend_agg import FigureCanvasAgg
+from matplotlib.figure import Figure
 
 from synapse_analysis import run_paired_analysis
 from synapse_core import (
     Brian2CPUBackend,
+    CircadianHomeostaticParameters,
     LIFParameters,
+    TwoProcessTrajectory,
     extract_bounded_subgraph,
+    run_shift_work_experiment,
     validate_model_spec,
+    verify_circadian_homeostatic_gates,
 )
 from synapse_data import (
     build_default_registry,
@@ -28,6 +36,7 @@ from synapse_data import (
 )
 from synapse_experiments import (
     cancel_local_job,
+    collect_source_provenance,
     evaluate_shiu2024_benchmark,
     freeze_protocol,
     get_local_job_status,
@@ -188,6 +197,7 @@ def _cmd_graph_subgraph(args: argparse.Namespace) -> int:
 def _cmd_model_list(args: argparse.Namespace) -> int:
     default_lif = LIFParameters()
     shiu_lif = LIFParameters.shiu2024_reference()
+    circadian_l3 = CircadianHomeostaticParameters()
     backend = Brian2CPUBackend()
     caps = backend.capabilities()
     payload = {
@@ -195,6 +205,7 @@ def _cmd_model_list(args: argparse.Namespace) -> int:
             {
                 "model_id": default_lif.model_id,
                 "model_revision": default_lif.model_revision,
+                "model_level": "L1",
                 "parameter_manifest_sha256": default_lif.canonical_sha256(),
                 "solver": default_lif.solver,
                 "dt_s": default_lif.dt_s,
@@ -204,11 +215,21 @@ def _cmd_model_list(args: argparse.Namespace) -> int:
             {
                 "model_id": shiu_lif.model_id,
                 "model_revision": shiu_lif.model_revision,
+                "model_level": "L1",
                 "parameter_manifest_sha256": shiu_lif.canonical_sha256(),
                 "solver": shiu_lif.solver,
                 "dt_s": shiu_lif.dt_s,
                 "dg_unless_refractory": shiu_lif.dg_unless_refractory,
                 "parameter_source": shiu_lif.parameter_source,
+            },
+            {
+                "model_id": circadian_l3.model_id,
+                "model_revision": circadian_l3.model_revision,
+                "model_level": circadian_l3.model_level,
+                "parameter_manifest_sha256": circadian_l3.canonical_sha256(),
+                "solver": circadian_l3.solver,
+                "dt_s": circadian_l3.dt_eval_h * circadian_l3.seconds_per_hour,
+                "parameter_source": circadian_l3.parameter_source,
             },
         ],
         "backends": [
@@ -413,6 +434,160 @@ def _cmd_export_bundle(args: argparse.Namespace) -> int:
     return 0
 
 
+def _write_l3_prc_figure(gate_report: dict[str, Any], figures_dir: Path) -> None:
+    figures_dir.mkdir(parents=True, exist_ok=True)
+    curve = gate_report["gates"]["light_pulse_prc"]["curve"]
+    cts = [int(row["ct_hours"]) for row in curve]
+    shifts = [float(row["phase_shift_h"] or 0.0) for row in curve]
+    colors = ["#009E73" if s > 0.15 else ("#D55E00" if s < -0.15 else "#64748B") for s in shifts]
+
+    fig = Figure(figsize=(7.2, 4.4), dpi=200)
+    FigureCanvasAgg(fig)
+    ax = fig.add_subplot(111)
+    ax.axhline(0.0, color="#475569", linewidth=1.0, linestyle="--")
+    ax.axvspan(0, 12, color="#FEF3C7", alpha=0.45, label="Subjective day (CT 0-12)")
+    ax.axvspan(12, 24, color="#E2E8F0", alpha=0.45, label="Subjective night (CT 12-24)")
+    ax.plot(cts, shifts, color="#0072B2", linewidth=1.8, zorder=2)
+    ax.scatter(cts, shifts, c=colors, s=55, zorder=3)
+    ax.set_xlim(-0.5, 22.5)
+    ax.set_xticks(cts)
+    ax.set_xlabel("Circadian Time of 2 h Light Pulse (CT, hours)")
+    ax.set_ylabel("Phase Shift (+ advance / - delay, hours)")
+    ax.set_title(
+        "L3 Circadian Light-Pulse PRC (BIOMD0000000021; RUO)",
+        fontsize=11,
+        fontweight="bold",
+    )
+    ax.legend(loc="upper left", frameon=False, fontsize=8)
+    ax.spines["top"].set_visible(False)
+    ax.spines["right"].set_visible(False)
+    fig.tight_layout()
+    fig.savefig(figures_dir / "l3_prc_curve.svg")
+    fig.savefig(figures_dir / "l3_prc_curve.png", dpi=200)
+
+
+def _write_l3_shift_work_figure(
+    summary: dict[str, Any],
+    trajectories: dict[str, TwoProcessTrajectory],
+    figures_dir: Path,
+) -> None:
+    figures_dir.mkdir(parents=True, exist_ok=True)
+    fig = Figure(figsize=(8.6, 5.4), dpi=200)
+    FigureCanvasAgg(fig)
+    ax_s = fig.add_subplot(211)
+    ax_err = fig.add_subplot(212)
+
+    palette = {
+        "ld12_12_control": "#0072B2",
+        "deprivation_12h_recovery": "#D55E00",
+        "shift_delay_8h": "#009E73",
+        "shift_advance_6h": "#CC79A7",
+        "rotating_shift_8h": "#E69F00",
+    }
+
+    for arm_id in ("ld12_12_control", "deprivation_12h_recovery"):
+        traj = trajectories[arm_id]
+        mask = traj.times_h >= 120.0
+        ax_s.plot(
+            traj.times_h[mask] / 24.0,
+            traj.s_homeostat[mask],
+            label=arm_id,
+            color=palette[arm_id],
+            linewidth=1.5,
+        )
+    ax_s.axvspan(156.0 / 24.0, 168.0 / 24.0, color="#FCA5A5", alpha=0.35, label="12 h forced wake")
+    ax_s.set_ylabel("Homeostat S (norm.)")
+    ax_s.set_title(
+        "L3 Two-Process Homeostat & Shift-Work Misalignment (tau_i=8.76h, tau_d=9.51h; RUO)",
+        fontsize=10.5,
+        fontweight="bold",
+    )
+    ax_s.legend(loc="upper right", frameon=False, fontsize=8)
+    ax_s.spines["top"].set_visible(False)
+    ax_s.spines["right"].set_visible(False)
+
+    for arm_id in ("ld12_12_control", "shift_delay_8h", "shift_advance_6h", "rotating_shift_8h"):
+        errs = summary["arms"][arm_id]["post_onset_phase_errors"]
+        if not errs:
+            continue
+        ax_err.plot(
+            [e["day"] for e in errs],
+            [abs(float(e["phase_error_h"])) for e in errs],
+            marker="o",
+            markersize=3.8,
+            linewidth=1.5,
+            color=palette[arm_id],
+            label=arm_id,
+        )
+    ax_err.axhline(
+        1.0, color="#64748B", linestyle="--", linewidth=1.0, label="1.0 h re-entrainment"
+    )
+    ax_err.set_xlabel("Simulation Day (24 h cycles)")
+    ax_err.set_ylabel("|Phase Error| (hours)")
+    ax_err.legend(loc="upper right", frameon=False, fontsize=8, ncol=2)
+    ax_err.spines["top"].set_visible(False)
+    ax_err.spines["right"].set_visible(False)
+
+    fig.tight_layout()
+    fig.savefig(figures_dir / "l3_shift_work_dynamics.svg")
+    fig.savefig(figures_dir / "l3_shift_work_dynamics.png", dpi=200)
+
+
+def _cmd_circadian_verify(args: argparse.Namespace) -> int:
+    params = CircadianHomeostaticParameters()
+    report = verify_circadian_homeostatic_gates(params)
+    report["generated_at_utc"] = datetime.now(UTC).isoformat()
+    report["source_provenance"] = collect_source_provenance(_repo_root())
+    if args.out_dir is not None:
+        out_dir = Path(args.out_dir)
+        out_dir.mkdir(parents=True, exist_ok=True)
+        (out_dir / "l3_verification_gate.json").write_text(
+            json.dumps(report, indent=2),
+            encoding="utf-8",
+        )
+        _write_l3_prc_figure(report, out_dir / "figures")
+    _emit(report, as_json=args.json)
+    return 0 if report["overall_passed"] else 3
+
+
+def _cmd_circadian_shift_work(args: argparse.Namespace) -> int:
+    params = CircadianHomeostaticParameters()
+    summary, trajectories = run_shift_work_experiment(params, require_verified_gate=True)
+    summary["generated_at_utc"] = datetime.now(UTC).isoformat()
+    summary["source_provenance"] = collect_source_provenance(_repo_root())
+    if args.out_dir is not None:
+        out_dir = Path(args.out_dir)
+        out_dir.mkdir(parents=True, exist_ok=True)
+        (out_dir / "l3_shift_work_summary.json").write_text(
+            json.dumps(summary, indent=2),
+            encoding="utf-8",
+        )
+        # Downsample strictly at 0.25 h (every 5th 0.05 h step) for compact archival timeseries
+        rows_df_parts: list[pl.DataFrame] = []
+        for arm_id, traj in trajectories.items():
+            sl = slice(None, None, 5)
+            rows_df_parts.append(
+                pl.DataFrame(
+                    {
+                        "arm_id": [arm_id] * int(traj.times_h[sl].size),
+                        "time_h": traj.times_h[sl],
+                        "light": traj.light[sl],
+                        "p_total_nm": traj.p_total[sl],
+                        "c_nuc_nm": traj.c_n[sl],
+                        "c_wake": traj.c_wake[sl],
+                        "s_homeostat": traj.s_homeostat[sl],
+                        "u_threshold": traj.u_threshold[sl],
+                        "l_threshold": traj.l_threshold[sl],
+                        "modeled_rest_state": traj.modeled_rest_state[sl].astype(int),
+                    }
+                )
+            )
+        pl.concat(rows_df_parts).write_parquet(out_dir / "l3_timeseries.parquet")
+        _write_l3_shift_work_figure(summary, trajectories, out_dir / "figures")
+    _emit(summary, as_json=args.json)
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="synapse",
@@ -603,6 +778,25 @@ def build_parser() -> argparse.ArgumentParser:
     p_ex_bun.add_argument("--out", required=True)
     p_ex_bun.add_argument("--json", action="store_true")
     p_ex_bun.set_defaults(func=_cmd_export_bundle)
+
+    # circadian (Phase 5B L3 oscillator verification & gated shift-work schedules)
+    p_circ = sub.add_parser(
+        "circadian", help="Verify L3 circadian-homeostatic oscillator and run gated schedules"
+    )
+    circ_sub = p_circ.add_subparsers(dest="circadian_cmd", required=True)
+    p_circ_ver = circ_sub.add_parser(
+        "verify", help="Verify DD period, LD entrainment, light PRC, and deprivation rebound gates"
+    )
+    p_circ_ver.add_argument("--out-dir", default=None)
+    p_circ_ver.add_argument("--json", action="store_true")
+    p_circ_ver.set_defaults(func=_cmd_circadian_verify)
+
+    p_circ_sw = circ_sub.add_parser(
+        "shift-work", help="Run gated L3 shift-work & forced-wake schedules after verification"
+    )
+    p_circ_sw.add_argument("--out-dir", default=None)
+    p_circ_sw.add_argument("--json", action="store_true")
+    p_circ_sw.set_defaults(func=_cmd_circadian_shift_work)
 
     return parser
 

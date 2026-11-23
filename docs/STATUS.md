@@ -10,16 +10,11 @@
 | **Phase 3** | Protocol freeze, CLI run planner, PostgreSQL `SKIP LOCKED`, FastAPI, Worker, React/Plotly UI | **Verified** | API/worker/UI suites + Docker backup/restore parity ([ADR-0005](adr/ADR-0005-phase3-research-laboratory-architecture.md)) |
 | **Phase 4 (`P4-MET-001`)** | Metabolic feeding circuit matched controls, confirmatory (`N=30`), robustness (`N=6`), MaleCNS audit | **Confirmatory Simulation Complete** | `180/180` confirmatory + `36/36` robustness runs; *not* biological validation ([Metabolic Report](../research/modules/metabolic/confirmatory_report.md)) |
 | **Phase 5A (`P5-PAIN-001`)** | Pain VNC GABAergic disinhibition (`EdgeMaskModulation`) vs. cell death on `malecns_v1_0` | **Confirmatory Simulation Complete** | `120/120` confirmatory (`6/6` primary `q = 9.9990e-05`) + `36/36` robustness runs ([Pain Report](../research/modules/pain/confirmatory_report.md)) |
-| **Phase 5B+** | Sleep & Addiction modules | **Planned** | Gated on primary literature review & module-specific negative controls |
+| **Phase 5B (`P5-SLEEP-001`)** | L3 circadian-homeostatic oscillator + shift-work & L1 `malecns_v1_0` pilot | **L3 Verified + L1 Pilot Complete (Draft Freeze Pending)** | 4/4 L3 gates + 5 shift arms; `24/24` L1 pilot runs + 3 bundles ([Sleep Pilot](../research/modules/sleep/pilot_report.md)) |
+| **Phase 5B+ (`Addiction`)** | Reward-learning / conditioning & reinstatement module | **Planned** | Gated on explicit plasticity rule, yoked sham controls & literature review |
 
-## Phase 5A Summary (`P5-PAIN-001`, RUO Computational Simulation)
+## Phase 5B Sleep Summary (`P5-SLEEP-001-PILOT`, RUO)
 
-- **Confirmatory Run:** Frozen [`P5-PAIN-001.frozen.yaml`](../research/protocols/P5-PAIN-001.frozen.yaml) (`protocol_sha256: a379c7e1c7b264859fe777730464cd8d34807dc1772818b5c4bb4b978ed683cf`, `master = 20261131`, `N = 15`, `git_commit: 5a878cd`, `git_dirty = false`) completed `120/120` runs (`0` failed, `8271.70 s`, `sham_max_spikes = 0`) into gitignored `runs/phase5_pain001_confirmatory/`.
-- **Primary Contrasts (BH-FDR `q = 9.9990e-05`):** Pathway-selective `acute_edge_mask` elevated ascending output `523539` (`+20.667 Hz` vs. baseline & matched ctrl; stim `19.067 -> 51.467 Hz`) and `558778` (`+3.833 Hz` vs. baseline, `+3.333 Hz` vs. ctrl), while matched-control GABA ablation remained null (`p = 1.0000` / `0.3544`).
-- **Disinhibition vs. Cell-Death Dissociation:** Global `gaba_cell_death` selectively suppressed `10592` (`-4.500 Hz`, `p = 2.9997e-04`) whereas selective `acute_edge_mask` raised it (`+1.417 Hz`, `p = 0.0213`); post-stimulus `[0.6, 0.8] s` firing remained `<= 1.667 Hz` across L1 LIF models.
-- **Exploratory Robustness (`36/36` runs, `N = 6`, `2269.22 s`):** Positive `acute_edge_mask` deltas on `523539` (`+15.208` to `+20.833 Hz`, `p = 0.03125`) and `558778` (`+2.708` to `+3.750 Hz`, `p = 0.03125`) held across `shiu2024_lif` and `±10% w_syn_v` (`0.2475`/`0.3025 mV`).
-
-## Known Limitations & Immediate Next Tasks
-
-1. **RUO Limits:** Single male specimen (`malecns_v1_0`), L1 LIF without receptor subtypes or chronic injury remodeling, and `Jones et al. 2025` non-peer-reviewed preprint status documented in [`evidence_register.md`](../research/modules/pain/evidence_register.md).
-2. **Next:** Verify Ubuntu CI + begin Phase 5B literature & anatomical scoping (Sleep / Addiction modules) only after explicit approval.
+- **L3 Oscillator Gates (`leloup_goldbeter_1998_two_process_v1`):** All 4 pre-shift-work gates passed (`tau_DD = 24.1346 h`, convergence `0.0 h`, `tau_LD = 24.0171 h`, `CT 15 = -2.3591 h`, `CT 21 = +2.3431 h`, 12 h deprivation rest rebound `+0.1625`); rotating 3-day `+8 h` shift reached `10.814 h` max error without stable re-entrainment ([ADR-0007](adr/ADR-0007-phase5b-sleep-circadian-homeostatic-coupling.md)).
+- **L1 Exploratory Pilot (`24/24` runs on `malecns_v1_0`, `N = 3`, `sham_max_spikes = 0`):** `DN1p` inhibited `TuTuB_b` (`22794`: `102.083 -> 89.167 Hz`, `520699`: `100.417 -> 89.167 Hz`), matched `GLUT` controls (`|SMD| <= 0.0304`) were null (`101.667 / 101.250 Hz`), and `DN1pB->TuBu01/TuTuB_b` masking rescued firing (`101.667 / 101.250 Hz`); `50 Hz` misaligned light + debt recruited `TuBu01` (`+14.583 Hz`), `ExR1` (`+2.917 Hz`), and `ER5` (`+2.083 Hz`).
+- **Draft Confirmatory Protocol:** [`P5-SLEEP-001.yaml`](../research/protocols/P5-SLEEP-001.yaml) remains `status: draft` (`120` runs, est. `~2.18 h` at `workers = 3`); freeze & run require explicit human sign-off.

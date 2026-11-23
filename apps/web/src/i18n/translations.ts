@@ -120,9 +120,9 @@ export const TRANSLATIONS = {
     modPainName: "Pain Circuit (P5-PAIN-001)",
     modPainDesc:
       "120/120 confirmatory runs (N=15) + 36/36 robustness checks on adult male malecns_v1_0 VNC GABA disinhibition vs. cell death.",
-    modSleepName: "Sleep & Circadian Regulation",
+    modSleepName: "Sleep & Circadian Regulation (P5-SLEEP-001)",
     modSleepDesc:
-      "Planned: clock/homeostatic dynamics with explicit oscillator period, phase-response, and recovery gates.",
+      "Experimental: verified L3 circadian-homeostatic oscillator (4/4 gates + shift-work arms) paired with L1 MaleCNS 24/24 exploratory pilot (confirmatory freeze pending).",
     modAddictionName: "Addiction & Reward Learning",
     modAddictionDesc:
       "Planned: dopamine/ Kenyon-cell acquisition, extinction, and reinstatement with explicit plasticity rules and yoked sham controls.",
@@ -141,6 +141,7 @@ export const TRANSLATIONS = {
     modulesMissingTitle: "Local Simulation Artifacts Not Found Under runs/",
     modulesMissingBody:
       "Live scientific summary JSONs under runs/ are intentionally gitignored. Run confirmatory scripts locally or inspect offline test fixtures; zero synthetic numbers are fabricated here.",
+    tabSleep: "Sleep · P5-SLEEP-001",
     tabPain: "Pain · P5-PAIN-001",
     tabMetabolic: "Metabolic · P4-MET-001",
     tabBenchmark: "Shiu 2024 Benchmark",
@@ -236,6 +237,7 @@ export const TRANSLATIONS = {
     minEdgeFilterLabel: "Edge Synapse Threshold",
     presetsLabel: "Verified Circuit Presets",
     presetPain: "Pain VNC (malecns_v1_0)",
+    presetSleep: "Sleep & Circadian (malecns_v1_0)",
     presetMetabolic: "Metabolic MN9 (flywire_fafb_v630)",
     presetSynth: "Synthetic Microcircuit",
     exploreIn3d: "Explore Circuit in 3D",
@@ -403,6 +405,35 @@ export const TRANSLATIONS = {
     compareSelectA: "Analysis A",
     compareSelectB: "Analysis B",
     compareNeedTwo: "At least two analyses are required to compare side by side.",
+    simpleSleepTitle: "Sleep & Clock Story (L3 + Male Brain)",
+    simpleSleepSummary:
+      "Verified 24 h molecular clock + sleep-debt math gates pass 4/4 checks; in the male connectome pilot (24/24 runs), DN1p clock neurons selectively braked TuTuB_b interneurons while 50 Hz misaligned light activated ExR1 and ER5.",
+    glossCircadianTitle: "Circadian Clock (24h)",
+    glossCircadianDef:
+      "An internal molecular oscillator (~24 hours) synchronized by light that gates when rest and activity happen.",
+    glossHomeostatTitle: "Sleep Pressure (Process S)",
+    glossHomeostatDef:
+      "A homeostatic debt signal that accumulates during waking hours and drains during quiescence/rest recovery.",
+    sleepBannerTitle: "Phase 5B: L3 Circadian-Homeostatic Oscillator & L1 MaleCNS Pilot",
+    sleepGatesTitle: "Mandatory Pre-Shift-Work Oscillator Verification (4/4 Gates)",
+    sleepGateDd: "Free-Running DD Period",
+    sleepGateLd: "LD 12:12 Entrainment",
+    sleepGatePrc: "Light-Pulse PRC",
+    sleepGateRebound: "12h Deprivation Rebound",
+    sleepChartPrcTitle: "L3 Light-Pulse Phase Response Curve (CT 0–21, 2 h pulse)",
+    sleepChartShiftTitle: "L3 16-Day Shift-Work Phase Misalignment & Re-Entrainment",
+    sleepChartPilotTutubTitle: "L1 Pilot TuTuB_b Gating by DN1p Clock Inputs (Hz, N=3)",
+    sleepChartPilotEbTitle: "L1 Pilot Downstream AOTU/EB Cohorts: TuBu01, TuBu06, ExR1 & ER5 (Hz, N=3)",
+    sleepL1ContrastsTitle: "Exploratory L1 Paired Contrasts & Causal Edge-Mask Rescue (0.0–0.8 s, N=3)",
+    sleepColArm: "Schedule Arm",
+    sleepColMaxErr: "Max |Phase Err| (h)",
+    sleepColReentrain: "Re-entrain (days)",
+    sleepColSPeak: "Peak Sleep Debt S",
+    sleepColRestFrac: "Post-Onset Rest Frac",
+    sleepNeverReentrained: "Never stably re-entrained",
+    sleepLimitsTitle: "Mandatory RUO Boundaries & Model Coupling Limits",
+    sleepLimitsBody:
+      "Modeled quiescence and LIF spike rates are mathematical proxies—NOT validated biological or human clinical sleep. L3 evolves on hours (tau_i=8.76 h, tau_d=9.51 h); L1 malecns_v1_0 probes run 0.8 s quasi-steady-state snapshots with zero weight on UNKNOWN/peptide/monoamine transmitters (PDF, SIFa, DA, OCT, SER, HIST). Confirmatory P5-SLEEP-001.yaml remains unfrozen (draft).",
   },
   tr: {
     // Document & Branding
@@ -521,9 +552,9 @@ export const TRANSLATIONS = {
     modPainName: "Ağrı Devresi (P5-PAIN-001)",
     modPainDesc:
       "Erişkin erkek malecns_v1_0 VNC ağında GABA disinhibisyonu ve hücre ölümü proksisi için 120/120 doğrulayıcı + 36/36 dayanıklılık koşusu.",
-    modSleepName: "Uyku ve Sirkadiyen Düzenleme",
+    modSleepName: "Uyku ve Sirkadiyen Düzenleme (P5-SLEEP-001)",
     modSleepDesc:
-      "Planlandı: açık osilatör periyodu, faz tepki eğrisi ve toparlanma kapılarıyla doğrulanmış sirkadiyen/homeostatik dinamikler.",
+      "Deneysel: doğrulanmış L3 sirkadiyen-homeostatik osilatör (4/4 kapı + vardiyalı çalışma kolları) ve L1 MaleCNS 24/24 keşifsel pilot (doğrulayıcı dondurma onay bekliyor).",
     modAddictionName: "Bağımlılık ve Ödül Öğrenmesi",
     modAddictionDesc:
       "Planlandı: açık plastisite kuralı ve eşleştirilmiş (yoked/sham) kontrollerle edinim, sönme ve geri dönüş modelleri.",
@@ -542,6 +573,7 @@ export const TRANSLATIONS = {
     modulesMissingTitle: "Yerel runs/ Altında Simülasyon Çıktıları Bulunamadı",
     modulesMissingBody:
       "runs/ altındaki simülasyon özet JSON dosyaları Git dışında tutulur. Yerel koşu sonuçları varsa otomatik okunur; sahte veri kesinlikle üretilmez.",
+    tabSleep: "Uyku · P5-SLEEP-001",
     tabPain: "Ağrı · P5-PAIN-001",
     tabMetabolic: "Metabolik · P4-MET-001",
     tabBenchmark: "Shiu 2024 Kıyaslaması",
@@ -642,6 +674,7 @@ export const TRANSLATIONS = {
     minEdgeFilterLabel: "Kenar Sinaps Eşiği",
     presetsLabel: "Doğrulanmış Devre Hazır Ayarları",
     presetPain: "Ağrı VNC Devresi (malecns_v1_0)",
+    presetSleep: "Uyku ve Sirkadiyen Devre (malecns_v1_0)",
     presetMetabolic: "Metabolik MN9 Devresi (flywire_fafb_v630)",
     presetSynth: "Sentetik Mikrodevre",
     exploreIn3d: "Devreyi 3B İncele",
@@ -809,6 +842,35 @@ export const TRANSLATIONS = {
     compareSelectA: "Analiz A",
     compareSelectB: "Analiz B",
     compareNeedTwo: "Yan yana karşılaştırma için en az iki analiz gereklidir.",
+    simpleSleepTitle: "Uyku ve Biyolojik Saat Hikayesi (L3 + Erkek Beyin)",
+    simpleSleepSummary:
+      "24 saatlik moleküler saat ve uyku borcu matematiği 4/4 doğrulama kapısını geçti; erkek konnektom pilotunda (24/24 koşu) DN1p saat nöronları TuTuB_b hücrelerini seçici olarak frenlerken 50 Hz uyumsuz ışık ExR1 ve ER5 devrelerini harekete geçirdi.",
+    glossCircadianTitle: "Sirkadiyen Saat (24 sa)",
+    glossCircadianDef:
+      "Işıkla senkronize olan ve uyanıklık ile dinlenme pencerelerini kapılayan ~24 saatlik içsel moleküler osilatördür.",
+    glossHomeostatTitle: "Uyku Basıncı (Süreç S)",
+    glossHomeostatDef:
+      "Uyanıklık süresince biriken ve dinlenme/toparlanma sırasında üssel olarak azalan homeostatik borç sinyalidir.",
+    sleepBannerTitle: "Faz 5B: L3 Sirkadiyen-Homeostatik Osilatör ve L1 MaleCNS Pilotu",
+    sleepGatesTitle: "Vardiyalı Çalışma Öncesi Zorunlu Osilatör Doğrulaması (4/4 Kapı)",
+    sleepGateDd: "Serbest Koşan DD Periyodu",
+    sleepGateLd: "LD 12:12 Senkronizasyonu",
+    sleepGatePrc: "Işık Palsi PRC Eğrisi",
+    sleepGateRebound: "12 sa Uyanıklık Toparlanması",
+    sleepChartPrcTitle: "L3 Işık Palsi Faz Tepki Eğrisi (CT 0–21, 2 sa ışık palsi)",
+    sleepChartShiftTitle: "L3 16 Günlük Vardiyalı Çalışma Faz Kayması ve Yeniden Uyum",
+    sleepChartPilotTutubTitle: "L1 Pilot TuTuB_b Nöronlarının DN1p Saat Girişleriyle Kapılanması (Hz, N=3)",
+    sleepChartPilotEbTitle: "L1 Pilot Aşağı Akım AOTU/EB Grupları: TuBu01, TuBu06, ExR1 ve ER5 (Hz, N=3)",
+    sleepL1ContrastsTitle: "Keşifsel L1 Eşleştirilmiş Farklar ve Kenar Maskesi Kurtarması (0.0–0.8 sn, N=3)",
+    sleepColArm: "Program Kolu",
+    sleepColMaxErr: "Maks |Faz Hatası| (sa)",
+    sleepColReentrain: "Yeniden Uyum (gün)",
+    sleepColSPeak: "Tepe Uyku Borcu S",
+    sleepColRestFrac: "Başlangıç Sonrası Dinlenme Oranı",
+    sleepNeverReentrained: "Kararlı uyum sağlanamadı",
+    sleepLimitsTitle: "Zorunlu RUO Sınırları ve Model Eşleştirme Kısıtları",
+    sleepLimitsBody:
+      "Modellenen dinginlik durumu ve LIF ateşleme hızları hesaplamalı proksilerdir — doğrulanmış biyolojik veya klinik insan uykusu DEĞİLDİR. L3 modeli saat ölçeğinde çalışır (tau_i=8.76 sa, tau_d=9.51 sa); L1 malecns_v1_0 koşuları 0.8 sn yarı-kararlı anlık kesitleri örnekler ve UNKNOWN/peptit/monoamin ileticilerine (PDF, SIFa, DA, OCT, SER, HIST) sıfır ağırlık verir. Doğrulayıcı P5-SLEEP-001.yaml henüz dondurulmamıştır (draft).",
   },
 } as const;
 

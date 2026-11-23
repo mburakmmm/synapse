@@ -43,6 +43,14 @@ const PRESET_CONFIGS: Record<string, Omit<CircuitPresetRequest, "nonce">> = {
     minSynapses: 8,
     maxNodes: 75,
   },
+  malecns_sleep: {
+    datasetId: "malecns_v1_0",
+    seedIds: "10324, 15016, 114115, 112789, 10043",
+    hops: 1,
+    direction: "both",
+    minSynapses: 25,
+    maxNodes: 75,
+  },
   flywire_fafb_v630: {
     datasetId: "flywire_fafb_v630",
     seedIds: "720575940660219265, 720575940645521262",
@@ -633,13 +641,22 @@ export const DatasetsView: React.FC<DatasetsViewProps> = ({
 
         <div className="pill-group">
           {hasDatasetOnDisk("malecns_v1_0") && (
-            <button
-              type="button"
-              className="pill-btn"
-              onClick={() => handleApplyPreset(PRESET_CONFIGS.malecns_v1_0)}
-            >
-              {t("presetPain")}
-            </button>
+            <>
+              <button
+                type="button"
+                className="pill-btn"
+                onClick={() => handleApplyPreset(PRESET_CONFIGS.malecns_v1_0)}
+              >
+                {t("presetPain")}
+              </button>
+              <button
+                type="button"
+                className="pill-btn"
+                onClick={() => handleApplyPreset(PRESET_CONFIGS.malecns_sleep)}
+              >
+                {t("presetSleep")}
+              </button>
+            </>
           )}
           {hasDatasetOnDisk("flywire_fafb_v630") && (
             <button

@@ -64,6 +64,8 @@ const GLOSSARY_KEYS: Array<{
   { id: "ctrl", titleKey: "glossCtrlTitle", defKey: "glossCtrlDef" },
   { id: "sham", titleKey: "glossShamTitle", defKey: "glossShamDef" },
   { id: "hz", titleKey: "glossHzTitle", defKey: "glossHzDef" },
+  { id: "circadian", titleKey: "glossCircadianTitle", defKey: "glossCircadianDef" },
+  { id: "homeostat", titleKey: "glossHomeostatTitle", defKey: "glossHomeostatDef" },
 ];
 
 export function moduleStateBadge(
@@ -109,6 +111,10 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
   const metPrimary = studies?.metabolic.confirmatory.find((c) =>
     c.analysis_key.includes("mn9r_gain_1p50"),
   );
+  const sleepPrimary = studies?.sleep?.pilot?.contrasts.find(
+    (c) => c.contrast_name === "analysis_22794_clock_vs_base",
+  );
+  const sleepL3Gate = studies?.sleep?.l3_gate ?? null;
   const primaryBench = benchmarks[0]?.report;
 
   if (uiMode === "simple") {
@@ -209,6 +215,53 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
                       hops: 1,
                       direction: "incoming",
                       minSynapses: 5,
+                      maxNodes: 75,
+                    })
+                  }
+                >
+                  {t("open3dBtn")}
+                </button>
+              </div>
+            </div>
+
+            <div className="story-card">
+              <div>
+                <div className="card-header" style={{ marginBottom: 6 }}>
+                  <h3>{t("simpleSleepTitle")}</h3>
+                  <StatusBadge
+                    label={sleepL3Gate?.overall_passed ? t("stateExperimental") : t("statePlanned")}
+                    tone={sleepL3Gate?.overall_passed ? "info" : "neutral"}
+                  />
+                </div>
+                <div className="story-card-metric">
+                  {sleepPrimary
+                    ? `${sleepPrimary.mean_difference_hz.toFixed(1)} Hz`
+                    : sleepL3Gate?.gates.dd_free_running_and_convergence.tau_dd_coarse_h
+                      ? `${sleepL3Gate.gates.dd_free_running_and_convergence.tau_dd_coarse_h.toFixed(2)} h`
+                      : t("noneDash")}
+                </div>
+                <p style={{ fontSize: "0.83rem", color: "var(--text-secondary)", marginBottom: 0 }}>
+                  {sleepPrimary || sleepL3Gate ? t("simpleSleepSummary") : t("simpleMissingNote")}
+                </p>
+              </div>
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                <button
+                  type="button"
+                  className="btn btn-sm"
+                  onClick={() => onNavigateModule("sleep")}
+                >
+                  {t("readStoryBtn")}
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-secondary btn-sm"
+                  onClick={() =>
+                    onExploreCircuit3D({
+                      datasetId: "malecns_v1_0",
+                      seedIds: "10324, 15016, 114115, 112789, 10043",
+                      hops: 1,
+                      direction: "both",
+                      minSynapses: 25,
                       maxNodes: 75,
                     })
                   }

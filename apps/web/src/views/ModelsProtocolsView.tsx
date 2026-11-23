@@ -160,7 +160,11 @@ export const ModelsProtocolsView: React.FC<ModelsProtocolsViewProps> = ({
               <div className="card-header" style={{ marginBottom: 6 }}>
                 <strong className="mono">{m.model_id}</strong>
                 <StatusBadge
-                  label={`solver: ${m.solver} · dg=${String(m.dg_unless_refractory)}`}
+                  label={
+                    m.model_level === "L3"
+                      ? `L3 ODE · solver: ${m.solver}`
+                      : `L1 LIF · solver: ${m.solver} · dg=${String(m.dg_unless_refractory)}`
+                  }
                   tone="info"
                 />
               </div>
