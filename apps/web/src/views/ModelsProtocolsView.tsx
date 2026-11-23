@@ -163,7 +163,9 @@ export const ModelsProtocolsView: React.FC<ModelsProtocolsViewProps> = ({
                   label={
                     m.model_level === "L3"
                       ? `L3 ODE · solver: ${m.solver}`
-                      : `L1 LIF · solver: ${m.solver} · dg=${String(m.dg_unless_refractory)}`
+                      : m.model_level === "L2"
+                        ? `L2 Plasticity · solver: ${m.solver}`
+                        : `L1 LIF · solver: ${m.solver} · dg=${String(m.dg_unless_refractory)}`
                   }
                   tone="info"
                 />

@@ -34,6 +34,14 @@ from synapse_core.models import (
     ShamIntervention,
     validate_model_spec,
 )
+from synapse_core.plasticity import (
+    MBPlasticityParameters,
+    PlasticityTrajectory,
+    compute_preference_metrics,
+    run_conditioning_paradigm,
+    simulate_conditioning_schedule,
+    verify_plasticity_paradigm_gates,
+)
 from synapse_core.rng import SEED_ALGORITHM, SeedRecord, derive_seed
 from synapse_core.subgraph import (
     SubgraphBoundExceededError,
@@ -61,8 +69,10 @@ __all__ = [
     "EdgeMaskModulation",
     "InterventionSpec",
     "LIFParameters",
+    "MBPlasticityParameters",
     "NeuronNamespaceKey",
     "NeuronSilencing",
+    "PlasticityTrajectory",
     "PoissonRateStimulus",
     "ResolvedInterventionRecord",
     "ResourceEstimate",
@@ -76,12 +86,16 @@ __all__ = [
     "SubgraphMetadata",
     "TwoProcessTrajectory",
     "UnsupportedBackendOptionError",
+    "compute_preference_metrics",
     "derive_seed",
     "detect_oscillation_peaks",
     "extract_bounded_subgraph",
+    "run_conditioning_paradigm",
     "run_shift_work_experiment",
+    "simulate_conditioning_schedule",
     "simulate_two_process",
     "validate_model_spec",
     "verify_circadian_homeostatic_gates",
+    "verify_plasticity_paradigm_gates",
     "wrap_phase_hours",
 ]

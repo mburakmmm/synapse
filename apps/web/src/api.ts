@@ -106,7 +106,7 @@ export interface DatasetPlanResponse {
 export interface ModelSummary {
   model_id: string;
   model_revision: string;
-  model_level?: "L1" | "L3";
+  model_level?: "L1" | "L2" | "L3";
   parameter_manifest_sha256: string;
   solver: string;
   dt_s: number;
@@ -513,6 +513,107 @@ export interface SleepStudyData {
   pilot: SleepPilotSummary | null;
 }
 
+export interface AddictionL2GateReport {
+  model_id: string;
+  model_level: string;
+  parameter_manifest_sha256: string;
+  overall_passed: boolean;
+  gates: {
+    numerical_convergence_and_bounds: {
+      passed: boolean;
+      dt_coarse_s: number;
+      dt_fine_s: number;
+      weights_within_bounds: boolean;
+      max_abs_weight_diff: number;
+      max_abs_pi_diff: number;
+    };
+    acquisition_specificity: {
+      passed: boolean;
+      pi_acq: number;
+      w_avoid_cs_plus_acq: number;
+      w_avoid_cs_minus_abs_err: number;
+      v_cs_minus_abs_err: number;
+    };
+    parallel_memory_extinction: {
+      passed: boolean;
+      pi_ext: number;
+      pi_drop_acq_to_ext: number;
+      w_appr_cs_plus_ext: number;
+      w_avoid_cs_plus_ext: number;
+    };
+    reinstatement_recovery: {
+      passed: boolean;
+      pi_reinst: number;
+      pi_gain_ext_to_reinst: number;
+      w_appr_cs_plus_reinst: number;
+      w_avoid_cs_minus_abs_err: number;
+    };
+    negative_controls_null: {
+      passed: boolean;
+      sham_max_abs_pi: number;
+      sham_max_weight_dev: number;
+      yoked_unpaired_acq_pi: number;
+      dan_blocked_max_abs_pi: number;
+    };
+  };
+}
+
+export interface AddictionL2PhaseSnapshot {
+  time_s: number;
+  pi_proxy: number;
+  v_cs_plus: number;
+  v_cs_minus: number;
+  w_avoid_cs_plus: number;
+  w_avoid_cs_minus: number;
+  w_appr_cs_plus: number;
+  w_appr_cs_minus: number;
+}
+
+export interface AddictionL2ParadigmSummary {
+  model_id: string;
+  parameter_manifest_sha256: string;
+  gate_overall_passed: boolean;
+  arms: Record<
+    string,
+    {
+      arm_id: string;
+      duration_s: number;
+      max_abs_pi_proxy: number;
+      phase_snapshots: Record<string, AddictionL2PhaseSnapshot>;
+    }
+  >;
+  l2_to_l1_weight_snapshots: Array<{
+    state_label: string;
+    l2_time_s: number;
+    w_avoid_cs_plus: number;
+    w_appr_cs_plus: number;
+    l2_pi_proxy: number;
+    l1_condition_mapping: string;
+  }>;
+}
+
+export interface AddictionPilotSummary {
+  protocol_id: string;
+  dataset_id: string;
+  total_runs: number;
+  succeeded_run_count: number;
+  failed_run_count: number;
+  sham_count: number;
+  sham_max_spikes: number;
+  wall_total_s: number;
+  run_wall_mean_s: number;
+  git_commits: string[];
+  cohort_stim_mean_hz: Record<string, Record<string, number>>;
+  l1_valence_proxy_by_condition?: Record<string, number>;
+  contrasts: SleepPilotContrast[];
+}
+
+export interface AddictionStudyData {
+  l2_gate: AddictionL2GateReport | null;
+  l2_paradigm: AddictionL2ParadigmSummary | null;
+  pilot: AddictionPilotSummary | null;
+}
+
 export interface StudiesResponse {
   modules: ResearchModuleItem[];
   metabolic: {
@@ -535,6 +636,7 @@ export interface StudiesResponse {
     robustness: PainRobustnessSummary | null;
   };
   sleep?: SleepStudyData;
+  addiction?: AddictionStudyData;
 }
 
 async function requestJson<T>(path: string, init?: RequestInit): Promise<T> {

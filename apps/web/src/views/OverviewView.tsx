@@ -66,6 +66,8 @@ const GLOSSARY_KEYS: Array<{
   { id: "hz", titleKey: "glossHzTitle", defKey: "glossHzDef" },
   { id: "circadian", titleKey: "glossCircadianTitle", defKey: "glossCircadianDef" },
   { id: "homeostat", titleKey: "glossHomeostatTitle", defKey: "glossHomeostatDef" },
+  { id: "plasticity", titleKey: "glossPlasticityTitle", defKey: "glossPlasticityDef" },
+  { id: "extinction", titleKey: "glossExtinctionTitle", defKey: "glossExtinctionDef" },
 ];
 
 export function moduleStateBadge(
@@ -115,6 +117,10 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
     (c) => c.contrast_name === "analysis_22794_clock_vs_base",
   );
   const sleepL3Gate = studies?.sleep?.l3_gate ?? null;
+  const addictionL2Gate = studies?.addiction?.l2_gate ?? null;
+  const addictionPrimary =
+    studies?.addiction?.pilot?.contrasts.find((c) => c.contrast_name.includes("acq")) ??
+    studies?.addiction?.pilot?.contrasts[0];
   const primaryBench = benchmarks[0]?.report;
 
   if (uiMode === "simple") {
@@ -262,6 +268,53 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
                       hops: 1,
                       direction: "both",
                       minSynapses: 25,
+                      maxNodes: 75,
+                    })
+                  }
+                >
+                  {t("open3dBtn")}
+                </button>
+              </div>
+            </div>
+
+            <div className="story-card">
+              <div>
+                <div className="card-header" style={{ marginBottom: 6 }}>
+                  <h3>{t("simpleAddictionTitle")}</h3>
+                  <StatusBadge
+                    label={addictionL2Gate?.overall_passed ? t("stateExperimental") : t("statePlanned")}
+                    tone={addictionL2Gate?.overall_passed ? "info" : "neutral"}
+                  />
+                </div>
+                <div className="story-card-metric">
+                  {addictionPrimary
+                    ? `${addictionPrimary.mean_difference_hz >= 0 ? "+" : ""}${addictionPrimary.mean_difference_hz.toFixed(1)} Hz`
+                    : addictionL2Gate
+                      ? `+${addictionL2Gate.gates.acquisition_specificity.pi_acq.toFixed(2)} PI`
+                      : t("noneDash")}
+                </div>
+                <p style={{ fontSize: "0.83rem", color: "var(--text-secondary)", marginBottom: 0 }}>
+                  {addictionPrimary || addictionL2Gate ? t("simpleAddictionSummary") : t("simpleMissingNote")}
+                </p>
+              </div>
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                <button
+                  type="button"
+                  className="btn btn-sm"
+                  onClick={() => onNavigateModule("addiction")}
+                >
+                  {t("readStoryBtn")}
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-secondary btn-sm"
+                  onClick={() =>
+                    onExploreCircuit3D({
+                      datasetId: "malecns_v1_0",
+                      seedIds: "522749, 522444, 13728, 10267, 512788, 10977",
+                      hops: 1,
+                      direction: "both",
+                      minSynapses: 30,
                       maxNodes: 75,
                     })
                   }

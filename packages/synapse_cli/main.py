@@ -23,11 +23,16 @@ from synapse_core import (
     Brian2CPUBackend,
     CircadianHomeostaticParameters,
     LIFParameters,
+    MBPlasticityParameters,
+    PlasticityTrajectory,
     TwoProcessTrajectory,
     extract_bounded_subgraph,
+    run_conditioning_paradigm,
     run_shift_work_experiment,
+    simulate_conditioning_schedule,
     validate_model_spec,
     verify_circadian_homeostatic_gates,
+    verify_plasticity_paradigm_gates,
 )
 from synapse_data import (
     build_default_registry,
@@ -197,6 +202,7 @@ def _cmd_graph_subgraph(args: argparse.Namespace) -> int:
 def _cmd_model_list(args: argparse.Namespace) -> int:
     default_lif = LIFParameters()
     shiu_lif = LIFParameters.shiu2024_reference()
+    plasticity_l2 = MBPlasticityParameters()
     circadian_l3 = CircadianHomeostaticParameters()
     backend = Brian2CPUBackend()
     caps = backend.capabilities()
@@ -221,6 +227,15 @@ def _cmd_model_list(args: argparse.Namespace) -> int:
                 "dt_s": shiu_lif.dt_s,
                 "dg_unless_refractory": shiu_lif.dg_unless_refractory,
                 "parameter_source": shiu_lif.parameter_source,
+            },
+            {
+                "model_id": plasticity_l2.model_id,
+                "model_revision": plasticity_l2.model_revision,
+                "model_level": plasticity_l2.model_level,
+                "parameter_manifest_sha256": plasticity_l2.canonical_sha256(),
+                "solver": plasticity_l2.solver,
+                "dt_s": plasticity_l2.dt_s,
+                "parameter_source": plasticity_l2.parameter_source,
             },
             {
                 "model_id": circadian_l3.model_id,
@@ -588,6 +603,193 @@ def _cmd_circadian_shift_work(args: argparse.Namespace) -> int:
     return 0
 
 
+def _write_l2_controls_figure(
+    params: MBPlasticityParameters,
+    figures_dir: Path,
+) -> None:
+    figures_dir.mkdir(parents=True, exist_ok=True)
+    arms = (
+        "paired_conditioning",
+        "spontaneous_recovery_only",
+        "yoked_unpaired",
+        "sham_no_stimulus",
+        "dan_blocked",
+    )
+    colors = {
+        "paired_conditioning": "#0072B2",
+        "spontaneous_recovery_only": "#009E73",
+        "yoked_unpaired": "#E69F00",
+        "sham_no_stimulus": "#64748B",
+        "dan_blocked": "#CC79A7",
+    }
+    phase_times = [("Acq (145s)", 145.0), ("Ext (235s)", 235.0), ("Reinst (310s)", 310.0)]
+
+    trajs = {arm: simulate_conditioning_schedule(params, arm_id=arm) for arm in arms}
+    fig = Figure(figsize=(8.0, 4.4), dpi=200)
+    FigureCanvasAgg(fig)
+    ax = fig.add_subplot(111)
+    xs = [0.0, 1.0, 2.0]
+    width = 0.15
+    for idx, arm in enumerate(arms):
+        offset = (idx - 2.0) * width
+        vals = []
+        for _, t_val in phase_times:
+            t_idx = int((abs(trajs[arm].times_s - t_val)).argmin())
+            vals.append(float(trajs[arm].pi_proxy[t_idx]))
+        ax.bar(
+            [x + offset for x in xs],
+            vals,
+            width=width,
+            color=colors[arm],
+            label=arm,
+        )
+    ax.axhline(0.0, color="#475569", linewidth=1.0, linestyle="--")
+    ax.set_xticks(xs)
+    ax.set_xticklabels([label for label, _ in phase_times])
+    ax.set_ylabel("Learned Preference Proxy (PI)")
+    ax.set_title(
+        "L2 MB Plasticity Conditioning vs Negative Controls (RUO)",
+        fontsize=11,
+        fontweight="bold",
+    )
+    ax.legend(loc="upper right", frameon=False, fontsize=8)
+    ax.spines["top"].set_visible(False)
+    ax.spines["right"].set_visible(False)
+    fig.tight_layout()
+    fig.savefig(figures_dir / "l2_controls_comparison.svg")
+    fig.savefig(figures_dir / "l2_controls_comparison.png", dpi=200)
+
+
+def _write_l2_learning_curve_figure(
+    trajectories: dict[str, PlasticityTrajectory],
+    figures_dir: Path,
+) -> None:
+    figures_dir.mkdir(parents=True, exist_ok=True)
+    fig = Figure(figsize=(8.6, 5.4), dpi=200)
+    FigureCanvasAgg(fig)
+    ax_pi = fig.add_subplot(211)
+    ax_w = fig.add_subplot(212)
+
+    palette = {
+        "paired_conditioning": "#0072B2",
+        "spontaneous_recovery_only": "#009E73",
+        "yoked_unpaired": "#E69F00",
+        "sham_no_stimulus": "#64748B",
+        "dan_blocked": "#CC79A7",
+    }
+    for arm_id, traj in trajectories.items():
+        ax_pi.plot(
+            traj.times_s,
+            traj.pi_proxy,
+            label=arm_id,
+            color=palette.get(arm_id, "#0072B2"),
+            linewidth=1.6,
+        )
+    ax_pi.axvspan(10.0, 102.0, color="#DBEAFE", alpha=0.35, label="Acq cues")
+    ax_pi.axvspan(150.0, 220.0, color="#FEE2E2", alpha=0.35, label="Extinction")
+    ax_pi.axvspan(265.0, 290.0, color="#DCFCE7", alpha=0.35, label="Reinstatement PAM")
+    ax_pi.set_ylabel("Preference Index (PI)")
+    ax_pi.set_title(
+        "L2 MB Three-Factor Plasticity: Acquisition, Parallel Extinction & Reinstatement (RUO)",
+        fontsize=10.5,
+        fontweight="bold",
+    )
+    ax_pi.legend(loc="upper right", frameon=False, fontsize=7.5, ncol=2)
+    ax_pi.spines["top"].set_visible(False)
+    ax_pi.spines["right"].set_visible(False)
+
+    paired = trajectories["paired_conditioning"]
+    ax_w.plot(
+        paired.times_s,
+        paired.w_avoid_cs_plus,
+        color="#D55E00",
+        linewidth=1.8,
+        label="w_avoid (CS+)",
+    )
+    ax_w.plot(
+        paired.times_s,
+        paired.w_appr_cs_plus,
+        color="#0072B2",
+        linewidth=1.8,
+        label="w_appr (CS+)",
+    )
+    ax_w.plot(
+        paired.times_s,
+        paired.w_avoid_cs_minus,
+        color="#009E73",
+        linewidth=1.5,
+        linestyle="--",
+        label="w_avoid (CS-)",
+    )
+    ax_w.set_xlabel("Time (seconds)")
+    ax_w.set_ylabel("Synaptic Weight (norm.)")
+    ax_w.set_ylim(0.1, 1.05)
+    ax_w.legend(loc="lower right", frameon=False, fontsize=8, ncol=3)
+    ax_w.spines["top"].set_visible(False)
+    ax_w.spines["right"].set_visible(False)
+
+    fig.tight_layout()
+    fig.savefig(figures_dir / "l2_learning_curve.svg")
+    fig.savefig(figures_dir / "l2_learning_curve.png", dpi=200)
+
+
+def _cmd_plasticity_verify(args: argparse.Namespace) -> int:
+    params = MBPlasticityParameters()
+    report = verify_plasticity_paradigm_gates(params)
+    report["generated_at_utc"] = datetime.now(UTC).isoformat()
+    report["source_provenance"] = collect_source_provenance(_repo_root())
+    if args.out_dir is not None:
+        out_dir = Path(args.out_dir)
+        out_dir.mkdir(parents=True, exist_ok=True)
+        (out_dir / "l2_verification_gate.json").write_text(
+            json.dumps(report, indent=2),
+            encoding="utf-8",
+        )
+        _write_l2_controls_figure(params, out_dir / "figures")
+    _emit(report, as_json=args.json)
+    return 0 if report["overall_passed"] else 3
+
+
+def _cmd_plasticity_paradigm(args: argparse.Namespace) -> int:
+    params = MBPlasticityParameters()
+    summary, trajectories = run_conditioning_paradigm(params, require_verified_gate=True)
+    summary["generated_at_utc"] = datetime.now(UTC).isoformat()
+    summary["source_provenance"] = collect_source_provenance(_repo_root())
+    if args.out_dir is not None:
+        out_dir = Path(args.out_dir)
+        out_dir.mkdir(parents=True, exist_ok=True)
+        (out_dir / "l2_paradigm_summary.json").write_text(
+            json.dumps(summary, indent=2),
+            encoding="utf-8",
+        )
+        # Downsample strictly at 0.5 s (every 10th 0.05 s step) for compact archival timeseries
+        parts: list[pl.DataFrame] = []
+        for arm_id, traj in trajectories.items():
+            sl = slice(None, None, 10)
+            parts.append(
+                pl.DataFrame(
+                    {
+                        "arm_id": [arm_id] * int(traj.times_s[sl].size),
+                        "time_s": traj.times_s[sl],
+                        "r_kc_cs_plus": traj.r_kc_cs_plus[sl],
+                        "r_kc_cs_minus": traj.r_kc_cs_minus[sl],
+                        "u_reward": traj.u_reward[sl],
+                        "d_pam": traj.d_pam[sl],
+                        "d_ppl1": traj.d_ppl1[sl],
+                        "w_avoid_cs_plus": traj.w_avoid_cs_plus[sl],
+                        "w_avoid_cs_minus": traj.w_avoid_cs_minus[sl],
+                        "w_appr_cs_plus": traj.w_appr_cs_plus[sl],
+                        "w_appr_cs_minus": traj.w_appr_cs_minus[sl],
+                        "pi_proxy": traj.pi_proxy[sl],
+                    }
+                )
+            )
+        pl.concat(parts).write_parquet(out_dir / "l2_timeseries.parquet")
+        _write_l2_learning_curve_figure(trajectories, out_dir / "figures")
+    _emit(summary, as_json=args.json)
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="synapse",
@@ -797,6 +999,25 @@ def build_parser() -> argparse.ArgumentParser:
     p_circ_sw.add_argument("--out-dir", default=None)
     p_circ_sw.add_argument("--json", action="store_true")
     p_circ_sw.set_defaults(func=_cmd_circadian_shift_work)
+
+    # plasticity (Phase 5B Addiction L2 MB plasticity verification & conditioning paradigm)
+    p_plas = sub.add_parser(
+        "plasticity", help="Verify L2 MB plasticity rules and run conditioning paradigms"
+    )
+    plas_sub = p_plas.add_subparsers(dest="plasticity_cmd", required=True)
+    p_plas_ver = plas_sub.add_parser(
+        "verify", help="Verify RK4 convergence, acquisition, extinction, reinstatement & controls"
+    )
+    p_plas_ver.add_argument("--out-dir", default=None)
+    p_plas_ver.add_argument("--json", action="store_true")
+    p_plas_ver.set_defaults(func=_cmd_plasticity_verify)
+
+    p_plas_par = plas_sub.add_parser(
+        "paradigm", help="Run gated L2 conditioning + control arms and export L2->L1 snapshots"
+    )
+    p_plas_par.add_argument("--out-dir", default=None)
+    p_plas_par.add_argument("--json", action="store_true")
+    p_plas_par.set_defaults(func=_cmd_plasticity_paradigm)
 
     return parser
 

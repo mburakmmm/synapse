@@ -70,6 +70,33 @@ function createApiFetchMock() {
           {
             module_id: "addiction",
             phase: "phase5b",
+            ui_state: "experimental",
+            simulation_phase: "l2_verified_and_l1_pilot_complete",
+            dataset_id: "malecns_v1_0",
+            protocol_id: "P5-ADD-001-PILOT",
+            available_on_disk: true,
+          },
+          {
+            module_id: "neuro",
+            phase: "phase5c",
+            ui_state: "planned",
+            simulation_phase: "planned",
+            dataset_id: null,
+            protocol_id: null,
+            available_on_disk: false,
+          },
+          {
+            module_id: "pharma",
+            phase: "phase5c",
+            ui_state: "planned",
+            simulation_phase: "planned",
+            dataset_id: null,
+            protocol_id: null,
+            available_on_disk: false,
+          },
+          {
+            module_id: "stress",
+            phase: "phase5c",
             ui_state: "planned",
             simulation_phase: "planned",
             dataset_id: null,
@@ -244,6 +271,143 @@ function createApiFetchMock() {
             ],
           },
         },
+        addiction: {
+          l2_gate: {
+            model_id: "mb_dopamine_plasticity_v1",
+            model_level: "L2",
+            parameter_manifest_sha256: "l2sha",
+            overall_passed: true,
+            gates: {
+              numerical_convergence_and_bounds: {
+                passed: true,
+                dt_coarse_s: 0.05,
+                dt_fine_s: 0.025,
+                weights_within_bounds: true,
+                max_abs_weight_diff: 0.00019469,
+                max_abs_pi_diff: 0.00007855,
+              },
+              acquisition_specificity: {
+                passed: true,
+                pi_acq: 0.33123,
+                w_avoid_cs_plus_acq: 0.292978,
+                w_avoid_cs_minus_abs_err: 0.0,
+                v_cs_minus_abs_err: 0.0,
+              },
+              parallel_memory_extinction: {
+                passed: true,
+                pi_ext: 0.045171,
+                pi_drop_acq_to_ext: 0.286059,
+                w_appr_cs_plus_ext: 0.384344,
+                w_avoid_cs_plus_ext: 0.334152,
+              },
+              reinstatement_recovery: {
+                passed: true,
+                pi_reinst: 0.2658,
+                pi_gain_ext_to_reinst: 0.220629,
+                w_appr_cs_plus_reinst: 0.924609,
+                w_avoid_cs_minus_abs_err: 0.0,
+              },
+              negative_controls_null: {
+                passed: true,
+                sham_max_abs_pi: 0.0,
+                sham_max_weight_dev: 0.0,
+                yoked_unpaired_acq_pi: 0.000062,
+                dan_blocked_max_abs_pi: 0.0,
+              },
+            },
+          },
+          l2_paradigm: {
+            model_id: "mb_dopamine_plasticity_v1",
+            parameter_manifest_sha256: "l2sha",
+            gate_overall_passed: true,
+            arms: {
+              paired_conditioning: {
+                arm_id: "paired_conditioning",
+                duration_s: 310,
+                max_abs_pi_proxy: 0.36459,
+                phase_snapshots: {
+                  naive: {
+                    time_s: 10,
+                    pi_proxy: 0.0,
+                    v_cs_plus: -0.142857,
+                    v_cs_minus: -0.142857,
+                    w_avoid_cs_plus: 1.0,
+                    w_avoid_cs_minus: 1.0,
+                    w_appr_cs_plus: 1.0,
+                    w_appr_cs_minus: 1.0,
+                  },
+                  acquisition: {
+                    time_s: 145,
+                    pi_proxy: 0.33123,
+                    v_cs_plus: 0.519604,
+                    v_cs_minus: -0.142857,
+                    w_avoid_cs_plus: 0.292978,
+                    w_avoid_cs_minus: 1.0,
+                    w_appr_cs_plus: 1.0,
+                    w_appr_cs_minus: 1.0,
+                  },
+                  extinction: {
+                    time_s: 235,
+                    pi_proxy: 0.045171,
+                    v_cs_plus: -0.052515,
+                    v_cs_minus: -0.142858,
+                    w_avoid_cs_plus: 0.334152,
+                    w_avoid_cs_minus: 1.0,
+                    w_appr_cs_plus: 0.384344,
+                    w_appr_cs_minus: 0.9999993,
+                  },
+                  reinstatement: {
+                    time_s: 310,
+                    pi_proxy: 0.2658,
+                    v_cs_plus: 0.388743,
+                    v_cs_minus: -0.142857,
+                    w_avoid_cs_plus: 0.366625,
+                    w_avoid_cs_minus: 1.0,
+                    w_appr_cs_plus: 0.924609,
+                    w_appr_cs_minus: 1.0,
+                  },
+                },
+              },
+            },
+            l2_to_l1_weight_snapshots: [],
+          },
+          pilot: {
+            protocol_id: "P5-ADD-001-PILOT",
+            dataset_id: "malecns_v1_0",
+            total_runs: 24,
+            succeeded_run_count: 24,
+            failed_run_count: 0,
+            sham_count: 3,
+            sham_max_spikes: 0,
+            wall_total_s: 1850.0,
+            run_wall_mean_s: 77.08,
+            git_commits: ["3af2151"],
+            cohort_stim_mean_hz: {
+              mbon02_avoid: { cs_plus_naive_baseline: 22.0, cs_plus_post_acquisition: 0.0 },
+              mbon14_appr: { cs_plus_naive_baseline: 22.0, cs_plus_post_acquisition: 28.0 },
+              mbon18_appr: { cs_plus_post_extinction: 0.0, cs_plus_post_reinstatement: 40.0 },
+              mbon12_appr: { cs_plus_naive_baseline: 22.0, cs_plus_post_acquisition: 28.0 },
+            },
+            contrasts: [
+              {
+                contrast_name: "analysis_522444_acq_vs_naive",
+                neuron_id: "522444",
+                baseline_condition: "cs_plus_naive_baseline",
+                treatment_condition: "cs_plus_post_acquisition",
+                n_pairs: 3,
+                failed_run_count: 0,
+                baseline_mean_hz: 31.667,
+                baseline_sd_hz: 1.667,
+                treatment_mean_hz: 0.0,
+                treatment_sd_hz: 0.0,
+                mean_difference_hz: -31.667,
+                sd_difference_hz: 1.667,
+                bootstrap_ci95_low_hz: -33.333,
+                bootstrap_ci95_high_hz: -30.0,
+              },
+            ],
+          },
+        },
       });
     }
     if (target.endsWith("/api/v1/datasets")) {
@@ -331,6 +495,16 @@ function createApiFetchMock() {
             dg_unless_refractory: true,
             parameter_source: "Shiu 2024",
             parameters: { v_rest_v: -0.052, w_syn_v: 0.000275 },
+          },
+          {
+            model_id: "mb_dopamine_plasticity_v1",
+            model_revision: "1.0",
+            model_level: "L2",
+            parameter_manifest_sha256: "l2sha",
+            solver: "rk4",
+            dt_s: 0.05,
+            parameter_source: "Aso 2014 / Felsenberg 2018",
+            parameters: { tau_e_s: 4.0, eta_ltd_pam: 0.09 },
           },
           {
             model_id: "leloup_goldbeter_1998_two_process_v1",
@@ -571,17 +745,20 @@ describe("SYNAPSE Research Workbench UI", () => {
     expect(window.localStorage.getItem("synapse.uiMode")).toBe("expert");
     expect(await screen.findByText(/128\.5 \/ 512 GB/)).toBeInTheDocument();
 
-    // Modules tab: real Sleep, Pain, Metabolic, and Planned modules
+    // Modules tab: real Addiction, Sleep, Pain, Metabolic, and Planned modules
     fireEvent.click(screen.getByRole("tab", { name: /Research Modules/ }));
     expect(await screen.findByText("120 / 120")).toBeInTheDocument();
     expect(screen.getByText("+20.667")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /Addiction · P5-ADD-001/ }));
+    expect(await screen.findByText(/\+0\.331 PI/)).toBeInTheDocument();
+    expect(screen.getByText("-31.667")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: /Sleep · P5-SLEEP-001/ }));
     expect(await screen.findByText(/24\.13/)).toBeInTheDocument();
     expect(screen.getByText("-12.917")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: /Metabolic · P4-MET-001/ }));
     expect(await screen.findByText("+30.900")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: /Planned Modules/ }));
-    expect(screen.getByText(/Addiction & Reward Learning/)).toBeInTheDocument();
+    expect(screen.getByText(/Neurodegeneration & Resilience/)).toBeInTheDocument();
 
     // Datasets & Circuits tab: 64-bit string ID + confidence column + 3D/2D controls
     fireEvent.click(screen.getByRole("tab", { name: /Datasets & Circuits/ }));
@@ -592,8 +769,9 @@ describe("SYNAPSE Research Workbench UI", () => {
     expect(screen.getByText("0.98")).toBeInTheDocument();
     expect(screen.getByText("SYNTHETIC FIXTURE — NOT BIOLOGICAL DATA")).toBeInTheDocument();
 
-    // Models & Protocols tab: Quick Form -> Draft YAML Builder + L3 badge + Validate + disabled freeze button
+    // Models & Protocols tab: Quick Form -> Draft YAML Builder + L2/L3 badges + Validate + disabled freeze button
     fireEvent.click(screen.getByRole("tab", { name: /Models & Protocols/ }));
+    expect(screen.getByText(/L2 Plasticity · solver: rk4/)).toBeInTheDocument();
     expect(screen.getByText(/L3 ODE · solver: RK45/)).toBeInTheDocument();
     expect(screen.queryByText(/dg=undefined/)).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Generate Draft YAML" }));
@@ -657,8 +835,10 @@ describe("SYNAPSE Research Workbench UI", () => {
     expect(screen.getByRole("tab", { name: /Deney Özetleri/ })).toBeInTheDocument();
     expect(screen.getByRole("tab", { name: /3B Beyin Devresi/ })).toBeInTheDocument();
     expect(screen.getByText("Uyku ve Biyolojik Saat Hikayesi (L3 + Erkek Beyin)")).toBeInTheDocument();
+    expect(screen.getByText("Ödül Öğrenmesi ve Sönme Hikayesi (L2 + Erkek MB)")).toBeInTheDocument();
     expect(screen.getByText("Sade Bilimsel Terimler Sözlüğü")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /Sirkadiyen Saat/ })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Sinaptik Plastisite/ })).toBeInTheDocument();
     expect(document.documentElement.lang).toBe("tr");
     expect(window.localStorage.getItem("synapse.lang")).toBe("tr");
 

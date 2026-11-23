@@ -123,9 +123,9 @@ export const TRANSLATIONS = {
     modSleepName: "Sleep & Circadian Regulation (P5-SLEEP-001)",
     modSleepDesc:
       "Experimental: verified L3 circadian-homeostatic oscillator (4/4 gates + shift-work arms) paired with L1 MaleCNS 24/24 exploratory pilot (confirmatory freeze pending).",
-    modAddictionName: "Addiction & Reward Learning",
+    modAddictionName: "Addiction & Reward Learning (P5-ADD-001)",
     modAddictionDesc:
-      "Planned: dopamine/ Kenyon-cell acquisition, extinction, and reinstatement with explicit plasticity rules and yoked sham controls.",
+      "Experimental: verified L2 MB three-factor dopamine plasticity (5/5 gates) paired with L1 MaleCNS 24/24 exploratory pilot (confirmatory freeze pending; NOT clinical dependence).",
     modNeuroName: "Neurodegeneration & Resilience",
     modNeuroDesc:
       "Planned: targeted vs. random cell/synapse ablation tracking fragmentation and validated motor/learning proxies.",
@@ -141,6 +141,7 @@ export const TRANSLATIONS = {
     modulesMissingTitle: "Local Simulation Artifacts Not Found Under runs/",
     modulesMissingBody:
       "Live scientific summary JSONs under runs/ are intentionally gitignored. Run confirmatory scripts locally or inspect offline test fixtures; zero synthetic numbers are fabricated here.",
+    tabAddiction: "Addiction · P5-ADD-001",
     tabSleep: "Sleep · P5-SLEEP-001",
     tabPain: "Pain · P5-PAIN-001",
     tabMetabolic: "Metabolic · P4-MET-001",
@@ -238,6 +239,7 @@ export const TRANSLATIONS = {
     presetsLabel: "Verified Circuit Presets",
     presetPain: "Pain VNC (malecns_v1_0)",
     presetSleep: "Sleep & Circadian (malecns_v1_0)",
+    presetAddiction: "Reward Learning MB (malecns_v1_0)",
     presetMetabolic: "Metabolic MN9 (flywire_fafb_v630)",
     presetSynth: "Synthetic Microcircuit",
     exploreIn3d: "Explore Circuit in 3D",
@@ -434,6 +436,29 @@ export const TRANSLATIONS = {
     sleepLimitsTitle: "Mandatory RUO Boundaries & Model Coupling Limits",
     sleepLimitsBody:
       "Modeled quiescence and LIF spike rates are mathematical proxies—NOT validated biological or human clinical sleep. L3 evolves on hours (tau_i=8.76 h, tau_d=9.51 h); L1 malecns_v1_0 probes run 0.8 s quasi-steady-state snapshots with zero weight on UNKNOWN/peptide/monoamine transmitters (PDF, SIFa, DA, OCT, SER, HIST). Confirmatory P5-SLEEP-001.yaml remains unfrozen (draft).",
+    simpleAddictionTitle: "Reward Learning & Extinction Story (L2 + Male MB)",
+    simpleAddictionSummary:
+      "Verified L2 dopamine plasticity passes 5/5 gates (acquisition, parallel-memory extinction, reinstatement, and null yoked/sham controls); in the MaleCNS pilot (24/24 runs), acquisition boosted approach MBON14/18/12 (+71.1 Hz on MBON14_R) and silenced early MBON02, extinction suppressed all approach readouts, and reinstatement restored them while CS- stayed invariant.",
+    glossPlasticityTitle: "Synaptic Plasticity (L2)",
+    glossPlasticityDef:
+      "Rule by which conjunctive odor-KC activity and dopamine reinforcement weaken or strengthen synapses across conditioning trials.",
+    glossExtinctionTitle: "Parallel-Memory Extinction",
+    glossExtinctionDef:
+      "Unreinforced CS+ omission recruits an opposing MBON memory trace that masks the original reward trace without erasing it, enabling reinstatement.",
+    addictionBannerTitle: "Phase 5B: L2 MB Dopamine Plasticity & L1 MaleCNS Pilot",
+    addictionGatesTitle: "Mandatory L2 Plasticity & Conditioning Verification (5/5 Gates)",
+    addGateConv: "RK4 Convergence",
+    addGateAcq: "CS+ Acquisition",
+    addGateExt: "Parallel Extinction",
+    addGateReinst: "Reinstatement",
+    addGateCtrl: "Yoked / Sham Null",
+    addChartL2PiTitle: "L2 Conditioning Preference Index (PI) Across Arms & Controls",
+    addChartL2WeightsTitle: "L2 Opposing Compartment Weights (w_avoid vs w_appr; Paired CS+ / CS-)",
+    addChartL1MbonTitle: "L1 Pilot MaleCNS MBON Cohorts Across Conditioning States (Hz, N=3)",
+    addL1ContrastsTitle: "Exploratory L1 Paired Contrasts & Odor Specificity (0.0–0.6 s, N=3)",
+    addLimitsTitle: "Mandatory RUO Non-Clinical & Point-Neuron Limitations",
+    addLimitsBody:
+      "Learned Preference Index (PI) and MBON firing shifts are Drosophila cue-conditioning proxies—NOT human clinical dependence, craving, or addiction diagnosis. L1 malecns_v1_0 samples frozen L2 weight snapshots with zero direct DA/OCT/SER synaptic weights and single-compartment somatic APL hyper-inhibition onto MBON01/05/11. Confirmatory P5-ADD-001.yaml remains unfrozen (draft).",
   },
   tr: {
     // Document & Branding
@@ -555,9 +580,9 @@ export const TRANSLATIONS = {
     modSleepName: "Uyku ve Sirkadiyen Düzenleme (P5-SLEEP-001)",
     modSleepDesc:
       "Deneysel: doğrulanmış L3 sirkadiyen-homeostatik osilatör (4/4 kapı + vardiyalı çalışma kolları) ve L1 MaleCNS 24/24 keşifsel pilot (doğrulayıcı dondurma onay bekliyor).",
-    modAddictionName: "Bağımlılık ve Ödül Öğrenmesi",
+    modAddictionName: "Bağımlılık ve Ödül Öğrenmesi (P5-ADD-001)",
     modAddictionDesc:
-      "Planlandı: açık plastisite kuralı ve eşleştirilmiş (yoked/sham) kontrollerle edinim, sönme ve geri dönüş modelleri.",
+      "Deneysel: doğrulanmış L2 MB üç-faktörlü dopamin plastisitesi (5/5 kapı) ve L1 MaleCNS 24/24 keşifsel pilot (doğrulayıcı dondurma onay bekliyor; klinik bağımlılık DEĞİLDİR).",
     modNeuroName: "Nörodejenerasyon ve Ağ Dayanıklılığı",
     modNeuroDesc:
       "Planlandı: hedefli ve rastgele hücre/sinaps kaybında ağ parçalanması ve doğrulanmış motor/öğrenme proksileri.",
@@ -573,6 +598,7 @@ export const TRANSLATIONS = {
     modulesMissingTitle: "Yerel runs/ Altında Simülasyon Çıktıları Bulunamadı",
     modulesMissingBody:
       "runs/ altındaki simülasyon özet JSON dosyaları Git dışında tutulur. Yerel koşu sonuçları varsa otomatik okunur; sahte veri kesinlikle üretilmez.",
+    tabAddiction: "Bağımlılık · P5-ADD-001",
     tabSleep: "Uyku · P5-SLEEP-001",
     tabPain: "Ağrı · P5-PAIN-001",
     tabMetabolic: "Metabolik · P4-MET-001",
@@ -675,6 +701,7 @@ export const TRANSLATIONS = {
     presetsLabel: "Doğrulanmış Devre Hazır Ayarları",
     presetPain: "Ağrı VNC Devresi (malecns_v1_0)",
     presetSleep: "Uyku ve Sirkadiyen Devre (malecns_v1_0)",
+    presetAddiction: "Ödül Öğrenmesi MB Devresi (malecns_v1_0)",
     presetMetabolic: "Metabolik MN9 Devresi (flywire_fafb_v630)",
     presetSynth: "Sentetik Mikrodevre",
     exploreIn3d: "Devreyi 3B İncele",
@@ -871,6 +898,29 @@ export const TRANSLATIONS = {
     sleepLimitsTitle: "Zorunlu RUO Sınırları ve Model Eşleştirme Kısıtları",
     sleepLimitsBody:
       "Modellenen dinginlik durumu ve LIF ateşleme hızları hesaplamalı proksilerdir — doğrulanmış biyolojik veya klinik insan uykusu DEĞİLDİR. L3 modeli saat ölçeğinde çalışır (tau_i=8.76 sa, tau_d=9.51 sa); L1 malecns_v1_0 koşuları 0.8 sn yarı-kararlı anlık kesitleri örnekler ve UNKNOWN/peptit/monoamin ileticilerine (PDF, SIFa, DA, OCT, SER, HIST) sıfır ağırlık verir. Doğrulayıcı P5-SLEEP-001.yaml henüz dondurulmamıştır (draft).",
+    simpleAddictionTitle: "Ödül Öğrenmesi ve Sönme Hikayesi (L2 + Erkek MB)",
+    simpleAddictionSummary:
+      "Doğrulanmış L2 dopamin plastisitesi 5/5 kapıyı geçti (edinim, paralel-hafıza sönmesi, geri dönüş ve sıfır yoked/sham kontroller); MaleCNS pilotunda (24/24 koşu) edinim yaklaşma MBON14/18/12 hızını artırdı (MBON14_R +71.1 Hz) ve erken MBON02'yi susturdu, sönme yaklaşma çıkışlarını bastırdı ve geri dönüş ateşlemeyi geri getirdi; CS- tamamen özgül kaldı.",
+    glossPlasticityTitle: "Sinaptik Plastisite (L2)",
+    glossPlasticityDef:
+      "Koku-KC aktivitesi ile dopamin pekiştirmesinin çakışmasına bağlı olarak koşullanma boyunca sinaps ağırlıklarını zayıflatan veya güçlendiren öğrenme kuralıdır.",
+    glossExtinctionTitle: "Paralel-Hafıza Sönmesi",
+    glossExtinctionDef:
+      "Ödülsüz CS+ tekrarı özgün ödül izini silmek yerine karşıt bir MBON hafıza izini zayıflatarak geçici olarak bastırır ve geri dönüşe (reinstatement) olanak tanır.",
+    addictionBannerTitle: "Faz 5B: L2 MB Dopamin Plastisitesi ve L1 MaleCNS Pilotu",
+    addictionGatesTitle: "Zorunlu L2 Plastisite ve Koşullanma Doğrulaması (5/5 Kapı)",
+    addGateConv: "RK4 Yakınsama",
+    addGateAcq: "CS+ Edinimi",
+    addGateExt: "Paralel Sönme",
+    addGateReinst: "Geri Dönüş (Reinst.)",
+    addGateCtrl: "Yoked / Sham Sıfır",
+    addChartL2PiTitle: "Koşullanma ve Kontroller Boyunca L2 Tercih İndeksi (PI)",
+    addChartL2WeightsTitle: "L2 Karşıt Bölme Sinaps Ağırlıkları (w_avoid vs w_appr; Eşli CS+ / CS-)",
+    addChartL1MbonTitle: "L1 Pilot Koşullanma Evrelerinde MaleCNS MBON Grupları (Hz, N=3)",
+    addL1ContrastsTitle: "Keşifsel L1 Eşleştirilmiş Farklar ve Koku Özgüllüğü (0.0–0.6 sn, N=3)",
+    addLimitsTitle: "Zorunlu RUO Klinik-Dışı Kapsam ve Nokta-Nöron Sınırları",
+    addLimitsBody:
+      "Öğrenilmiş Tercih İndeksi (PI) ve MBON ateşleme farkları Drosophila koku-koşullanma proksileridir — insanlarda klinik bağımlılık, aşerme veya tanı DEĞİLDİR. L1 malecns_v1_0 koşuları donmuş L2 ağırlık kesitlerini DA/OCT/SER sıfır doğrudan sinaps ağırlığıyla örnekler ve MBON01/05/11 üzerinde somatik APL aşırı-baskılaması gösterir. Doğrulayıcı P5-ADD-001.yaml henüz dondurulmamıştır (draft).",
   },
 } as const;
 

@@ -8,7 +8,29 @@ import { useI18n } from "../i18n/LanguageContext";
 
 import type { CircuitPresetRequest } from "./DatasetsView";
 
-export type ModuleSectionTab = "sleep" | "pain" | "metabolic" | "benchmark" | "planned";
+export type ModuleSectionTab = "addiction" | "sleep" | "pain" | "metabolic" | "benchmark" | "planned";
+
+const ADDICTION_CONDITIONS_ORDER = [
+  "sham_zero_stimulus",
+  "cs_plus_naive_baseline",
+  "cs_plus_post_acquisition",
+  "cs_plus_post_extinction",
+  "cs_plus_post_reinstatement",
+  "cs_plus_yoked_matched_ctrl",
+  "cs_minus_naive_baseline",
+  "cs_minus_after_cs_plus_acq",
+];
+
+const ADDICTION_COND_SHORT: Record<string, string> = {
+  sham_zero_stimulus: "Sham 0",
+  cs_plus_naive_baseline: "CS+ Naive",
+  cs_plus_post_acquisition: "CS+ Acq",
+  cs_plus_post_extinction: "CS+ Ext",
+  cs_plus_post_reinstatement: "CS+ Reinst",
+  cs_plus_yoked_matched_ctrl: "Yoked Ctrl",
+  cs_minus_naive_baseline: "CS- Naive",
+  cs_minus_after_cs_plus_acq: "CS- After Acq",
+};
 
 const SLEEP_CONDITIONS_ORDER = [
   "sham_zero_stimulus",
@@ -90,8 +112,91 @@ export const ModulesView: React.FC<ModulesViewProps> = ({
   const sleepL3Gate = studies?.sleep?.l3_gate ?? null;
   const sleepShift = studies?.sleep?.l3_shift_work ?? null;
   const sleepPilot = studies?.sleep?.pilot ?? null;
+  const addL2Gate = studies?.addiction?.l2_gate ?? null;
+  const addL2Paradigm = studies?.addiction?.l2_paradigm ?? null;
+  const addPilot = studies?.addiction?.pilot ?? null;
   const metConf = studies?.metabolic.confirmatory ?? [];
   const metRob = studies?.metabolic.robustness ?? {};
+
+  const addL2PiTraces = useMemo<PlotlyTrace[]>(() => {
+    if (!addL2Paradigm) return [];
+    const phases = ["naive", "acquisition", "extinction", "reinstatement"];
+    const phaseLabels = ["Naive (10s)", "Acquisition (145s)", "Extinction (235s)", "Reinstatement (310s)"];
+    const armDefs: Array<{ id: string; color: string }> = [
+      { id: "paired_conditioning", color: "#0072B2" },
+      { id: "spontaneous_recovery_only", color: "#009E73" },
+      { id: "yoked_unpaired", color: "#E69F00" },
+      { id: "sham_no_stimulus", color: "#64748B" },
+      { id: "dan_blocked", color: "#CC79A7" },
+    ];
+    return armDefs
+      .filter((a) => Boolean(addL2Paradigm.arms[a.id]))
+      .map((a) => ({
+        type: "scatter" as const,
+        mode: "lines+markers" as const,
+        name: a.id,
+        x: phaseLabels,
+        y: phases.map((ph) => addL2Paradigm.arms[a.id]?.phase_snapshots?.[ph]?.pi_proxy ?? 0),
+        line: { color: a.color, width: 2.5 },
+        marker: { size: 8, color: a.color },
+      }));
+  }, [addL2Paradigm]);
+
+  const addL2WeightTraces = useMemo<PlotlyTrace[]>(() => {
+    const paired = addL2Paradigm?.arms?.paired_conditioning?.phase_snapshots;
+    if (!paired) return [];
+    const phases = ["naive", "acquisition", "extinction", "reinstatement"];
+    const phaseLabels = ["Naive (10s)", "Acquisition (145s)", "Extinction (235s)", "Reinstatement (310s)"];
+    return [
+      {
+        type: "scatter",
+        mode: "lines+markers",
+        name: "w_avoid (CS+)",
+        x: phaseLabels,
+        y: phases.map((ph) => paired[ph]?.w_avoid_cs_plus ?? 1.0),
+        line: { color: "#D55E00", width: 2.5 },
+        marker: { size: 8, color: "#D55E00" },
+      },
+      {
+        type: "scatter",
+        mode: "lines+markers",
+        name: "w_appr (CS+)",
+        x: phaseLabels,
+        y: phases.map((ph) => paired[ph]?.w_appr_cs_plus ?? 1.0),
+        line: { color: "#0072B2", width: 2.5 },
+        marker: { size: 8, color: "#0072B2" },
+      },
+      {
+        type: "scatter",
+        mode: "lines+markers",
+        name: "w_avoid (CS-)",
+        x: phaseLabels,
+        y: phases.map((ph) => paired[ph]?.w_avoid_cs_minus ?? 1.0),
+        line: { color: "#009E73", width: 2, dash: "dash" },
+        marker: { size: 7, color: "#009E73" },
+      },
+    ];
+  }, [addL2Paradigm]);
+
+  const addL1MbonTraces = useMemo<PlotlyTrace[]>(() => {
+    const cohorts = addPilot?.cohort_stim_mean_hz;
+    if (!cohorts) return [];
+    const xLabels = ADDICTION_CONDITIONS_ORDER.map((c) => ADDICTION_COND_SHORT[c] ?? c);
+    return [
+      { key: "mbon02_avoid", label: "MBON02 (Avoid GLUT)", color: "#D55E00" },
+      { key: "mbon14_appr", label: "MBON14 (Appr ACH)", color: "#0072B2" },
+      { key: "mbon18_appr", label: "MBON18 (Appr ACH)", color: "#009E73" },
+      { key: "mbon12_appr", label: "MBON12 (Appr ACH)", color: "#56B4E9" },
+    ]
+      .filter((item) => Boolean(cohorts[item.key]))
+      .map((item) => ({
+        type: "bar" as const,
+        name: item.label,
+        x: xLabels,
+        y: ADDICTION_CONDITIONS_ORDER.map((c) => cohorts[item.key]?.[c] ?? 0),
+        marker: { color: item.color },
+      }));
+  }, [addPilot]);
 
   const sleepPrcTraces = useMemo<PlotlyTrace[]>(() => {
     const curve = sleepL3Gate?.gates.light_pulse_prc.curve ?? [];
@@ -329,6 +434,18 @@ export const ModulesView: React.FC<ModulesViewProps> = ({
         <button
           type="button"
           className="pill-btn"
+          aria-pressed={activeSubTab === "addiction"}
+          onClick={() => onSelectSubTab("addiction")}
+        >
+          <span>{t("tabAddiction")}</span>
+          <StatusBadge
+            label={addL2Gate || addPilot ? t("stateExperimental") : t("statePlanned")}
+            tone={addL2Gate || addPilot ? "info" : "neutral"}
+          />
+        </button>
+        <button
+          type="button"
+          className="pill-btn"
           aria-pressed={activeSubTab === "sleep"}
           onClick={() => onSelectSubTab("sleep")}
         >
@@ -378,6 +495,303 @@ export const ModulesView: React.FC<ModulesViewProps> = ({
           <StatusBadge label={t("statePlanned")} tone="neutral" />
         </button>
       </div>
+
+      {activeSubTab === "addiction" && (
+        <>
+          {!addL2Gate && !addPilot ? (
+            <div className="card">
+              <div className="empty-state">
+                <strong>{t("modulesMissingTitle")}</strong>
+                <p style={{ marginBottom: 0 }}>{t("modulesMissingBody")}</p>
+              </div>
+            </div>
+          ) : (
+            <>
+              <div className="card">
+                <div className="card-header">
+                  <div>
+                    <h2>{t("addictionBannerTitle")}</h2>
+                    <p className="card-subtitle mono">
+                      mb_dopamine_plasticity_v1 (L2) + malecns_v1_0 · synapse_lif_v1 (L1){" "}
+                      {addPilot?.git_commits?.[0] ? `· git ${addPilot.git_commits[0].slice(0, 8)}` : ""}
+                    </p>
+                  </div>
+                  <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                    <StatusBadge label={t("stateExperimental")} tone="info" />
+                    <StatusBadge label={t("ruoBadge")} tone="ruo" />
+                    <button
+                      type="button"
+                      className="btn btn-sm"
+                      onClick={() =>
+                        onExploreCircuit3D({
+                          datasetId: "malecns_v1_0",
+                          seedIds: "522749, 522444, 13728, 10267, 512788, 10977",
+                          hops: 1,
+                          direction: "both",
+                          minSynapses: 30,
+                          maxNodes: 75,
+                        })
+                      }
+                    >
+                      {t("exploreIn3d")}
+                    </button>
+                  </div>
+                </div>
+
+                {addL2Gate && (
+                  <div className="kpi-grid">
+                    <div className="kpi-card">
+                      <div className="kpi-label">{t("addGateConv")}</div>
+                      <div className="kpi-value">
+                        {addL2Gate.gates.numerical_convergence_and_bounds.max_abs_weight_diff.toExponential(
+                          2,
+                        )}
+                      </div>
+                      <div className="kpi-sub">
+                        <StatusBadge
+                          label={
+                            addL2Gate.gates.numerical_convergence_and_bounds.passed
+                              ? t("statusPass")
+                              : t("statusFail")
+                          }
+                          tone={
+                            addL2Gate.gates.numerical_convergence_and_bounds.passed ? "ok" : "warn"
+                          }
+                        />
+                      </div>
+                    </div>
+                    <div className="kpi-card">
+                      <div className="kpi-label">{t("addGateAcq")}</div>
+                      <div className="kpi-value">
+                        +{addL2Gate.gates.acquisition_specificity.pi_acq.toFixed(3)} PI
+                      </div>
+                      <div className="kpi-sub">
+                        <StatusBadge
+                          label={
+                            addL2Gate.gates.acquisition_specificity.passed
+                              ? t("statusPass")
+                              : t("statusFail")
+                          }
+                          tone={addL2Gate.gates.acquisition_specificity.passed ? "ok" : "warn"}
+                        />
+                      </div>
+                    </div>
+                    <div className="kpi-card">
+                      <div className="kpi-label">{t("addGateExt")}</div>
+                      <div className="kpi-value">
+                        {addL2Gate.gates.parallel_memory_extinction.pi_ext.toFixed(3)} PI
+                      </div>
+                      <div className="kpi-sub">
+                        <StatusBadge
+                          label={
+                            addL2Gate.gates.parallel_memory_extinction.passed
+                              ? t("statusPass")
+                              : t("statusFail")
+                          }
+                          tone={
+                            addL2Gate.gates.parallel_memory_extinction.passed ? "ok" : "warn"
+                          }
+                        />
+                      </div>
+                    </div>
+                    <div className="kpi-card">
+                      <div className="kpi-label">{t("addGateReinst")}</div>
+                      <div className="kpi-value">
+                        +{addL2Gate.gates.reinstatement_recovery.pi_reinst.toFixed(3)} PI
+                      </div>
+                      <div className="kpi-sub">
+                        <StatusBadge
+                          label={
+                            addL2Gate.gates.reinstatement_recovery.passed
+                              ? t("statusPass")
+                              : t("statusFail")
+                          }
+                          tone={addL2Gate.gates.reinstatement_recovery.passed ? "ok" : "warn"}
+                        />
+                      </div>
+                    </div>
+                    <div className="kpi-card">
+                      <div className="kpi-label">{t("addGateCtrl")}</div>
+                      <div className="kpi-value">
+                        {addL2Gate.gates.negative_controls_null.yoked_unpaired_acq_pi.toExponential(
+                          1,
+                        )}
+                      </div>
+                      <div className="kpi-sub">
+                        <StatusBadge
+                          label={
+                            addL2Gate.gates.negative_controls_null.passed
+                              ? t("statusPass")
+                              : t("statusFail")
+                          }
+                          tone={addL2Gate.gates.negative_controls_null.passed ? "ok" : "warn"}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {uiMode === "simple" && (
+                <div className="notice-box" style={{ marginBottom: 12 }}>
+                  <strong>{t("simpleAddictionTitle")}: </strong>
+                  {t("simpleAddictionSummary")}
+                </div>
+              )}
+
+              {addL2Paradigm && (
+                <div className="grid-2">
+                  <div className="card">
+                    <div className="card-header">
+                      <h3>{t("addChartL2PiTitle")}</h3>
+                    </div>
+                    <PlotlyChart
+                      theme={theme}
+                      ariaLabel={t("addChartL2PiTitle")}
+                      traces={addL2PiTraces}
+                      layout={{
+                        height: 320,
+                        yaxis: { title: "Preference Index (PI)" },
+                        margin: { l: 55, r: 20, t: 25, b: 60 },
+                      }}
+                    />
+                  </div>
+                  <div className="card">
+                    <div className="card-header">
+                      <h3>{t("addChartL2WeightsTitle")}</h3>
+                    </div>
+                    <PlotlyChart
+                      theme={theme}
+                      ariaLabel={t("addChartL2WeightsTitle")}
+                      traces={addL2WeightTraces}
+                      layout={{
+                        height: 320,
+                        yaxis: { title: "Normalized Weight", range: [0.1, 1.05] },
+                        margin: { l: 55, r: 20, t: 25, b: 60 },
+                      }}
+                    />
+                  </div>
+                </div>
+              )}
+
+              {uiMode === "expert" ? (
+                <>
+                  {addPilot && (
+                    <>
+                      <div className="card">
+                        <div className="card-header">
+                          <h3>{t("addChartL1MbonTitle")}</h3>
+                          <span className="mono" style={{ fontSize: "0.78rem" }}>
+                            {addPilot.succeeded_run_count}/{addPilot.total_runs} succeeded · sham=
+                            {addPilot.sham_max_spikes}
+                          </span>
+                        </div>
+                        <PlotlyChart
+                          theme={theme}
+                          ariaLabel={t("addChartL1MbonTitle")}
+                          traces={addL1MbonTraces}
+                          layout={{
+                            barmode: "group",
+                            height: 340,
+                            yaxis: { title: t("chartYAxisHz"), rangemode: "tozero" },
+                            xaxis: { tickangle: -18 },
+                            margin: { l: 55, r: 20, t: 25, b: 85 },
+                          }}
+                        />
+                      </div>
+
+                      <div className="card">
+                        <div className="card-header">
+                          <h3>{t("addL1ContrastsTitle")}</h3>
+                        </div>
+                        <div className="table-wrap">
+                          <table>
+                            <thead>
+                              <tr>
+                                <th>{t("colContrast")}</th>
+                                <th>{t("colNeuron")}</th>
+                                <th>{t("colBaseMean")}</th>
+                                <th>{t("colTreatMean")}</th>
+                                <th>{t("colDelta")}</th>
+                                <th>{t("colCi95")}</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {addPilot.contrasts.map((row) => (
+                                <tr key={row.contrast_name}>
+                                  <td className="mono">{row.contrast_name}</td>
+                                  <td className="mono">{row.neuron_id}</td>
+                                  <td>
+                                    {row.baseline_mean_hz.toFixed(3)} ±{" "}
+                                    {row.baseline_sd_hz.toFixed(3)}
+                                  </td>
+                                  <td>
+                                    {row.treatment_mean_hz.toFixed(3)} ±{" "}
+                                    {row.treatment_sd_hz.toFixed(3)}
+                                  </td>
+                                  <td>
+                                    <strong>
+                                      {row.mean_difference_hz >= 0 ? "+" : ""}
+                                      {row.mean_difference_hz.toFixed(3)}
+                                    </strong>{" "}
+                                    ± {row.sd_difference_hz.toFixed(3)}
+                                  </td>
+                                  <td className="mono">
+                                    [{row.bootstrap_ci95_low_hz.toFixed(3)},{" "}
+                                    {row.bootstrap_ci95_high_hz.toFixed(3)}]
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                    </>
+                  )}
+
+                  <div className="alert" role="note">
+                    <div>
+                      <strong>{t("addLimitsTitle")}: </strong>
+                      <span>{t("addLimitsBody")}</span>
+                    </div>
+                  </div>
+                </>
+              ) : (
+                addPilot && (
+                  <details className="tech-details">
+                    <summary>{t("showTechDetails")}</summary>
+                    <div className="table-wrap">
+                      <table>
+                        <thead>
+                          <tr>
+                            <th>{t("colContrast")}</th>
+                            <th>{t("colNeuron")}</th>
+                            <th>{t("colDelta")}</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {addPilot.contrasts.map((row) => (
+                            <tr key={row.contrast_name}>
+                              <td className="mono">{row.contrast_name}</td>
+                              <td className="mono">{row.neuron_id}</td>
+                              <td>
+                                <strong>
+                                  {row.mean_difference_hz >= 0 ? "+" : ""}
+                                  {row.mean_difference_hz.toFixed(3)} Hz
+                                </strong>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </details>
+                )
+              )}
+            </>
+          )}
+        </>
+      )}
 
       {activeSubTab === "sleep" && (
         <>

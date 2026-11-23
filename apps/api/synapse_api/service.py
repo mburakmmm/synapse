@@ -19,6 +19,7 @@ from synapse_core import (
     CircadianHomeostaticParameters,
     DirectedConnectomeGraph,
     LIFParameters,
+    MBPlasticityParameters,
     extract_bounded_subgraph,
     validate_model_spec,
 )
@@ -285,6 +286,32 @@ def _serialize_model_entry(params: LIFParameters) -> dict[str, Any]:
     }
 
 
+def _serialize_plasticity_model_entry(params: MBPlasticityParameters) -> dict[str, Any]:
+    return {
+        "model_id": params.model_id,
+        "model_revision": params.model_revision,
+        "model_level": params.model_level,
+        "parameter_manifest_sha256": params.canonical_sha256(),
+        "solver": params.solver,
+        "dt_s": params.dt_s,
+        "parameter_source": params.parameter_source,
+        "parameters": {
+            "tau_e_s": params.tau_e_s,
+            "tau_d_s": params.tau_d_s,
+            "eta_ltd_pam": params.eta_ltd_pam,
+            "eta_ltd_ppl1": params.eta_ltd_ppl1,
+            "eta_pot_reinst": params.eta_pot_reinst,
+            "omission_gain": params.omission_gain,
+            "tau_rec_avoid_s": params.tau_rec_avoid_s,
+            "tau_rec_appr_s": params.tau_rec_appr_s,
+            "w_init": params.w_init,
+            "w_min": params.w_min,
+            "r_base_hz": params.r_base_hz,
+            "g_cross": params.g_cross,
+        },
+    }
+
+
 def _serialize_circadian_model_entry(params: CircadianHomeostaticParameters) -> dict[str, Any]:
     return {
         "model_id": params.model_id,
@@ -315,12 +342,14 @@ def _serialize_circadian_model_entry(params: CircadianHomeostaticParameters) -> 
 def list_models_and_backends() -> dict[str, Any]:
     default_lif = LIFParameters()
     shiu_lif = LIFParameters.shiu2024_reference()
+    plasticity_l2 = MBPlasticityParameters()
     circadian_l3 = CircadianHomeostaticParameters()
     cpu_caps = Brian2CPUBackend().capabilities()
     return {
         "models": [
             _serialize_model_entry(default_lif),
             _serialize_model_entry(shiu_lif),
+            _serialize_plasticity_model_entry(plasticity_l2),
             _serialize_circadian_model_entry(circadian_l3),
         ],
         "backends": [
@@ -784,6 +813,33 @@ def list_research_studies(settings: Settings) -> dict[str, Any]:
             "failed_run_count": sleep_win_raw.get("failed_run_count", 0),
         }
 
+    add_l2_dir = settings.runs_root / "phase5b_add001_l2_plasticity"
+    add_l2_gate = _read_json_if_file(add_l2_dir / "l2_verification_gate.json")
+    add_l2_paradigm_raw = _read_json_if_file(add_l2_dir / "l2_paradigm_summary.json")
+    add_l2_paradigm: dict[str, Any] | None = None
+    if add_l2_paradigm_raw is not None:
+        add_l2_paradigm = {
+            "model_id": add_l2_paradigm_raw.get("model_id"),
+            "model_level": add_l2_paradigm_raw.get("model_level"),
+            "parameter_manifest_sha256": add_l2_paradigm_raw.get("parameter_manifest_sha256"),
+            "timescale_coupling_note": add_l2_paradigm_raw.get("timescale_coupling_note"),
+            "gate_overall_passed": add_l2_paradigm_raw.get("gate_overall_passed"),
+            "arms": add_l2_paradigm_raw.get("arms", {}),
+            "l2_to_l1_weight_snapshots": add_l2_paradigm_raw.get("l2_to_l1_weight_snapshots", []),
+        }
+
+    add_pilot_dir = settings.runs_root / "phase5b_add001_exploratory_pilot"
+    add_pilot = _read_json_if_file(add_pilot_dir / "pilot_summary.json")
+    add_win_raw = _read_json_if_file(add_pilot_dir / "windowed_summary.json")
+    add_win_trimmed: dict[str, Any] | None = None
+    if add_win_raw is not None:
+        add_win_trimmed = {
+            "windows": add_win_raw.get("windows", {}),
+            "neuron_ids": [str(nid) for nid in add_win_raw.get("neuron_ids", [])],
+            "succeeded_run_count": add_win_raw.get("succeeded_run_count", 0),
+            "failed_run_count": add_win_raw.get("failed_run_count", 0),
+        }
+
     met_available = len(met_conf_list) > 0
     pain_available = pain_conf is not None
     sleep_available = sleep_l3_gate is not None or sleep_pilot is not None
@@ -793,6 +849,14 @@ def list_research_studies(settings: Settings) -> dict[str, Any]:
         sleep_phase = "l3_verified"
     else:
         sleep_phase = "planned"
+
+    addiction_available = add_l2_gate is not None or add_pilot is not None
+    if add_l2_gate is not None and add_pilot is not None:
+        addiction_phase = "l2_verified_and_l1_pilot_complete"
+    elif add_l2_gate is not None:
+        addiction_phase = "l2_verified"
+    else:
+        addiction_phase = "planned"
 
     modules = [
         {
@@ -838,11 +902,11 @@ def list_research_studies(settings: Settings) -> dict[str, Any]:
         {
             "module_id": "addiction",
             "phase": "phase5b",
-            "ui_state": "planned",
-            "simulation_phase": "planned",
-            "dataset_id": None,
-            "protocol_id": None,
-            "available_on_disk": False,
+            "ui_state": "experimental" if addiction_available else "planned",
+            "simulation_phase": addiction_phase,
+            "dataset_id": "malecns_v1_0" if addiction_available else None,
+            "protocol_id": "P5-ADD-001-PILOT" if add_pilot is not None else None,
+            "available_on_disk": addiction_available,
         },
         {
             "module_id": "neuro",
@@ -889,6 +953,12 @@ def list_research_studies(settings: Settings) -> dict[str, Any]:
             "l3_shift_work": sleep_l3_shift,
             "pilot": sleep_pilot,
             "windowed": sleep_win_trimmed,
+        },
+        "addiction": {
+            "l2_gate": add_l2_gate,
+            "l2_paradigm": add_l2_paradigm,
+            "pilot": add_pilot,
+            "windowed": add_win_trimmed,
         },
     }
 

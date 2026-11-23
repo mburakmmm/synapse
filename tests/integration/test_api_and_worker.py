@@ -184,10 +184,12 @@ def test_api_and_worker_full_fixture_lifecycle_security_cancel_and_backup(tmp_pa
             )
             assert bad_proto_res.status_code == 403
 
-            # Verify /api/v1/models exposes both L1 LIF and L3 circadian-homeostatic models
+            # Verify /api/v1/models exposes L1 LIF, L2 plasticity, and L3 circadian models
             models_res = client.get("/api/v1/models")
             assert models_res.status_code == 200
             model_ids = {m["model_id"]: m for m in models_res.json()["models"]}
+            assert "mb_dopamine_plasticity_v1" in model_ids
+            assert model_ids["mb_dopamine_plasticity_v1"]["model_level"] == "L2"
             assert "leloup_goldbeter_1998_two_process_v1" in model_ids
             assert model_ids["leloup_goldbeter_1998_two_process_v1"]["model_level"] == "L3"
 
@@ -196,6 +198,7 @@ def test_api_and_worker_full_fixture_lifecycle_security_cancel_and_backup(tmp_pa
             assert studies_res.status_code == 200
             studies_body = studies_res.json()
             assert "sleep" in studies_body
+            assert "addiction" in studies_body
             allowed_states = {
                 "planned",
                 "experimental",
