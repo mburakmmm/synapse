@@ -34,6 +34,7 @@ from synapse_experiments import (
     plan_protocol_experiment,
 )
 from synapse_experiments.protocol import ProtocolValidationError
+from synapse_publication import audit_citation_register, verify_evidence_bundle
 
 
 class ResourceNotFoundError(LookupError):
@@ -1288,6 +1289,95 @@ def create_experiment_record(
     )
 
 
+def get_publication_readiness(settings: Settings) -> dict[str, Any]:
+    """Summarize Phase 6 citation audit, verified bundles, manuscripts, and human gates."""
+    candidate_root = settings.protocols_root.parent.parent
+    repo_root = (
+        candidate_root
+        if (candidate_root / "research" / "literature" / "source_register.yaml").is_file()
+        else Path(__file__).resolve().parents[3]
+    )
+    citation_audit = audit_citation_register(
+        repo_root / "research" / "literature" / "source_register.yaml"
+    )
+
+    bundle_items: list[dict[str, Any]] = []
+    verified_passed = 0
+    verified_failed = 0
+    if settings.runs_root.is_dir():
+        skip_dirs = _PRUNE_COMMON_DIRS | {"runs"}
+        for root_str, dirnames, filenames in os.walk(settings.runs_root):
+            if "bundle_manifest.json" in filenames and Path(root_str).name == "provenance":
+                bundle_dir = Path(root_str).parent
+                rel_key = bundle_dir.relative_to(settings.runs_root).as_posix()
+                res = verify_evidence_bundle(bundle_dir)
+                if res["valid"]:
+                    verified_passed += 1
+                else:
+                    verified_failed += 1
+                bundle_items.append(
+                    {
+                        "export_key": rel_key,
+                        "valid": bool(res["valid"]),
+                        "checked_files": int(res["checked_files"]),
+                        "failed_run_count": int(res["failed_run_count"]),
+                        "is_synthetic_fixture": bool(res["is_synthetic_fixture"]),
+                    }
+                )
+            dirnames[:] = sorted(d for d in dirnames if d not in skip_dirs)
+    bundle_items.sort(key=lambda b: str(b["export_key"]))
+
+    manuscripts_dir = repo_root / "research" / "manuscripts"
+    manuscripts = (
+        sorted(p.name for p in manuscripts_dir.glob("*.md") if p.is_file())
+        if manuscripts_dir.is_dir()
+        else []
+    )
+    governance_files = {
+        "CITATION.cff": (repo_root / "CITATION.cff").is_file(),
+        "LICENSE": (repo_root / "LICENSE").is_file(),
+        "THIRD_PARTY_NOTICES.md": (repo_root / "THIRD_PARTY_NOTICES.md").is_file(),
+        "CHANGELOG.md": (repo_root / "CHANGELOG.md").is_file(),
+        "docs/security/operations_and_backup.md": (
+            repo_root / "docs" / "security" / "operations_and_backup.md"
+        ).is_file(),
+    }
+
+    draft_confirmatory: list[dict[str, str]] = []
+    for p_entry in list_protocols(settings)["protocols"]:
+        if p_entry["status"] == "draft" and p_entry["analysis_intent"] == "confirmatory":
+            draft_confirmatory.append(
+                {
+                    "protocol_id": str(p_entry["protocol_id"]),
+                    "relative_path": str(p_entry["relative_path"]),
+                    "status": str(p_entry["status"]),
+                }
+            )
+
+    return {
+        "ruo_notice": "Research Use Only (RUO) - human sign-off required before external release",
+        "citation_audit": citation_audit,
+        "bundles": {
+            "total_bundles": len(bundle_items),
+            "verified_passed": verified_passed,
+            "verified_failed": verified_failed,
+            "items": bundle_items,
+        },
+        "manuscripts": manuscripts,
+        "governance_files": governance_files,
+        "draft_confirmatory_protocols": draft_confirmatory,
+        "human_approval_gates": [
+            "Zenodo DOI minting & public archive upload",
+            "Journal manuscript submission, authorship & CRediT role sign-off",
+            "Institutional ethics scope determination & funding/COI disclosure",
+            (
+                "Explicit freeze & execution of queued N=15 confirmatory drafts "
+                "(Sleep, Addiction, Neuro, Pharma, Stress)"
+            ),
+        ],
+    }
+
+
 __all__ = [
     "ProtocolValidationError",
     "ResourceNotFoundError",
@@ -1298,6 +1388,7 @@ __all__ = [
     "get_analysis_detail",
     "get_dataset_plan",
     "get_protocol_content",
+    "get_publication_readiness",
     "get_run_detail",
     "inspect_dataset_graph",
     "list_analyses",

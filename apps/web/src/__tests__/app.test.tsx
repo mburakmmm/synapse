@@ -1264,6 +1264,43 @@ function createApiFetchMock() {
     if (target.endsWith("/api/v1/audit?limit=30")) {
       return mockJsonResponse({ events: [] });
     }
+    if (target.endsWith("/api/v1/publication/readiness")) {
+      return mockJsonResponse({
+        ruo_notice: "Research Use Only (RUO) - human sign-off required before external release",
+        citation_audit: {
+          valid: true,
+          sections_checked: 12,
+          total_references: 44,
+          peer_reviewed_count: 43,
+          preprint_count: 1,
+          preprint_ref_ids: ["jones2025_biorxiv"],
+          errors: [],
+        },
+        bundles: {
+          total_bundles: 4,
+          verified_passed: 4,
+          verified_failed: 0,
+          items: [],
+        },
+        manuscripts: [
+          "met001_outline.md",
+          "pain001_outline.md",
+          "synapse_platform_software_outline.md",
+        ],
+        governance_files: {
+          "CITATION.cff": true,
+          LICENSE: true,
+          "THIRD_PARTY_NOTICES.md": true,
+          "CHANGELOG.md": true,
+          "docs/security/operations_and_backup.md": true,
+        },
+        draft_confirmatory_protocols: [],
+        human_approval_gates: [
+          "Zenodo DOI minting & public archive upload",
+          "Journal manuscript submission, authorship & CRediT role sign-off",
+        ],
+      });
+    }
     return mockJsonResponse({});
   });
 }
@@ -1397,10 +1434,16 @@ describe("SYNAPSE Research Workbench UI", () => {
       ),
     );
 
-    // Results & Exports tab: 64-bit string ID + Side-by-Side Analysis Comparison
+    // Results & Exports tab: 64-bit string ID + Side-by-Side Analysis Comparison + Phase 6 Readiness
     fireEvent.click(screen.getByRole("tab", { name: /Results & Exports/ }));
     expect((await screen.findAllByText("720575940660219265")).length).toBeGreaterThanOrEqual(1);
     expect(screen.getByText("Side-by-Side Analysis Comparison")).toBeInTheDocument();
+    expect(
+      await screen.findByText(/Phase 6: Open-Science Publication & Archival Readiness/),
+    ).toBeInTheDocument();
+    expect(screen.getByText("4 / 4")).toBeInTheDocument();
+    expect(screen.getByText("43 + 1")).toBeInTheDocument();
+    expect(screen.getByText(/pain001_outline\.md/)).toBeInTheDocument();
   });
 
   it("supports live Turkish/English switching in Simple & Expert modes plus dark/light themes", async () => {

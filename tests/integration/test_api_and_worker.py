@@ -217,6 +217,12 @@ def test_api_and_worker_full_fixture_lifecycle_security_cancel_and_backup(tmp_pa
             for mod in studies_body["modules"]:
                 assert mod["ui_state"] in allowed_states
 
+            pub_res = client.get("/api/v1/publication/readiness")
+            assert pub_res.status_code == 200
+            pub_body = pub_res.json()
+            assert pub_body["citation_audit"]["valid"] is True
+            assert len(pub_body["human_approval_gates"]) >= 3
+
             # Verify run discovery, protocol_id filter, and artifact traversal rejection
             runs_res = client.get("/api/v1/runs").json()
             assert runs_res["total"] == 4

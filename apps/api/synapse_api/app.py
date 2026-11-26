@@ -36,6 +36,7 @@ from synapse_api.service import (
     get_analysis_detail,
     get_dataset_plan,
     get_protocol_content,
+    get_publication_readiness,
     get_run_detail,
     inspect_dataset_graph,
     list_analyses,
@@ -413,6 +414,10 @@ def create_app(settings: Settings | None = None, *, run_migrations: bool = True)
     def exports_file(export_key: str, file_path: str) -> FileResponse:
         resolved = resolve_export_file(cfg, export_key, file_path)
         return FileResponse(path=resolved, filename=resolved.name)
+
+    @v1.get("/publication/readiness")
+    def publication_readiness() -> dict[str, Any]:
+        return get_publication_readiness(cfg)
 
     @v1.get("/audit")
     def audit_list(

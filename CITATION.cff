@@ -13,13 +13,14 @@ abstract: >-
   dynamical simulations in adult Drosophila melanogaster (Research Use Only).
   SYNAPSE enforces SHA-256 dataset provenance across FlyWire/FAFB v630 and Janelia
   MaleCNS v1.0, provides computational reproduction of the Shiu et al. (2024)
-  leaky integrate-and-fire feeding circuit, includes a reproducible CLI, API,
-  worker, and web laboratory workbench, and supports pre-registered frozen
-  confirmatory simulation protocols such as P4-MET-001.
+  leaky integrate-and-fire feeding circuit, couples verified L0 topology, L1 LIF,
+  L2 plasticity/pharmacology, and L3 circadian/allostatic modules, and exports
+  checksummed evidence bundles and open-science release archives.
 keywords:
   - computational neuroscience
   - reproducibility
   - leaky integrate-and-fire
   - connectomics
   - drosophila
+  - open-science
   - research-use-only

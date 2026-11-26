@@ -7,6 +7,7 @@ import {
   type AnalysisSummaryItem,
   type BenchmarkEnvelope,
   type ExportBundleItem,
+  type PublicationReadinessResponse,
 } from "../api";
 import type { UiMode } from "../App";
 import { PlotlyChart } from "../components/PlotlyChart";
@@ -18,6 +19,7 @@ interface ResultsExportsViewProps {
   benchmarks: BenchmarkEnvelope[];
   analyses: AnalysisSummaryItem[];
   exportsList: ExportBundleItem[];
+  publicationReadiness?: PublicationReadinessResponse | null;
   theme: "dark" | "light";
   onError: (msg: string | null) => void;
 }
@@ -34,6 +36,7 @@ export const ResultsExportsView: React.FC<ResultsExportsViewProps> = ({
   benchmarks,
   analyses,
   exportsList,
+  publicationReadiness = null,
   theme,
   onError,
 }) => {
@@ -609,6 +612,76 @@ export const ResultsExportsView: React.FC<ResultsExportsViewProps> = ({
             {analysesCard}
           </details>
         </>
+      )}
+
+      {publicationReadiness && (
+        <div className="card" style={{ marginTop: 14 }}>
+          <div className="card-header">
+            <div>
+              <h2>{t("pubReadinessTitle")}</h2>
+              <p className="card-subtitle">{t("pubReadinessSubtitle")}</p>
+            </div>
+            <StatusBadge label={t("ruoBadge")} tone="ruo" />
+          </div>
+
+          <div className="kpi-grid" style={{ marginBottom: 12 }}>
+            <div className="kpi-card">
+              <div className="kpi-label">{t("pubBundlesKpi")}</div>
+              <div className="kpi-value">
+                {publicationReadiness.bundles.verified_passed} /{" "}
+                {publicationReadiness.bundles.total_bundles}
+              </div>
+              <div className="kpi-sub">
+                <StatusBadge
+                  label={
+                    publicationReadiness.bundles.verified_failed === 0
+                      ? t("statusPass")
+                      : t("statusFail")
+                  }
+                  tone={publicationReadiness.bundles.verified_failed === 0 ? "ok" : "warn"}
+                />
+              </div>
+            </div>
+            <div className="kpi-card">
+              <div className="kpi-label">{t("pubCitationsKpi")}</div>
+              <div className="kpi-value">
+                {publicationReadiness.citation_audit.peer_reviewed_count} +{" "}
+                {publicationReadiness.citation_audit.preprint_count}
+              </div>
+              <div className="kpi-sub">
+                {t("pubPreprintsNote")}:{" "}
+                {publicationReadiness.citation_audit.preprint_ref_ids.join(", ") || t("noneDash")}
+              </div>
+            </div>
+            <div className="kpi-card">
+              <div className="kpi-label">{t("pubManuscriptsLabel")}</div>
+              <div className="kpi-value">{publicationReadiness.manuscripts.length}</div>
+              <div className="kpi-sub mono">
+                {publicationReadiness.manuscripts.join(" · ") || t("noneDash")}
+              </div>
+            </div>
+          </div>
+
+          <div className="meta-strip" style={{ marginBottom: 10 }}>
+            <span>
+              <strong>{t("pubGovernanceLabel")}: </strong>
+            </span>
+            {Object.entries(publicationReadiness.governance_files).map(([fname, ok]) => (
+              <StatusBadge
+                key={fname}
+                label={`${fname}: ${ok ? "OK" : "MISSING"}`}
+                tone={ok ? "ok" : "warn"}
+              />
+            ))}
+          </div>
+
+          <div className="alert" role="note">
+            <div>
+              <strong>{t("pubHumanGatesLabel")}: </strong>
+              <span>{publicationReadiness.human_approval_gates.join(" | ")}</span>
+            </div>
+          </div>
+        </div>
       )}
     </section>
   );

@@ -11,6 +11,7 @@ import {
   type JobSummary,
   type ModelSummary,
   type ProtocolSummary,
+  type PublicationReadinessResponse,
   type RunSummary,
   type StudiesResponse,
 } from "./api";
@@ -86,6 +87,8 @@ export const App: React.FC = () => {
   const [benchmarks, setBenchmarks] = useState<BenchmarkEnvelope[]>([]);
   const [analyses, setAnalyses] = useState<AnalysisSummaryItem[]>([]);
   const [exportsList, setExportsList] = useState<ExportBundleItem[]>([]);
+  const [publicationReadiness, setPublicationReadiness] =
+    useState<PublicationReadinessResponse | null>(null);
   const [auditEvents, setAuditEvents] = useState<AuditEventItem[]>([]);
 
   const [selectedDataset, setSelectedDataset] = useState<string>("");
@@ -151,12 +154,16 @@ export const App: React.FC = () => {
         api.benchmarks(),
         api.analyses(),
         api.exports(),
-      ]).then(([r, bm, an, ex]) => {
+        api.publicationReadiness().catch(() => null),
+      ]).then(([r, bm, an, ex, pub]) => {
         setRuns(r.runs);
         setRunsTotal(r.total);
         setBenchmarks(bm.benchmarks);
         setAnalyses(an.analyses);
         setExportsList(ex.exports);
+        if (pub) {
+          setPublicationReadiness(pub);
+        }
       });
 
       await fastPromise;
@@ -477,6 +484,7 @@ export const App: React.FC = () => {
               benchmarks={benchmarks}
               analyses={analyses}
               exportsList={exportsList}
+              publicationReadiness={publicationReadiness}
               theme={theme}
               onError={setErrorMsg}
             />

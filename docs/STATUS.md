@@ -12,6 +12,7 @@
 | **Phase 5C-1 (`P5-NEURO-001`)** | L0 fragmentation/ablation (`5/5`) + `malecns_v1_0` L0 audit + L1 `flywire_fafb_v630` `24/24` pilot | **L0 Verified + L1 Pilot Complete (Draft Queued)** | Hub `k=12` `eff=0.6027`, `MN9_R -69.0 Hz`, `ctrl +1.3 Hz` ([Neuro Pilot](../research/modules/neuro/pilot_report.md)) |
 | **Phase 5C-2 (`P5-PHARMA-001`)** | L2 dose-independent kinetics (`5/5`) + L1 `malecns_v1_0` `24/24` pilot | **L2 Verified + L1 Pilot Complete (Draft Queued)** | Schild `1.000000`, `Rdl` `+21.1`/`-5.0 Hz`, Bliss `0.7692` vs `0.6982` ([Pharma Pilot](../research/modules/pharma/pilot_report.md)) |
 | **Phase 5C-3 (`P5-STRESS-001`)** | L3 reactive-scope allostasis (`5/5`) + L1 `malecns_v1_0` `24/24` defensive pilot | **L3 Verified + L1 Pilot Complete (Draft Queued)** | `80.21x` L3 load, `DNp01` `12.2->63.1 Hz`, `off-inh` `12.5 Hz` ([Stress Pilot](../research/modules/stress/pilot_report.md)) |
+| **Phase 6 (`Publication/Gov`)** | Bundle/citation verification, release archive, manuscript outlines & readiness API/UI | **Verified / Archive Ready (Human Sign-Off Pending)** | [ADR-0012](adr/ADR-0012-phase6-publication-archival-and-governance.md); [`CHANGELOG.md`](../CHANGELOG.md); 3 manuscript outlines |
 
 ## Phase 5C-3 Stress Summary (`P5-STRESS-001-PILOT`, RUO)
 

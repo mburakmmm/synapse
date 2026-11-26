@@ -537,6 +537,15 @@ export const TRANSLATIONS = {
     plannedAllActiveTitle: "All Phase 0–5C Modules Active at Exploratory/Confirmatory RUO Gates",
     plannedAllActiveBody:
       "Zero modules remain in pure 'planned' placeholder status: Shiu 2024 benchmark is computationally reproduced, Metabolic (Phase 4) and Pain (Phase 5A) confirmatory simulations are complete, and Sleep, Addiction, Neuro, Pharma, and Stress (Phases 5B–5C) have verified L0/L2/L3 kernels paired with L1 exploratory pilots (unfrozen confirmatory drafts queued in docs/STATUS.md).",
+    pubReadinessTitle: "Phase 6: Open-Science Publication & Archival Readiness (RUO)",
+    pubReadinessSubtitle:
+      "Automated SHA-256 bundle checks, citation & preprint audit, manuscript outlines, and human-gated external release",
+    pubBundlesKpi: "Verified Evidence Bundles",
+    pubCitationsKpi: "Verified Citations",
+    pubPreprintsNote: "Preprints flagged",
+    pubManuscriptsLabel: "Tracked Manuscript Outlines",
+    pubGovernanceLabel: "Open-Science Governance Files",
+    pubHumanGatesLabel: "Mandatory Human Approval Gates (Blocked Until Sign-Off)",
   },
   tr: {
     // Document & Branding
@@ -1077,6 +1086,15 @@ export const TRANSLATIONS = {
     plannedAllActiveTitle: "Faz 0–5C Arası Tüm Modüller Keşifsel / Doğrulayıcı Aşamada Etkin",
     plannedAllActiveBody:
       "Hiçbir modül boş yer-tutucu durumda kalmadı: Shiu 2024 kıyaslaması tekrarlandı, Metabolik (Faz 4) ve Ağrı (Faz 5A) doğrulayıcı simülasyonları tamamlandı; Uyku, Bağımlılık, Nöro, Farmakoloji ve Stres (Faz 5B–5C) ise doğrulanmış L0/L2/L3 modellerle L1 keşifsel pilotlarını tamamladı (dondurulmamış doğrulayıcı taslaklar docs/STATUS.md kuyruğundadır).",
+    pubReadinessTitle: "Faz 6: Açık Bilim Yayın ve Arşivleme Hazırlığı (RUO)",
+    pubReadinessSubtitle:
+      "Otomatik SHA-256 paket doğrulama, kaynakça/ön-baskı denetimi, makale taslakları ve insan onay kapıları",
+    pubBundlesKpi: "Doğrulanmış Kanıt Paketleri",
+    pubCitationsKpi: "Doğrulanmış Kaynaklar",
+    pubPreprintsNote: "İşaretli ön-baskı",
+    pubManuscriptsLabel: "Takip Edilen Makale Taslakları",
+    pubGovernanceLabel: "Açık Bilim Yönetişim Dosyaları",
+    pubHumanGatesLabel: "Zorunlu İnsan Onayı Kapıları (İmzasız Dış Yayın Engelli)",
   },
 } as const;
 

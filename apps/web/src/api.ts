@@ -292,6 +292,39 @@ export interface AuditEventItem {
   resource_id: string;
 }
 
+export interface PublicationReadinessResponse {
+  ruo_notice: string;
+  citation_audit: {
+    valid: boolean;
+    sections_checked: number;
+    total_references: number;
+    peer_reviewed_count: number;
+    preprint_count: number;
+    preprint_ref_ids: string[];
+    errors: string[];
+  };
+  bundles: {
+    total_bundles: number;
+    verified_passed: number;
+    verified_failed: number;
+    items: Array<{
+      export_key: string;
+      valid: boolean;
+      checked_files: number;
+      failed_run_count: number;
+      is_synthetic_fixture: boolean;
+    }>;
+  };
+  manuscripts: string[];
+  governance_files: Record<string, boolean>;
+  draft_confirmatory_protocols: Array<{
+    protocol_id: string;
+    relative_path: string;
+    status: string;
+  }>;
+  human_approval_gates: string[];
+}
+
 export type ModuleUiState =
   | "planned"
   | "experimental"
@@ -1162,4 +1195,6 @@ export const api = {
   },
   audit: () =>
     requestJson<{ events: AuditEventItem[] }>("/api/v1/audit?limit=30"),
+  publicationReadiness: () =>
+    requestJson<PublicationReadinessResponse>("/api/v1/publication/readiness"),
 };

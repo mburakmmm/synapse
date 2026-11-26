@@ -11,8 +11,8 @@ Retrieved and verified metadata as of **2026-11-20**:
 | Brian2 (`2.10.1` pinned lock range `>=2.10,<2.11`) | https://brian2.readthedocs.io/ | CeCILL-2.1 | Reference CPU LIF simulation engine |
 | `philshiu/Drosophila_brain_model` (commit `91bdd1e7dcf193f3e7ca5a8933497fcef63b7960`) | https://github.com/philshiu/Drosophila_brain_model | MIT | Reference LIF equations and `flywire_fafb_v630` reproduction baseline (`sez_neurons.pickle` excluded) |
 | Graphify (`graphifyy 0.9.113`) | https://github.com/Graphify-Labs/graphify | Upstream OSS (external dev tool) | Local code-only navigation index; strictly outside runtime dependency lock |
-| Python scientific, API & DB packages (`NumPy`, `SciPy`, `Polars`, `PyArrow`, `Pydantic`, `FastAPI`, `SQLAlchemy`, `Alembic`, `psycopg`, `Matplotlib`) | `pyproject.toml` / `uv.lock` | Respective OSS licenses | Pinned in `uv.lock` for offline-reproducible CPU execution and metadata orchestration |
-| Frontend & container dependencies (`React`, `Vite`, `Plotly.js`, `PostgreSQL`) | `apps/web/package-lock.json` / `compose.yaml` | Respective OSS licenses | Local exploratory workbench and containerized metadata persistence |
+| Python scientific, API & DB packages (`NumPy`, `SciPy`, `Polars`, `PyArrow`, `Pydantic`, `PyYAML`, `jsonschema`, `FastAPI`, `SQLAlchemy`, `Alembic`, `psycopg`, `Matplotlib`) | `pyproject.toml` / `uv.lock` | Respective OSS licenses | Pinned in `uv.lock` for offline-reproducible CPU execution and metadata orchestration |
+| Frontend & container dependencies (`React`, `Vite`, `Plotly.js`, `Three.js`, `Vitest`, `Playwright`, `PostgreSQL`) | `apps/web/package-lock.json` / `compose.yaml` | Respective OSS licenses | Local exploratory workbench, 3D topology projection, and containerized metadata persistence |
 
 ## Biological Connectome Data Sources (Not Redistributed in Git)
 

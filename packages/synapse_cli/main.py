@@ -60,7 +60,13 @@ from synapse_experiments import (
     run_protocol_experiment,
     start_local_job,
 )
-from synapse_publication import export_evidence_bundle
+from synapse_publication import (
+    audit_citation_register,
+    build_publication_release_archive,
+    export_evidence_bundle,
+    verify_evidence_bundle,
+    verify_publication_release_archive,
+)
 
 
 def _repo_root() -> Path:
@@ -486,6 +492,54 @@ def _cmd_export_bundle(args: argparse.Namespace) -> int:
     payload = {"status": "succeeded", "bundle_manifest": str(bundle_manifest)}
     _emit(payload, as_json=args.json)
     return 0
+
+
+def _cmd_export_verify_bundle(args: argparse.Namespace) -> int:
+    report = verify_evidence_bundle(Path(args.bundle_dir))
+    _emit(report, as_json=args.json)
+    return 0 if report["valid"] else 3
+
+
+def _cmd_export_verify_citations(args: argparse.Namespace) -> int:
+    reg_path = (
+        Path(args.register)
+        if args.register
+        else (_repo_root() / "research" / "literature" / "source_register.yaml")
+    )
+    report = audit_citation_register(reg_path)
+    _emit(report, as_json=args.json)
+    return 0 if report["valid"] else 3
+
+
+def _cmd_export_release_archive(args: argparse.Namespace) -> int:
+    bundles = (
+        [Path(p.strip()) for p in args.include_bundles.split(",") if p.strip()]
+        if args.include_bundles
+        else []
+    )
+    manifest_path = build_publication_release_archive(
+        repo_root=_repo_root(),
+        out_dir=Path(args.out_dir),
+        include_bundle_dirs=bundles,
+        release_version=str(args.version),
+    )
+    manifest_data = json.loads(manifest_path.read_text(encoding="utf-8"))
+    payload = {
+        "status": "succeeded",
+        "archive_manifest": str(manifest_path),
+        "zip_filename": manifest_data["zip_filename"],
+        "zip_sha256": manifest_data["zip_sha256"],
+        "verified_bundles_count": manifest_data["verified_bundles_count"],
+        "total_files": len(manifest_data["files"]),
+    }
+    _emit(payload, as_json=args.json)
+    return 0
+
+
+def _cmd_export_verify_archive(args: argparse.Namespace) -> int:
+    report = verify_publication_release_archive(Path(args.archive_dir))
+    _emit(report, as_json=args.json)
+    return 0 if report["valid"] else 3
 
 
 def _write_l3_prc_figure(gate_report: dict[str, Any], figures_dir: Path) -> None:
@@ -1585,6 +1639,36 @@ def build_parser() -> argparse.ArgumentParser:
     p_ex_bun.add_argument("--out", required=True)
     p_ex_bun.add_argument("--json", action="store_true")
     p_ex_bun.set_defaults(func=_cmd_export_bundle)
+
+    p_ex_v_bun = ex_sub.add_parser(
+        "verify-bundle", help="Verify evidence bundle SHA-256 checksums and containment"
+    )
+    p_ex_v_bun.add_argument("--bundle-dir", required=True)
+    p_ex_v_bun.add_argument("--json", action="store_true")
+    p_ex_v_bun.set_defaults(func=_cmd_export_verify_bundle)
+
+    p_ex_v_cit = ex_sub.add_parser(
+        "verify-citations", help="Audit source_register.yaml DOIs, URLs, and preprints"
+    )
+    p_ex_v_cit.add_argument("--register", default=None)
+    p_ex_v_cit.add_argument("--json", action="store_true")
+    p_ex_v_cit.set_defaults(func=_cmd_export_verify_citations)
+
+    p_ex_rel = ex_sub.add_parser(
+        "release-archive", help="Build checksummed open-science release archive (zip + manifest)"
+    )
+    p_ex_rel.add_argument("--out-dir", required=True)
+    p_ex_rel.add_argument("--version", default="0.1.0.dev0")
+    p_ex_rel.add_argument("--include-bundles", default="")
+    p_ex_rel.add_argument("--json", action="store_true")
+    p_ex_rel.set_defaults(func=_cmd_export_release_archive)
+
+    p_ex_v_arc = ex_sub.add_parser(
+        "verify-archive", help="Verify open-science release archive checksums and zip safety"
+    )
+    p_ex_v_arc.add_argument("--archive-dir", required=True)
+    p_ex_v_arc.add_argument("--json", action="store_true")
+    p_ex_v_arc.set_defaults(func=_cmd_export_verify_archive)
 
     # circadian (Phase 5B L3 oscillator verification & gated shift-work schedules)
     p_circ = sub.add_parser(
