@@ -54,6 +54,15 @@ from synapse_core.plasticity import (
     verify_plasticity_paradigm_gates,
 )
 from synapse_core.rng import SEED_ALGORITHM, SeedRecord, derive_seed
+from synapse_core.stress import (
+    STRESS_ARM_IDS,
+    StressAllostaticParameters,
+    StressTrajectory,
+    run_stress_allostatic_panel,
+    simulate_stress_schedule,
+    stressor_intensity,
+    verify_stress_allostatic_gates,
+)
 from synapse_core.subgraph import (
     SubgraphBoundExceededError,
     SubgraphMetadata,
@@ -79,6 +88,7 @@ __all__ = [
     "DEFAULT_SIGN_MAP",
     "PHARMA_ARM_IDS",
     "SEED_ALGORITHM",
+    "STRESS_ARM_IDS",
     "AblationAuditRecord",
     "BackendCapabilities",
     "Brian2CPUBackend",
@@ -104,6 +114,8 @@ __all__ = [
     "SimulationRequest",
     "SimulationResult",
     "SimulatorBackend",
+    "StressAllostaticParameters",
+    "StressTrajectory",
     "SubgraphBoundExceededError",
     "SubgraphMetadata",
     "TopologyAnalysisParameters",
@@ -123,13 +135,17 @@ __all__ = [
     "run_conditioning_paradigm",
     "run_progressive_ablation_curve",
     "run_shift_work_experiment",
+    "run_stress_allostatic_panel",
     "simulate_conditioning_schedule",
     "simulate_receptor_modulation_panel",
+    "simulate_stress_schedule",
     "simulate_two_process",
+    "stressor_intensity",
     "validate_model_spec",
     "verify_circadian_homeostatic_gates",
     "verify_pharmacology_gates",
     "verify_plasticity_paradigm_gates",
+    "verify_stress_allostatic_gates",
     "verify_topology_ablation_gates",
     "wrap_phase_hours",
 ]

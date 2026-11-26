@@ -26,18 +26,21 @@ from synapse_core import (
     MBPlasticityParameters,
     PlasticityTrajectory,
     ReceptorModulationParameters,
+    StressAllostaticParameters,
     TopologyAnalysisParameters,
     TwoProcessTrajectory,
     extract_bounded_subgraph,
     run_conditioning_paradigm,
     run_progressive_ablation_curve,
     run_shift_work_experiment,
+    run_stress_allostatic_panel,
     simulate_conditioning_schedule,
     simulate_receptor_modulation_panel,
     validate_model_spec,
     verify_circadian_homeostatic_gates,
     verify_pharmacology_gates,
     verify_plasticity_paradigm_gates,
+    verify_stress_allostatic_gates,
     verify_topology_ablation_gates,
 )
 from synapse_data import (
@@ -211,6 +214,7 @@ def _cmd_model_list(args: argparse.Namespace) -> int:
     plasticity_l2 = MBPlasticityParameters()
     pharma_l2 = ReceptorModulationParameters()
     circadian_l3 = CircadianHomeostaticParameters()
+    stress_l3 = StressAllostaticParameters()
     topology_l0 = TopologyAnalysisParameters()
     backend = Brian2CPUBackend()
     caps = backend.capabilities()
@@ -271,6 +275,15 @@ def _cmd_model_list(args: argparse.Namespace) -> int:
                 "solver": circadian_l3.solver,
                 "dt_s": circadian_l3.dt_eval_h * circadian_l3.seconds_per_hour,
                 "parameter_source": circadian_l3.parameter_source,
+            },
+            {
+                "model_id": stress_l3.model_id,
+                "model_revision": stress_l3.model_revision,
+                "model_level": stress_l3.model_level,
+                "parameter_manifest_sha256": stress_l3.canonical_sha256(),
+                "solver": stress_l3.solver,
+                "dt_s": stress_l3.dt_eval_h * stress_l3.seconds_per_hour,
+                "parameter_source": stress_l3.parameter_source,
             },
         ],
         "backends": [
@@ -1241,6 +1254,147 @@ def _cmd_pharma_panel(args: argparse.Namespace) -> int:
     return 0
 
 
+def _write_l3_stress_figures(
+    panel_payload: dict[str, Any],
+    figures_dir: Path,
+) -> None:
+    figures_dir.mkdir(parents=True, exist_ok=True)
+    trajs = panel_payload["trajectories"]
+    palette = {
+        "sham_zero_stressor": "#64748B",
+        "acute_single_threat": "#0072B2",
+        "chronic_repeated_stress": "#D55E00",
+        "chronic_with_washout_recovery": "#009E73",
+    }
+
+    fig1 = Figure(figsize=(8.8, 5.8), dpi=200)
+    FigureCanvasAgg(fig1)
+    ax_a = fig1.add_subplot(311)
+    ax_c = fig1.add_subplot(312, sharex=ax_a)
+    ax_l = fig1.add_subplot(313, sharex=ax_a)
+
+    for arm_id, pts in trajs.items():
+        ts = [float(p["time_h"]) for p in pts]
+        col = palette.get(arm_id, "#0072B2")
+        ax_a.plot(ts, [float(p["arousal_a"]) for p in pts], color=col, linewidth=1.7, label=arm_id)
+        ax_c.plot(ts, [float(p["reserve_c"]) for p in pts], color=col, linewidth=1.7)
+        ax_l.plot(ts, [float(p["load_l"]) for p in pts], color=col, linewidth=1.7)
+
+    ax_a.set_ylabel("Arousal A")
+    ax_a.set_ylim(-0.04, 1.02)
+    ax_a.legend(loc="upper right", ncol=2, frameon=False, fontsize=7.5)
+    ax_c.set_ylabel("Reserve C")
+    ax_c.set_ylim(0.15, 1.06)
+    ax_l.set_ylabel("Allostatic L")
+    ax_l.set_xlabel("Protocol Time (hours)")
+    for ax in (ax_a, ax_c, ax_l):
+        ax.spines["top"].set_visible(False)
+        ax.spines["right"].set_visible(False)
+
+    fig1.suptitle(
+        "L3 Reactive-Scope Defensive Arousal, Reserve & Allostatic Load (RUO)",
+        fontsize=11,
+        fontweight="bold",
+    )
+    fig1.tight_layout(rect=(0.0, 0.0, 1.0, 0.94))
+    fig1.savefig(figures_dir / "l3_stress_trajectories.svg")
+    fig1.savefig(figures_dir / "l3_stress_trajectories.png", dpi=200)
+
+    arm_order = [
+        "sham_zero_stressor",
+        "acute_single_threat",
+        "chronic_with_washout_recovery",
+        "chronic_repeated_stress",
+    ]
+    labels = ["Sham", "Acute Threat", "Chronic + Washout", "Chronic Repeat"]
+    arms_map = panel_payload["arms"]
+    load_peaks = [float(arms_map[a]["load_l_peak"]) for a in arm_order]
+    res_mins = [float(arms_map[a]["reserve_c_min"]) for a in arm_order]
+    xs = list(range(len(labels)))
+
+    fig2 = Figure(figsize=(8.2, 4.3), dpi=200)
+    FigureCanvasAgg(fig2)
+    ax1 = fig2.add_subplot(121)
+    ax2 = fig2.add_subplot(122)
+    colors = [palette[a] for a in arm_order]
+    ax1.bar(xs, load_peaks, color=colors)
+    ax1.set_xticks(xs)
+    ax1.set_xticklabels(labels, rotation=18, ha="right", fontsize=8)
+    ax1.set_ylabel("Peak Allostatic Load L")
+    ax1.set_title("Cumulative Load Separation", fontsize=10, fontweight="bold")
+    ax1.spines["top"].set_visible(False)
+    ax1.spines["right"].set_visible(False)
+
+    ax2.bar(xs, res_mins, color=colors)
+    ax2.set_xticks(xs)
+    ax2.set_xticklabels(labels, rotation=18, ha="right", fontsize=8)
+    ax2.set_ylim(0.0, 1.1)
+    ax2.set_ylabel("Minimum Homeostatic Reserve C")
+    ax2.set_title("Inhibitory Reserve Erosion", fontsize=10, fontweight="bold")
+    ax2.spines["top"].set_visible(False)
+    ax2.spines["right"].set_visible(False)
+
+    fig2.suptitle(
+        "L3 Acute vs Chronic Allostatic Overload & Reserve Floor (RUO)",
+        fontsize=11,
+        fontweight="bold",
+    )
+    fig2.tight_layout(rect=(0.0, 0.0, 1.0, 0.94))
+    fig2.savefig(figures_dir / "l3_allostatic_load_comparison.svg")
+    fig2.savefig(figures_dir / "l3_allostatic_load_comparison.png", dpi=200)
+
+
+def _cmd_stress_verify(args: argparse.Namespace) -> int:
+    params = StressAllostaticParameters()
+    report = verify_stress_allostatic_gates(params)
+    report["generated_at_utc"] = datetime.now(UTC).isoformat()
+    report["source_provenance"] = collect_source_provenance(_repo_root())
+    if args.out_dir is not None:
+        out_dir = Path(args.out_dir)
+        out_dir.mkdir(parents=True, exist_ok=True)
+        (out_dir / "l3_verification_gate.json").write_text(
+            json.dumps(report, indent=2),
+            encoding="utf-8",
+        )
+    _emit(report, as_json=args.json)
+    return 0 if report["overall_passed"] else 3
+
+
+def _cmd_stress_panel(args: argparse.Namespace) -> int:
+    params = StressAllostaticParameters()
+    gate_report = verify_stress_allostatic_gates(params)
+    if not gate_report["overall_passed"]:
+        _emit(gate_report, as_json=args.json)
+        return 3
+
+    panel_payload = run_stress_allostatic_panel(params)
+    now_utc = datetime.now(UTC).isoformat()
+    src_prov = collect_source_provenance(_repo_root())
+    gate_report["generated_at_utc"] = now_utc
+    gate_report["source_provenance"] = src_prov
+    panel_payload["generated_at_utc"] = now_utc
+    panel_payload["source_provenance"] = src_prov
+    panel_payload["gate_overall_passed"] = bool(gate_report["overall_passed"])
+
+    if args.out_dir is not None:
+        out_dir = Path(args.out_dir)
+        out_dir.mkdir(parents=True, exist_ok=True)
+        (out_dir / "l3_verification_gate.json").write_text(
+            json.dumps(gate_report, indent=2),
+            encoding="utf-8",
+        )
+        (out_dir / "l3_allostatic_panel.json").write_text(
+            json.dumps(panel_payload, indent=2),
+            encoding="utf-8",
+        )
+        snapshot_rows = list(panel_payload["l3_to_l1_coupling_snapshots"])
+        pl.DataFrame(snapshot_rows).write_parquet(out_dir / "l3_coupling_snapshots.parquet")
+        _write_l3_stress_figures(panel_payload, out_dir / "figures")
+
+    _emit(panel_payload, as_json=args.json)
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="synapse",
@@ -1512,6 +1666,28 @@ def build_parser() -> argparse.ArgumentParser:
     p_pharma_pan.add_argument("--out-dir", default=None)
     p_pharma_pan.add_argument("--json", action="store_true")
     p_pharma_pan.set_defaults(func=_cmd_pharma_panel)
+
+    # stress (Phase 5C-3 Stress L3 reactive-scope allostatic ODEs & L1 coupling)
+    p_stress = sub.add_parser(
+        "stress",
+        help="Verify L3 reactive-scope allostatic load dynamics and run panel",
+    )
+    stress_sub = p_stress.add_subparsers(dest="stress_cmd", required=True)
+    p_stress_ver = stress_sub.add_parser(
+        "verify",
+        help="Verify RK45 convergence, sham baseline, acute/chronic load & washout gates",
+    )
+    p_stress_ver.add_argument("--out-dir", default=None)
+    p_stress_ver.add_argument("--json", action="store_true")
+    p_stress_ver.set_defaults(func=_cmd_stress_verify)
+
+    p_stress_pan = stress_sub.add_parser(
+        "panel",
+        help="Run gated L3 stress arms and export L3->L1 coupling snapshots",
+    )
+    p_stress_pan.add_argument("--out-dir", default=None)
+    p_stress_pan.add_argument("--json", action="store_true")
+    p_stress_pan.set_defaults(func=_cmd_stress_panel)
 
     return parser
 

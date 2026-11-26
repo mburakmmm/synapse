@@ -97,11 +97,11 @@ function createApiFetchMock() {
           {
             module_id: "stress",
             phase: "phase5c",
-            ui_state: "planned",
-            simulation_phase: "planned",
-            dataset_id: null,
-            protocol_id: null,
-            available_on_disk: false,
+            ui_state: "experimental",
+            simulation_phase: "l3_verified_and_l1_pilot_complete",
+            dataset_id: "malecns_v1_0",
+            protocol_id: "P5-STRESS-001-PILOT",
+            available_on_disk: true,
           },
         ],
         metabolic: {
@@ -829,6 +829,132 @@ function createApiFetchMock() {
             ],
           },
         },
+        stress: {
+          l3_gate: {
+            model_id: "stress_allostatic_reactive_scope_v1",
+            model_level: "L3",
+            solver: "RK45",
+            parameter_manifest_sha256: "stress_l3_sha",
+            overall_passed: true,
+            gates: {
+              rk45_convergence_and_bounds: {
+                passed: true,
+                max_abs_diff: 1.18e-5,
+                bounds_preserved: true,
+              },
+              sham_baseline_invariance: {
+                passed: true,
+                sham_max_a: 0.0,
+                sham_max_c_dev: 0.0,
+                sham_max_l: 0.0,
+              },
+              acute_stress_habituation_and_recovery: {
+                passed: true,
+                acute_a_peak: 0.402,
+                acute_c_min: 0.969,
+                acute_l_peak: 0.022,
+                acute_a_end: 0.0,
+              },
+              chronic_allostatic_overload_separation: {
+                passed: true,
+                chronic_c_min: 0.497,
+                chronic_l_peak: 1.792,
+                chronic_vs_acute_load_ratio: 80.21,
+                first_bout_a_peak: 0.43,
+                late_bout_a_peak: 0.524,
+              },
+              post_chronic_washout_and_ruo_guard: {
+                passed: true,
+                washout_c_at_21h: 0.545,
+                washout_c_end: 0.934,
+                washout_l_peak: 0.978,
+                washout_l_end: 0.318,
+                diagnostic_label_guard_enabled: true,
+              },
+            },
+          },
+          l3_panel: {
+            model_id: "stress_allostatic_reactive_scope_v1",
+            parameter_manifest_sha256: "stress_l3_sha",
+            diagnostic_label_guard_enabled: true,
+            arms: {
+              acute_single_threat: {
+                arm_id: "acute_single_threat",
+                duration_h: 48.0,
+                arousal_a_peak: 0.402,
+                arousal_a_end: 0.0,
+                reserve_c_min: 0.969,
+                reserve_c_end: 0.999,
+                load_l_peak: 0.022,
+                load_l_end: 0.004,
+              },
+            },
+            trajectories: {
+              acute_single_threat: [
+                { time_h: 0.0, arousal_a: 0.0, reserve_c: 1.0, load_l: 0.0, stressor_u: 0.0 },
+                { time_h: 4.5, arousal_a: 0.4, reserve_c: 0.97, load_l: 0.02, stressor_u: 1.0 },
+              ],
+            },
+            l3_to_l1_coupling_snapshots: [
+              {
+                condition_id: "acute_threat_baseline_30hz",
+                l3_state_source: "acute_single_threat",
+                threat_drive_hz: 30.0,
+                inhibitory_reserve_scale: 1.0,
+                sensory_sensitization_scale: 1.0,
+                specificity_note: "Acute bout",
+              },
+            ],
+          },
+          pilot: {
+            protocol_id: "P5-STRESS-001-PILOT",
+            dataset_id: "malecns_v1_0",
+            total_runs: 24,
+            succeeded_run_count: 24,
+            failed_run_count: 0,
+            sham_count: 3,
+            sham_max_spikes: 0,
+            wall_total_s: 600.0,
+            run_wall_mean_s: 25.0,
+            git_commits: ["ce513da"],
+            condition_readout_means: {
+              sham_zero_stimulus: {
+                dnp01_escape_mean_hz: 0.0,
+                dnp01_escape_sd_hz: 0.0,
+                dnp09_freeze_mean_hz: 0.0,
+                dnp09_freeze_sd_hz: 0.0,
+                dnp11_escape_mean_hz: 0.0,
+                dnp11_escape_sd_hz: 0.0,
+              },
+              acute_threat_baseline_30hz: {
+                dnp01_escape_mean_hz: 22.0,
+                dnp01_escape_sd_hz: 1.5,
+                dnp09_freeze_mean_hz: 12.0,
+                dnp09_freeze_sd_hz: 1.0,
+                dnp11_escape_mean_hz: 15.0,
+                dnp11_escape_sd_hz: 1.0,
+              },
+            },
+            contrasts: [
+              {
+                contrast_name: "10001_reserve_depletion_vs_acute",
+                neuron_id: "10001",
+                baseline_condition: "acute_threat_baseline_30hz",
+                treatment_condition: "chronic_allostatic_reserve_depletion",
+                n_pairs: 3,
+                failed_run_count: 0,
+                baseline_mean_hz: 22.0,
+                baseline_sd_hz: 1.5,
+                treatment_mean_hz: 40.0,
+                treatment_sd_hz: 2.0,
+                mean_difference_hz: 18.0,
+                sd_difference_hz: 1.2,
+                bootstrap_ci95_low_hz: 17.0,
+                bootstrap_ci95_high_hz: 19.0,
+              },
+            ],
+          },
+        },
       });
     }
     if (target.endsWith("/api/v1/datasets")) {
@@ -956,6 +1082,16 @@ function createApiFetchMock() {
             dt_s: 180.0,
             parameter_source: "Leloup & Goldbeter 1998",
             parameters: { tau_i_h: 8.76, tau_d_h: 9.51 },
+          },
+          {
+            model_id: "stress_allostatic_reactive_scope_v1",
+            model_revision: "1.0",
+            model_level: "L3",
+            parameter_manifest_sha256: "stresssha",
+            solver: "RK45",
+            dt_s: 180.0,
+            parameter_source: "Romero 2009 / McEwen 1998",
+            parameters: { duration_h: 48.0, k_wear: 1.1 },
           },
         ],
         backends: [
@@ -1186,10 +1322,13 @@ describe("SYNAPSE Research Workbench UI", () => {
     expect(window.localStorage.getItem("synapse.uiMode")).toBe("expert");
     expect(await screen.findByText(/128\.5 \/ 512 GB/)).toBeInTheDocument();
 
-    // Modules tab: real Pharma, Neuro, Addiction, Sleep, Pain, Metabolic, and Planned modules
+    // Modules tab: real Stress, Pharma, Neuro, Addiction, Sleep, Pain, Metabolic, and Planned state
     fireEvent.click(screen.getByRole("tab", { name: /Research Modules/ }));
     expect(await screen.findByText("120 / 120")).toBeInTheDocument();
     expect(screen.getByText("+20.667")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /Stress · P5-STRESS-001/ }));
+    expect(await screen.findByText(/80\.21x/)).toBeInTheDocument();
+    expect(screen.getByText("+18.000")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: /Pharma · P5-PHARMA-001/ }));
     expect(await screen.findByText(/1\.000000/)).toBeInTheDocument();
     expect(screen.getByText("+24.000")).toBeInTheDocument();
@@ -1205,7 +1344,7 @@ describe("SYNAPSE Research Workbench UI", () => {
     fireEvent.click(screen.getByRole("button", { name: /Metabolic · P4-MET-001/ }));
     expect(await screen.findByText("+30.900")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: /Planned Modules/ }));
-    expect(screen.getByText(/Stress Circuitry/)).toBeInTheDocument();
+    expect(screen.getByText(/All Phase 0–5C Modules Active/)).toBeInTheDocument();
 
     // Datasets & Circuits tab: 64-bit string ID + confidence column + 3D/2D controls
     fireEvent.click(screen.getByRole("tab", { name: /Datasets & Circuits/ }));
@@ -1224,6 +1363,7 @@ describe("SYNAPSE Research Workbench UI", () => {
       screen.getByText(/L2 Pharmacology · solver: analytic_hill_schild/),
     ).toBeInTheDocument();
     expect(screen.getByText(/L3 ODE · solver: RK45/)).toBeInTheDocument();
+    expect(screen.getByText(/L3 Stress · solver: RK45/)).toBeInTheDocument();
     expect(screen.queryByText(/dg=undefined/)).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Generate Draft YAML" }));
     fireEvent.click(screen.getByRole("button", { name: "Validate Draft YAML" }));

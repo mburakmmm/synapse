@@ -893,6 +893,118 @@ export interface PharmaStudyData {
   pilot: PharmaPilotSummary | null;
 }
 
+export interface StressL3GateReport {
+  model_id: string;
+  model_level: string;
+  solver: string;
+  parameter_manifest_sha256: string;
+  overall_passed: boolean;
+  gates: {
+    rk45_convergence_and_bounds: {
+      passed: boolean;
+      max_abs_diff: number;
+      bounds_preserved: boolean;
+    };
+    sham_baseline_invariance: {
+      passed: boolean;
+      sham_max_a: number;
+      sham_max_c_dev: number;
+      sham_max_l: number;
+    };
+    acute_stress_habituation_and_recovery: {
+      passed: boolean;
+      acute_a_peak: number;
+      acute_c_min: number;
+      acute_l_peak: number;
+      acute_a_end: number;
+    };
+    chronic_allostatic_overload_separation: {
+      passed: boolean;
+      chronic_c_min: number;
+      chronic_l_peak: number;
+      chronic_vs_acute_load_ratio: number;
+      first_bout_a_peak: number;
+      late_bout_a_peak: number;
+    };
+    post_chronic_washout_and_ruo_guard: {
+      passed: boolean;
+      washout_c_at_21h: number;
+      washout_c_end: number;
+      washout_l_peak: number;
+      washout_l_end: number;
+      diagnostic_label_guard_enabled: boolean;
+    };
+  };
+}
+
+export interface StressL3Panel {
+  model_id: string;
+  parameter_manifest_sha256: string;
+  diagnostic_label_guard_enabled: boolean;
+  arms: Record<
+    string,
+    {
+      arm_id: string;
+      duration_h: number;
+      arousal_a_peak: number;
+      arousal_a_end: number;
+      reserve_c_min: number;
+      reserve_c_end: number;
+      load_l_peak: number;
+      load_l_end: number;
+    }
+  >;
+  trajectories: Record<
+    string,
+    Array<{
+      time_h: number;
+      arousal_a: number;
+      reserve_c: number;
+      load_l: number;
+      stressor_u: number;
+    }>
+  >;
+  l3_to_l1_coupling_snapshots: Array<{
+    condition_id: string;
+    l3_state_source: string;
+    threat_drive_hz: number;
+    inhibitory_reserve_scale: number;
+    sensory_sensitization_scale: number;
+    specificity_note: string;
+  }>;
+}
+
+export interface StressPilotSummary {
+  protocol_id: string;
+  dataset_id: string;
+  total_runs: number;
+  succeeded_run_count: number;
+  failed_run_count: number;
+  sham_count: number;
+  sham_max_spikes: number;
+  wall_total_s: number;
+  run_wall_mean_s: number;
+  git_commits: string[];
+  condition_readout_means: Record<
+    string,
+    {
+      dnp01_escape_mean_hz: number;
+      dnp01_escape_sd_hz: number;
+      dnp09_freeze_mean_hz: number;
+      dnp09_freeze_sd_hz: number;
+      dnp11_escape_mean_hz: number;
+      dnp11_escape_sd_hz: number;
+    }
+  >;
+  contrasts: SleepPilotContrast[];
+}
+
+export interface StressStudyData {
+  l3_gate: StressL3GateReport | null;
+  l3_panel: StressL3Panel | null;
+  pilot: StressPilotSummary | null;
+}
+
 export interface StudiesResponse {
   modules: ResearchModuleItem[];
   metabolic: {
@@ -918,6 +1030,7 @@ export interface StudiesResponse {
   addiction?: AddictionStudyData;
   neuro?: NeuroStudyData;
   pharma?: PharmaStudyData;
+  stress?: StressStudyData;
 }
 
 async function requestJson<T>(path: string, init?: RequestInit): Promise<T> {

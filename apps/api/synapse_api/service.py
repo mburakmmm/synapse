@@ -21,6 +21,7 @@ from synapse_core import (
     LIFParameters,
     MBPlasticityParameters,
     ReceptorModulationParameters,
+    StressAllostaticParameters,
     TopologyAnalysisParameters,
     extract_bounded_subgraph,
     validate_model_spec,
@@ -377,6 +378,26 @@ def _serialize_pharma_model_entry(params: ReceptorModulationParameters) -> dict[
     }
 
 
+def _serialize_stress_model_entry(params: StressAllostaticParameters) -> dict[str, Any]:
+    return {
+        "model_id": params.model_id,
+        "model_revision": params.model_revision,
+        "model_level": params.model_level,
+        "parameter_manifest_sha256": params.canonical_sha256(),
+        "solver": params.solver,
+        "dt_s": params.dt_eval_h * params.seconds_per_hour,
+        "parameter_source": params.parameter_source,
+        "parameters": {
+            "duration_h": params.duration_h,
+            "tau_a_h": params.tau_a_h,
+            "tau_c_h": params.tau_c_h,
+            "tau_l_h": params.tau_l_h,
+            "k_wear": params.k_wear,
+            "diagnostic_label_guard_enabled": params.diagnostic_label_guard_enabled,
+        },
+    }
+
+
 def list_models_and_backends() -> dict[str, Any]:
     topology_l0 = TopologyAnalysisParameters()
     default_lif = LIFParameters()
@@ -384,6 +405,7 @@ def list_models_and_backends() -> dict[str, Any]:
     plasticity_l2 = MBPlasticityParameters()
     pharma_l2 = ReceptorModulationParameters()
     circadian_l3 = CircadianHomeostaticParameters()
+    stress_l3 = StressAllostaticParameters()
     cpu_caps = Brian2CPUBackend().capabilities()
     return {
         "models": [
@@ -393,6 +415,7 @@ def list_models_and_backends() -> dict[str, Any]:
             _serialize_plasticity_model_entry(plasticity_l2),
             _serialize_pharma_model_entry(pharma_l2),
             _serialize_circadian_model_entry(circadian_l3),
+            _serialize_stress_model_entry(stress_l3),
         ],
         "backends": [
             {
@@ -928,6 +951,19 @@ def list_research_studies(settings: Settings) -> dict[str, Any]:
     else:
         pharma_phase = "planned"
 
+    stress_l3_dir = settings.runs_root / "phase5c_stress001_l3_allostatic"
+    stress_l3_gate = _read_json_if_file(stress_l3_dir / "l3_verification_gate.json")
+    stress_l3_panel = _read_json_if_file(stress_l3_dir / "l3_allostatic_panel.json")
+    stress_pilot_dir = settings.runs_root / "phase5c_stress001_exploratory_pilot"
+    stress_pilot = _read_json_if_file(stress_pilot_dir / "pilot_summary.json")
+    stress_available = stress_l3_gate is not None or stress_pilot is not None
+    if stress_l3_gate is not None and stress_pilot is not None:
+        stress_phase = "l3_verified_and_l1_pilot_complete"
+    elif stress_l3_gate is not None:
+        stress_phase = "l3_verified"
+    else:
+        stress_phase = "planned"
+
     modules = [
         {
             "module_id": "shiu2024_benchmark",
@@ -999,11 +1035,11 @@ def list_research_studies(settings: Settings) -> dict[str, Any]:
         {
             "module_id": "stress",
             "phase": "phase5c",
-            "ui_state": "planned",
-            "simulation_phase": "planned",
-            "dataset_id": None,
-            "protocol_id": None,
-            "available_on_disk": False,
+            "ui_state": "experimental" if stress_available else "planned",
+            "simulation_phase": stress_phase,
+            "dataset_id": "malecns_v1_0" if stress_available else None,
+            "protocol_id": "P5-STRESS-001-PILOT" if stress_pilot is not None else None,
+            "available_on_disk": stress_available,
         },
     ]
 
@@ -1040,6 +1076,11 @@ def list_research_studies(settings: Settings) -> dict[str, Any]:
             "l2_gate": pharma_l2_gate,
             "l2_panel": pharma_l2_panel,
             "pilot": pharma_pilot,
+        },
+        "stress": {
+            "l3_gate": stress_l3_gate,
+            "l3_panel": stress_l3_panel,
+            "pilot": stress_pilot,
         },
     }
 

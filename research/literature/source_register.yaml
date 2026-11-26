@@ -439,3 +439,68 @@ sources:
         url: "https://doi.org/10.1146/annurev-pharmtox-010818-021747"
         peer_review_status: "peer_reviewed"
         claim_scope: "Mechanistic diversity and agonist/antagonist pharmacology of insect nicotinic acetylcholine receptors"
+
+  - id: phase5c_stress_sources
+    purpose: "Verified peer-reviewed literature basis for L3 reactive-scope allostatic load and Drosophila looming-defensive DNp01/DNp09/LC4 circuitry"
+    retrieved_at_utc: "2026-11-26"
+    references:
+      - ref_id: mcewen1998_nejm
+        citation_short: "McEwen BS (1998) N Engl J Med 338(3):171-179"
+        doi: "10.1056/NEJM199801153380307"
+        url: "https://doi.org/10.1056/NEJM199801153380307"
+        peer_review_status: "peer_reviewed"
+        claim_scope: "Theoretical formulation of allostasis vs cumulative allostatic load under chronic repeated stress (used strictly as conceptual dynamical abstraction, not clinical diagnosis)"
+      - ref_id: romero2009_hormbehav
+        citation_short: "Romero LM, Dickens MJ, Cyr NE (2009) Horm Behav 55(3):375-389"
+        doi: "10.1016/j.yhbeh.2008.12.009"
+        url: "https://doi.org/10.1016/j.yhbeh.2008.12.009"
+        peer_review_status: "peer_reviewed"
+        claim_scope: "Reactive Scope Model separating predictive homeostasis, acute reactive elevation, and homeostatic overload when coping reserve declines"
+      - ref_id: suh2004_nature
+        citation_short: "Suh GS, Wong AM, Hergarden AC et al. (2004) Nature 431:854-859"
+        doi: "10.1038/nature02980"
+        url: "https://doi.org/10.1038/nature02980"
+        peer_review_status: "peer_reviewed"
+        claim_scope: "Innate Drosophila avoidance of stress-associated odor signals"
+      - ref_id: gibson2015_currbiol
+        citation_short: "Gibson WT et al. (2015) Curr Biol 25(11):1401-1415"
+        doi: "10.1016/j.cub.2015.03.058"
+        url: "https://doi.org/10.1016/j.cub.2015.03.058"
+        peer_review_status: "peer_reviewed"
+        claim_scope: "Persistent internal defensive arousal state in Drosophila triggered by repetitive looming visual threats"
+      - ref_id: wu2016_elife
+        citation_short: "Wu M, Nern A, Williamson WR, Morimoto MM, Reiser MB, Card GM, Rubin GM (2016) eLife 5:e21022"
+        doi: "10.7554/eLife.21022"
+        url: "https://doi.org/10.7554/eLife.21022"
+        peer_review_status: "peer_reviewed"
+        claim_scope: "Systematic identification of lobula columnar (LC) visual projection neuron types including LC4 and non-defensive visual types"
+      - ref_id: vonreyn2017_neuron
+        citation_short: "von Reyn CR, Nern A, Williamson WR et al. (2017) Neuron 94(6):1190-1204"
+        doi: "10.1016/j.neuron.2017.05.036"
+        url: "https://doi.org/10.1016/j.neuron.2017.05.036"
+        peer_review_status: "peer_reviewed"
+        claim_scope: "LC4 visual projection integration onto Drosophila Giant Fiber (DNp01) driving escape kinematics"
+      - ref_id: ries2017_natcommun
+        citation_short: "Ries AS, Hermanns T, Poeck B, Strauss R (2017) Nat Commun 8:15738"
+        doi: "10.1038/ncomms15738"
+        url: "https://doi.org/10.1038/ncomms15738"
+        peer_review_status: "peer_reviewed"
+        claim_scope: "Chronic uncontrollable vibration stress induces persistent behavioral suppression in Drosophila (fly-level proxy; no human clinical equivalence)"
+      - ref_id: zacarias2018_natcommun
+        citation_short: "Zacarias R, Namiki S, Card GM, Vasconcelos ML, Moita MA (2018) Nat Commun 9:3697"
+        doi: "10.1038/s41467-018-05875-1"
+        url: "https://doi.org/10.1038/s41467-018-05875-1"
+        peer_review_status: "peer_reviewed"
+        claim_scope: "Descending neuron DNp09 control of looming-evoked defensive freezing vs DNp01 escape in Drosophila"
+      - ref_id: ache2019_currbiol
+        citation_short: "Ache JM, Namiki S, Lee A, Branson K, Card GM (2019) Curr Biol 29(6):1073-1081"
+        doi: "10.1016/j.cub.2019.01.079"
+        url: "https://doi.org/10.1016/j.cub.2019.01.079"
+        peer_review_status: "peer_reviewed"
+        claim_scope: "LPLC2 and LC4 joint encoding of looming angular size and velocity on Giant Fiber DNp01"
+      - ref_id: nassel2019_progneurobiol
+        citation_short: "Nassel DR, Zandawala M (2019) Prog Neurobiol 179:101607"
+        doi: "10.1016/j.pneurobio.2019.02.003"
+        url: "https://doi.org/10.1016/j.pneurobio.2019.02.003"
+        peer_review_status: "peer_reviewed"
+        claim_scope: "Drosophila stress-related neuropeptidergic signaling (DH44, Crz, IPC/DILP) and context boundaries for peptidergic neuromodulation"

@@ -132,15 +132,16 @@ export const TRANSLATIONS = {
     modPharmaName: "Pharmacology & Receptor Modulation (P5-PHARMA-001)",
     modPharmaDesc:
       "Experimental: verified L2 dose-independent receptor kinetics (5/5 gates: Hill, Schild slope=1.0, PAM/block, Bliss) + L1 MaleCNS 24/24 exploratory pilot (confirmatory freeze pending; NOT human dosing).",
-    modStressName: "Stress Circuitry",
+    modStressName: "Stress & Allostatic Defensive Circuitry (P5-STRESS-001)",
     modStressDesc:
-      "Planned: declared fly-level stress signaling circuits; diagnostic human labels strictly excluded.",
+      "Experimental: verified L3 reactive-scope allostatic ODEs (5/5 gates) + L1 MaleCNS 24/24 defensive escape/freezing pilot (confirmatory freeze pending; NOT human clinical anxiety/depression).",
 
     // Modules Workspace
     modulesTitle: "Research Module Scientific Dashboards",
     modulesMissingTitle: "Local Simulation Artifacts Not Found Under runs/",
     modulesMissingBody:
       "Live scientific summary JSONs under runs/ are intentionally gitignored. Run confirmatory scripts locally or inspect offline test fixtures; zero synthetic numbers are fabricated here.",
+    tabStress: "Stress · P5-STRESS-001",
     tabPharma: "Pharma · P5-PHARMA-001",
     tabNeuro: "Neuro · P5-NEURO-001",
     tabAddiction: "Addiction · P5-ADD-001",
@@ -243,6 +244,7 @@ export const TRANSLATIONS = {
     presetSleep: "Sleep & Circadian (malecns_v1_0)",
     presetAddiction: "Reward Learning MB (malecns_v1_0)",
     presetPharma: "Receptor Modulation (malecns_v1_0)",
+    presetStress: "Defensive Stress Circuit (malecns_v1_0)",
     presetMetabolic: "Metabolic MN9 (flywire_fafb_v630)",
     presetNeuro: "Premotor Hub Ablation (flywire_fafb_v630)",
     presetSynth: "Synthetic Microcircuit",
@@ -509,6 +511,32 @@ export const TRANSLATIONS = {
     pharmaLimitsTitle: "Mandatory RUO Non-Clinical & Dose-Independent Boundaries",
     pharmaLimitsBody:
       "All L2 curves use dimensionless affinity ratios ([A]/EC50, [B]/Ki, [I]/IC50, [M]/Km) with named_compound_gate_enabled = false—NOT human drugs, patient dosing, or clinical efficacy. L1 weights proxy Rdl/nAChR gain uniformly across predicted GABA/ACH edges without PK/PD metabolism or receptor desensitization. Confirmatory P5-PHARMA-001.yaml remains unfrozen (draft).",
+    simpleStressTitle: "Threat Escape vs. Chronic Reserve Loss (L3 + Male Brain)",
+    simpleStressSummary:
+      "Verified L3 reactive-scope allostatic ODEs pass 5/5 gates (chronic threat erodes inhibitory reserve C and drives cumulative load); on MaleCNS, eroding inhibitory gates onto DNp01/DNp09 amplified defensive threat output far beyond Hungarian-matched off-pathway controls.",
+    glossAllostasisTitle: "Allostatic Load & Reserve (L3)",
+    glossAllostasisDef:
+      "Wear accumulated when repeated threats deplete homeostatic inhibitory reserve faster than baseline recovery can replenish it — a quantitative systems variable, NOT human clinical stress.",
+    glossDefensiveTitle: "Escape (DNp01) vs Freezing (DNp09)",
+    glossDefensiveDef:
+      "Dual descending motor pathways in adult Drosophila driving rapid takeoff/escape (DNp01 Giant Fiber) or threat freezing (DNp09) from visual lobula inputs (LC4 / LC9).",
+    stressBannerTitle: "Phase 5C-3: L3 Reactive-Scope Allostatic ODEs & L1 Defensive Pilot",
+    stressGatesTitle: "Mandatory L3 Allostatic Overload & RUO Verification (5/5 Gates)",
+    stressGateRk45: "RK45 Convergence",
+    stressGateSham: "Sham Zero Stressor",
+    stressGateAcute: "Acute Habit. / Recovery",
+    stressGateChronic: "Chronic Load Overload",
+    stressGateWashout: "Washout & RUO Guard",
+    stressChartL3Title: "L3 48 h Defensive Arousal (A), Reserve (C) & Allostatic Load (L)",
+    stressChartL1Title: "L1 Pilot MaleCNS Escape (DNp01) & Freezing (DNp09) Across Stress States (Hz, N=3)",
+    stressSnapshotTableTitle: "L3 -> L1 Defensive State Mapping & Control Specificity",
+    stressContrastsTitle: "Exploratory L1 Paired Contrasts & Matched Control Specificity (0.0–0.6 s, N=3)",
+    stressLimitsTitle: "Mandatory RUO Non-Clinical & Static-Gain Limits",
+    stressLimitsBody:
+      "DNp01 escape and DNp09 freezing firing rates plus L3 arousal/reserve/load trajectories are Drosophila circuit proxies—NOT human clinical anxiety, depression, PTSD, or cortisol diagnosis. MaleCNS DH44/IPC peptidergic neurons remain unmodeled (UNKNOWN NT tags). Confirmatory P5-STRESS-001.yaml remains unfrozen (draft).",
+    plannedAllActiveTitle: "All Phase 0–5C Modules Active at Exploratory/Confirmatory RUO Gates",
+    plannedAllActiveBody:
+      "Zero modules remain in pure 'planned' placeholder status: Shiu 2024 benchmark is computationally reproduced, Metabolic (Phase 4) and Pain (Phase 5A) confirmatory simulations are complete, and Sleep, Addiction, Neuro, Pharma, and Stress (Phases 5B–5C) have verified L0/L2/L3 kernels paired with L1 exploratory pilots (unfrozen confirmatory drafts queued in docs/STATUS.md).",
   },
   tr: {
     // Document & Branding
@@ -639,15 +667,16 @@ export const TRANSLATIONS = {
     modPharmaName: "Farmakoloji ve Reseptör Modülasyonu (P5-PHARMA-001)",
     modPharmaDesc:
       "Deneysel: doğrulanmış L2 dozdan bağımsız reseptör kinetiği (5/5 kapı: Hill, Schild eğimi=1.0, PAM/blok, Bliss) + L1 MaleCNS 24/24 keşifsel pilot (doğrulayıcı dondurma onay bekliyor; insan dozajı DEĞİLDİR).",
-    modStressName: "Stres Devreleri",
+    modStressName: "Stres ve Allostatik Savunma Devreleri (P5-STRESS-001)",
     modStressDesc:
-      "Planlandı: yalnızca sinek düzeyi devre/davranış çıktıları; klinik anksiyete/depresyon tanı etiketleri kesinlikle dışlanır.",
+      "Deneysel: doğrulanmış L3 tepkisel-kapsam allostatik ODE'leri (5/5 kapı) + L1 MaleCNS 24/24 kaçış/donma keşifsel pilotu (doğrulayıcı dondurma onay bekliyor; klinik anksiyete/depresyon DEĞİLDİR).",
 
     // Modules Workspace
     modulesTitle: "Araştırma Modülü Bilimsel Panoları",
     modulesMissingTitle: "Yerel runs/ Altında Simülasyon Çıktıları Bulunamadı",
     modulesMissingBody:
       "runs/ altındaki simülasyon özet JSON dosyaları Git dışında tutulur. Yerel koşu sonuçları varsa otomatik okunur; sahte veri kesinlikle üretilmez.",
+    tabStress: "Stres · P5-STRESS-001",
     tabPharma: "Farmakoloji · P5-PHARMA-001",
     tabNeuro: "Nöro · P5-NEURO-001",
     tabAddiction: "Bağımlılık · P5-ADD-001",
@@ -755,6 +784,7 @@ export const TRANSLATIONS = {
     presetSleep: "Uyku ve Sirkadiyen Devre (malecns_v1_0)",
     presetAddiction: "Ödül Öğrenmesi MB Devresi (malecns_v1_0)",
     presetPharma: "Reseptör Modülasyonu (malecns_v1_0)",
+    presetStress: "Savunma Stres Devresi (malecns_v1_0)",
     presetMetabolic: "Metabolik MN9 Devresi (flywire_fafb_v630)",
     presetNeuro: "Premotor Hub Ablasyonu (flywire_fafb_v630)",
     presetSynth: "Sentetik Mikrodevre",
@@ -1021,6 +1051,32 @@ export const TRANSLATIONS = {
     pharmaLimitsTitle: "Zorunlu RUO Klinik-Dışı ve Dozdan Bağımsız Kapsam Sınırları",
     pharmaLimitsBody:
       "Tüm L2 eğrileri boyutsuz afinite oranları ([A]/EC50, [B]/Ki, [I]/IC50, [M]/Km) ve named_compound_gate_enabled = false ile çalışır — insan ilacı, hasta dozu veya klinik etkinlik DEĞİLDİR. L1 ağırlıkları öngörülen GABA/ACH kenarları boyunca PK/PD veya desensitizasyon olmadan tekdüze Rdl/nAChR kazancı uygular. Doğrulayıcı P5-PHARMA-001.yaml henüz dondurulmamıştır (draft).",
+    simpleStressTitle: "Tehdit Kaçışı vs Kronik Rezerv Kaybı (L3 + Erkek Beyin)",
+    simpleStressSummary:
+      "Doğrulanmış L3 tepkisel-kapsam allostatik ODE'leri 5/5 kapıyı geçti (tekrarlayan tehdit baskılayıcı rezervi eritir ve kümülatif yükü artırır); MaleCNS devresinde DNp01/DNp09 baskılayıcı frenlerinin kaybı eşli kontrollerin aksine savunma ateşlemesini artırdı.",
+    glossAllostasisTitle: "Allostatik Yük ve Rezerv (L3)",
+    glossAllostasisDef:
+      "Tekrarlayan tehditlerin homeostatik baskılayıcı rezervi toparlanmadan hızlı tüketmesiyle biriken nicel sistem yıpranmasıdır — insan klinik stresi DEĞİLDİR.",
+    glossDefensiveTitle: "Kaçış (DNp01) vs Donma (DNp09)",
+    glossDefensiveDef:
+      "Erişkin Drosophila'da görsel tehdit girdilerinden (LC4 / LC9) hızlı kalkış-kaçış (DNp01 Dev Lif) veya donma (DNp09) tepkisini yöneten çift inen motor yoldur.",
+    stressBannerTitle: "Faz 5C-3: L3 Tepkisel-Kapsam Allostatik ODE'ler ve L1 Savunma Pilotu",
+    stressGatesTitle: "Zorunlu L3 Allostatik Yüklenme ve RUO Doğrulaması (5/5 Kapı)",
+    stressGateRk45: "RK45 Yakınsama",
+    stressGateSham: "Sham Sıfır Stresör",
+    stressGateAcute: "Akut Alışma / Toparlanma",
+    stressGateChronic: "Kronik Yük Aşımı",
+    stressGateWashout: "Yıkama ve RUO Koruma",
+    stressChartL3Title: "L3 48 Saat Savunma Uyarımı (A), Rezerv (C) ve Allostatik Yük (L)",
+    stressChartL1Title: "Stres Evrelerinde L1 Pilot MaleCNS Kaçış (DNp01) ve Donma (DNp09) Hızları (Hz, N=3)",
+    stressSnapshotTableTitle: "L3 -> L1 Savunma Durumu Eşleşmesi ve Kontrol Özgüllüğü",
+    stressContrastsTitle: "Keşifsel L1 Eşleştirilmiş Farklar ve Kontrol Özgüllüğü (0.0–0.6 sn, N=3)",
+    stressLimitsTitle: "Zorunlu RUO Klinik-Dışı ve Statik-Kazanç Sınırları",
+    stressLimitsBody:
+      "DNp01 kaçış / DNp09 donma hızları ile L3 uyarım/rezerv/yük yörüngeleri yalnızca sinek devresi proksileridir — insan anksiyetesi, depresyon, TSSB veya kortizol tanısı DEĞİLDİR. MaleCNS DH44/IPC nöropeptit nöronları modellenmemiştir (UNKNOWN NT). Doğrulayıcı P5-STRESS-001.yaml henüz dondurulmamıştır (draft).",
+    plannedAllActiveTitle: "Faz 0–5C Arası Tüm Modüller Keşifsel / Doğrulayıcı Aşamada Etkin",
+    plannedAllActiveBody:
+      "Hiçbir modül boş yer-tutucu durumda kalmadı: Shiu 2024 kıyaslaması tekrarlandı, Metabolik (Faz 4) ve Ağrı (Faz 5A) doğrulayıcı simülasyonları tamamlandı; Uyku, Bağımlılık, Nöro, Farmakoloji ve Stres (Faz 5B–5C) ise doğrulanmış L0/L2/L3 modellerle L1 keşifsel pilotlarını tamamladı (dondurulmamış doğrulayıcı taslaklar docs/STATUS.md kuyruğundadır).",
   },
 } as const;
 

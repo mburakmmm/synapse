@@ -9,6 +9,7 @@ import { useI18n } from "../i18n/LanguageContext";
 import type { CircuitPresetRequest } from "./DatasetsView";
 
 export type ModuleSectionTab =
+  | "stress"
   | "pharma"
   | "neuro"
   | "addiction"
@@ -17,6 +18,28 @@ export type ModuleSectionTab =
   | "metabolic"
   | "benchmark"
   | "planned";
+
+const STRESS_CONDITIONS_ORDER = [
+  "sham_zero_stimulus",
+  "acute_threat_baseline_30hz",
+  "acute_threat_high_60hz",
+  "chronic_allostatic_reserve_drop",
+  "chronic_allostatic_reserve_depletion",
+  "chronic_arousal_sensory_sensitization",
+  "matched_ctrl_nondefensive_visual_60hz",
+  "matched_ctrl_offpathway_inh_depletion",
+];
+
+const STRESS_COND_SHORT: Record<string, string> = {
+  sham_zero_stimulus: "Sham 0",
+  acute_threat_baseline_30hz: "Acute 30Hz",
+  acute_threat_high_60hz: "Acute 60Hz",
+  chronic_allostatic_reserve_drop: "Reserve 0.5x",
+  chronic_allostatic_reserve_depletion: "Reserve 0.0x",
+  chronic_arousal_sensory_sensitization: "Sensitized",
+  matched_ctrl_nondefensive_visual_60hz: "Ctrl Visual",
+  matched_ctrl_offpathway_inh_depletion: "Ctrl Off-Inh",
+};
 
 const PHARMA_CONDITIONS_ORDER = [
   "sham_zero_stimulus",
@@ -174,8 +197,87 @@ export const ModulesView: React.FC<ModulesViewProps> = ({
   const pharmaL2Gate = studies?.pharma?.l2_gate ?? null;
   const pharmaL2Panel = studies?.pharma?.l2_panel ?? null;
   const pharmaPilot = studies?.pharma?.pilot ?? null;
+  const stressL3Gate = studies?.stress?.l3_gate ?? null;
+  const stressL3Panel = studies?.stress?.l3_panel ?? null;
+  const stressPilot = studies?.stress?.pilot ?? null;
   const metConf = studies?.metabolic.confirmatory ?? [];
   const metRob = studies?.metabolic.robustness ?? {};
+
+  const stressL3TrajTraces = useMemo<PlotlyTrace[]>(() => {
+    const trajs = stressL3Panel?.trajectories;
+    if (!trajs) return [];
+    const traces: PlotlyTrace[] = [];
+    const specs: Array<{ arm: string; label: string; color: string }> = [
+      { arm: "acute_single_threat", label: "Acute", color: "#0072B2" },
+      { arm: "chronic_repeated_stress", label: "Chronic Repeat", color: "#D55E00" },
+      { arm: "chronic_with_washout_recovery", label: "Chronic + Washout", color: "#009E73" },
+    ];
+    for (const sp of specs) {
+      const pts = trajs[sp.arm] ?? [];
+      if (pts.length === 0) continue;
+      traces.push({
+        type: "scatter",
+        mode: "lines",
+        name: `${sp.label} Reserve C`,
+        x: pts.map((p) => p.time_h),
+        y: pts.map((p) => p.reserve_c),
+        line: { color: sp.color, width: 2.3 },
+      });
+      traces.push({
+        type: "scatter",
+        mode: "lines",
+        name: `${sp.label} Load L`,
+        x: pts.map((p) => p.time_h),
+        y: pts.map((p) => p.load_l),
+        line: { color: sp.color, width: 1.8, dash: "dot" },
+      });
+    }
+    return traces;
+  }, [stressL3Panel]);
+
+  const stressL1ReadoutTraces = useMemo<PlotlyTrace[]>(() => {
+    const condMap = stressPilot?.condition_readout_means;
+    if (!condMap) return [];
+    const xLabels = STRESS_CONDITIONS_ORDER.map((c) => STRESS_COND_SHORT[c] ?? c);
+    return [
+      {
+        type: "bar",
+        name: "DNp01 Escape (Hz)",
+        x: xLabels,
+        y: STRESS_CONDITIONS_ORDER.map((c) => condMap[c]?.dnp01_escape_mean_hz ?? 0),
+        error_y: {
+          type: "data",
+          array: STRESS_CONDITIONS_ORDER.map((c) => condMap[c]?.dnp01_escape_sd_hz ?? 0),
+          visible: true,
+        },
+        marker: { color: "#D55E00" },
+      },
+      {
+        type: "bar",
+        name: "DNp09 Freeze (Hz)",
+        x: xLabels,
+        y: STRESS_CONDITIONS_ORDER.map((c) => condMap[c]?.dnp09_freeze_mean_hz ?? 0),
+        error_y: {
+          type: "data",
+          array: STRESS_CONDITIONS_ORDER.map((c) => condMap[c]?.dnp09_freeze_sd_hz ?? 0),
+          visible: true,
+        },
+        marker: { color: "#0072B2" },
+      },
+      {
+        type: "bar",
+        name: "DNp11 Escape (Hz)",
+        x: xLabels,
+        y: STRESS_CONDITIONS_ORDER.map((c) => condMap[c]?.dnp11_escape_mean_hz ?? 0),
+        error_y: {
+          type: "data",
+          array: STRESS_CONDITIONS_ORDER.map((c) => condMap[c]?.dnp11_escape_sd_hz ?? 0),
+          visible: true,
+        },
+        marker: { color: "#009E73" },
+      },
+    ];
+  }, [stressPilot]);
 
   const pharmaL2CurveTraces = useMemo<PlotlyTrace[]>(() => {
     if (!pharmaL2Panel) return [];
@@ -651,6 +753,18 @@ export const ModulesView: React.FC<ModulesViewProps> = ({
         <button
           type="button"
           className="pill-btn"
+          aria-pressed={activeSubTab === "stress"}
+          onClick={() => onSelectSubTab("stress")}
+        >
+          <span>{t("tabStress")}</span>
+          <StatusBadge
+            label={stressL3Gate || stressPilot ? t("stateExperimental") : t("statePlanned")}
+            tone={stressL3Gate || stressPilot ? "info" : "neutral"}
+          />
+        </button>
+        <button
+          type="button"
+          className="pill-btn"
           aria-pressed={activeSubTab === "pharma"}
           onClick={() => onSelectSubTab("pharma")}
         >
@@ -736,6 +850,338 @@ export const ModulesView: React.FC<ModulesViewProps> = ({
           <StatusBadge label={t("statePlanned")} tone="neutral" />
         </button>
       </div>
+
+      {activeSubTab === "stress" && (
+        <>
+          {!stressL3Gate && !stressPilot ? (
+            <div className="card">
+              <div className="empty-state">
+                <strong>{t("modulesMissingTitle")}</strong>
+                <p style={{ marginBottom: 0 }}>{t("modulesMissingBody")}</p>
+              </div>
+            </div>
+          ) : (
+            <>
+              <div className="card">
+                <div className="card-header">
+                  <div>
+                    <h2>{t("stressBannerTitle")}</h2>
+                    <p className="card-subtitle mono">
+                      stress_allostatic_reactive_scope_v1 (L3) + malecns_v1_0 · synapse_lif_v1 (L1){" "}
+                      {stressPilot?.git_commits?.[0] ? `· git ${stressPilot.git_commits[0].slice(0, 8)}` : ""}
+                    </p>
+                  </div>
+                  <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                    <StatusBadge label={t("stateExperimental")} tone="info" />
+                    <StatusBadge label={t("ruoBadge")} tone="ruo" />
+                    <button
+                      type="button"
+                      className="btn btn-sm"
+                      onClick={() =>
+                        onExploreCircuit3D({
+                          datasetId: "malecns_v1_0",
+                          seedIds: "10001, 10010, 11177, 10783, 13109, 11832",
+                          hops: 1,
+                          direction: "both",
+                          minSynapses: 15,
+                          maxNodes: 75,
+                        })
+                      }
+                    >
+                      {t("exploreIn3d")}
+                    </button>
+                  </div>
+                </div>
+
+                {stressL3Gate && (
+                  <div className="kpi-grid">
+                    <div className="kpi-card">
+                      <div className="kpi-label">{t("stressGateRk45")}</div>
+                      <div className="kpi-value">
+                        {stressL3Gate.gates.rk45_convergence_and_bounds.max_abs_diff.toExponential(2)}
+                      </div>
+                      <div className="kpi-sub">
+                        <StatusBadge
+                          label={
+                            stressL3Gate.gates.rk45_convergence_and_bounds.passed
+                              ? t("statusPass")
+                              : t("statusFail")
+                          }
+                          tone={
+                            stressL3Gate.gates.rk45_convergence_and_bounds.passed ? "ok" : "warn"
+                          }
+                        />
+                      </div>
+                    </div>
+                    <div className="kpi-card">
+                      <div className="kpi-label">{t("stressGateSham")}</div>
+                      <div className="kpi-value">
+                        {stressL3Gate.gates.sham_baseline_invariance.sham_max_a.toFixed(1)} /{" "}
+                        {stressL3Gate.gates.sham_baseline_invariance.sham_max_l.toFixed(1)}
+                      </div>
+                      <div className="kpi-sub">
+                        <StatusBadge
+                          label={
+                            stressL3Gate.gates.sham_baseline_invariance.passed
+                              ? t("statusPass")
+                              : t("statusFail")
+                          }
+                          tone={stressL3Gate.gates.sham_baseline_invariance.passed ? "ok" : "warn"}
+                        />
+                      </div>
+                    </div>
+                    <div className="kpi-card">
+                      <div className="kpi-label">{t("stressGateAcute")}</div>
+                      <div className="kpi-value">
+                        C={stressL3Gate.gates.acute_stress_habituation_and_recovery.acute_c_min.toFixed(3)}
+                      </div>
+                      <div className="kpi-sub">
+                        <StatusBadge
+                          label={
+                            stressL3Gate.gates.acute_stress_habituation_and_recovery.passed
+                              ? t("statusPass")
+                              : t("statusFail")
+                          }
+                          tone={
+                            stressL3Gate.gates.acute_stress_habituation_and_recovery.passed
+                              ? "ok"
+                              : "warn"
+                          }
+                        />
+                      </div>
+                    </div>
+                    <div className="kpi-card">
+                      <div className="kpi-label">{t("stressGateChronic")}</div>
+                      <div className="kpi-value">
+                        {stressL3Gate.gates.chronic_allostatic_overload_separation.chronic_vs_acute_load_ratio.toFixed(
+                          2,
+                        )}
+                        x
+                      </div>
+                      <div className="kpi-sub">
+                        <StatusBadge
+                          label={
+                            stressL3Gate.gates.chronic_allostatic_overload_separation.passed
+                              ? t("statusPass")
+                              : t("statusFail")
+                          }
+                          tone={
+                            stressL3Gate.gates.chronic_allostatic_overload_separation.passed
+                              ? "ok"
+                              : "warn"
+                          }
+                        />
+                      </div>
+                    </div>
+                    <div className="kpi-card">
+                      <div className="kpi-label">{t("stressGateWashout")}</div>
+                      <div className="kpi-value">
+                        C={stressL3Gate.gates.post_chronic_washout_and_ruo_guard.washout_c_end.toFixed(3)}
+                      </div>
+                      <div className="kpi-sub">
+                        <StatusBadge
+                          label={
+                            stressL3Gate.gates.post_chronic_washout_and_ruo_guard.passed
+                              ? t("statusPass")
+                              : t("statusFail")
+                          }
+                          tone={
+                            stressL3Gate.gates.post_chronic_washout_and_ruo_guard.passed
+                              ? "ok"
+                              : "warn"
+                          }
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {uiMode === "simple" && (
+                <div className="notice-box" style={{ marginBottom: 12 }}>
+                  <strong>{t("simpleStressTitle")}: </strong>
+                  {t("simpleStressSummary")}
+                </div>
+              )}
+
+              <div className="grid-2">
+                {stressL3Panel && (
+                  <div className="card">
+                    <div className="card-header">
+                      <h3>{t("stressChartL3Title")}</h3>
+                    </div>
+                    <PlotlyChart
+                      theme={theme}
+                      ariaLabel={t("stressChartL3Title")}
+                      traces={stressL3TrajTraces}
+                      layout={{
+                        height: 320,
+                        xaxis: { title: "Time (h)" },
+                        yaxis: { title: "Normalized State (C / L)", rangemode: "tozero" },
+                        margin: { l: 55, r: 20, t: 25, b: 55 },
+                      }}
+                    />
+                  </div>
+                )}
+
+                {stressPilot && (
+                  <div className="card">
+                    <div className="card-header">
+                      <h3>{t("stressChartL1Title")}</h3>
+                      <span className="mono" style={{ fontSize: "0.78rem" }}>
+                        {stressPilot.succeeded_run_count}/{stressPilot.total_runs} succeeded · sham=
+                        {stressPilot.sham_max_spikes}
+                      </span>
+                    </div>
+                    <PlotlyChart
+                      theme={theme}
+                      ariaLabel={t("stressChartL1Title")}
+                      traces={stressL1ReadoutTraces}
+                      layout={{
+                        barmode: "group",
+                        height: 320,
+                        yaxis: { title: t("chartYAxisHz"), rangemode: "tozero" },
+                        xaxis: { tickangle: -18 },
+                        margin: { l: 55, r: 20, t: 25, b: 85 },
+                      }}
+                    />
+                  </div>
+                )}
+              </div>
+
+              {uiMode === "expert" ? (
+                <>
+                  {stressL3Panel && (
+                    <div className="card">
+                      <div className="card-header">
+                        <h3>{t("stressSnapshotTableTitle")}</h3>
+                      </div>
+                      <div className="table-wrap">
+                        <table>
+                          <thead>
+                            <tr>
+                              <th>{t("colContrast")}</th>
+                              <th>L3 Source</th>
+                              <th>Drive (Hz)</th>
+                              <th>Inh Reserve Scale</th>
+                              <th>DNp01 (Hz)</th>
+                              <th>DNp09 (Hz)</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {stressL3Panel.l3_to_l1_coupling_snapshots.map((snap) => {
+                              const ro = stressPilot?.condition_readout_means?.[snap.condition_id];
+                              return (
+                                <tr key={snap.condition_id}>
+                                  <td className="mono">{snap.condition_id}</td>
+                                  <td>{snap.l3_state_source}</td>
+                                  <td className="mono">{snap.threat_drive_hz.toFixed(0)}</td>
+                                  <td className="mono">{snap.inhibitory_reserve_scale.toFixed(2)}x</td>
+                                  <td className="mono">
+                                    {ro ? ro.dnp01_escape_mean_hz.toFixed(3) : t("noneDash")}
+                                  </td>
+                                  <td className="mono">
+                                    {ro ? ro.dnp09_freeze_mean_hz.toFixed(3) : t("noneDash")}
+                                  </td>
+                                </tr>
+                              );
+                            })}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  )}
+
+                  {stressPilot && (
+                    <div className="card">
+                      <div className="card-header">
+                        <h3>{t("stressContrastsTitle")}</h3>
+                      </div>
+                      <div className="table-wrap">
+                        <table>
+                          <thead>
+                            <tr>
+                              <th>{t("colContrast")}</th>
+                              <th>{t("colNeuron")}</th>
+                              <th>{t("colBaseMean")}</th>
+                              <th>{t("colTreatMean")}</th>
+                              <th>{t("colDelta")}</th>
+                              <th>{t("colCi95")}</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {stressPilot.contrasts.map((row) => (
+                              <tr key={row.contrast_name}>
+                                <td className="mono">{row.contrast_name}</td>
+                                <td className="mono">{row.neuron_id}</td>
+                                <td>
+                                  {row.baseline_mean_hz.toFixed(3)} ± {row.baseline_sd_hz.toFixed(3)}
+                                </td>
+                                <td>
+                                  {row.treatment_mean_hz.toFixed(3)} ± {row.treatment_sd_hz.toFixed(3)}
+                                </td>
+                                <td>
+                                  <strong>
+                                    {row.mean_difference_hz >= 0 ? "+" : ""}
+                                    {row.mean_difference_hz.toFixed(3)}
+                                  </strong>{" "}
+                                  ± {row.sd_difference_hz.toFixed(3)}
+                                </td>
+                                <td className="mono">
+                                  [{row.bootstrap_ci95_low_hz.toFixed(3)},{" "}
+                                  {row.bootstrap_ci95_high_hz.toFixed(3)}]
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="alert" role="note">
+                    <div>
+                      <strong>{t("stressLimitsTitle")}: </strong>
+                      <span>{t("stressLimitsBody")}</span>
+                    </div>
+                  </div>
+                </>
+              ) : (
+                stressPilot && (
+                  <details className="tech-details">
+                    <summary>{t("showTechDetails")}</summary>
+                    <div className="table-wrap">
+                      <table>
+                        <thead>
+                          <tr>
+                            <th>{t("colContrast")}</th>
+                            <th>{t("colNeuron")}</th>
+                            <th>{t("colDelta")}</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {stressPilot.contrasts.map((row) => (
+                            <tr key={row.contrast_name}>
+                              <td className="mono">{row.contrast_name}</td>
+                              <td className="mono">{row.neuron_id}</td>
+                              <td>
+                                <strong>
+                                  {row.mean_difference_hz >= 0 ? "+" : ""}
+                                  {row.mean_difference_hz.toFixed(3)} Hz
+                                </strong>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </details>
+                )
+              )}
+            </>
+          )}
+        </>
+      )}
 
       {activeSubTab === "pharma" && (
         <>
@@ -2533,35 +2979,46 @@ export const ModulesView: React.FC<ModulesViewProps> = ({
         </div>
       )}
 
-      {activeSubTab === "planned" && (
-        <div className="grid-2">
-          {plannedModules.map((mod) => {
-            const descMap: Record<string, [string, string]> = {
-              sleep: [t("modSleepName"), t("modSleepDesc")],
-              addiction: [t("modAddictionName"), t("modAddictionDesc")],
-              neuro: [t("modNeuroName"), t("modNeuroDesc")],
-              pharma: [t("modPharmaName"), t("modPharmaDesc")],
-              stress: [t("modStressName"), t("modStressDesc")],
-            };
-            const pair = descMap[mod.module_id] ?? [mod.module_id, ""];
-            return (
-              <div key={mod.module_id} className="card">
-                <div className="card-header">
-                  <div>
-                    <h3>{pair[0]}</h3>
-                    <p className="card-subtitle mono">{mod.phase.toUpperCase()}</p>
-                  </div>
-                  <StatusBadge label={t("statePlanned")} tone="neutral" />
-                </div>
-                <p style={{ margin: "6px 0 0", fontSize: "0.85rem", color: "var(--text-secondary)" }}>
-                  <strong>{t("plannedGateLabel")}: </strong>
-                  {pair[1]}
-                </p>
+      {activeSubTab === "planned" &&
+        (plannedModules.length === 0 ? (
+          <div className="card">
+            <div className="card-header">
+              <div>
+                <h3>{t("plannedAllActiveTitle")}</h3>
+                <p className="card-subtitle">{t("plannedAllActiveBody")}</p>
               </div>
-            );
-          })}
-        </div>
-      )}
+              <StatusBadge label={t("stateExperimental")} tone="ok" />
+            </div>
+          </div>
+        ) : (
+          <div className="grid-2">
+            {plannedModules.map((mod) => {
+              const descMap: Record<string, [string, string]> = {
+                sleep: [t("modSleepName"), t("modSleepDesc")],
+                addiction: [t("modAddictionName"), t("modAddictionDesc")],
+                neuro: [t("modNeuroName"), t("modNeuroDesc")],
+                pharma: [t("modPharmaName"), t("modPharmaDesc")],
+                stress: [t("modStressName"), t("modStressDesc")],
+              };
+              const pair = descMap[mod.module_id] ?? [mod.module_id, ""];
+              return (
+                <div key={mod.module_id} className="card">
+                  <div className="card-header">
+                    <div>
+                      <h3>{pair[0]}</h3>
+                      <p className="card-subtitle mono">{mod.phase.toUpperCase()}</p>
+                    </div>
+                    <StatusBadge label={t("statePlanned")} tone="neutral" />
+                  </div>
+                  <p style={{ margin: "6px 0 0", fontSize: "0.85rem", color: "var(--text-secondary)" }}>
+                    <strong>{t("plannedGateLabel")}: </strong>
+                    {pair[1]}
+                  </p>
+                </div>
+              );
+            })}
+          </div>
+        ))}
     </section>
   );
 };

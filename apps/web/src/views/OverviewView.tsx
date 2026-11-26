@@ -72,6 +72,8 @@ const GLOSSARY_KEYS: Array<{
   { id: "fragmentation", titleKey: "glossFragTitle", defKey: "glossFragDef" },
   { id: "receptor", titleKey: "glossReceptorTitle", defKey: "glossReceptorDef" },
   { id: "allosteric", titleKey: "glossAllostericTitle", defKey: "glossAllostericDef" },
+  { id: "allostasis", titleKey: "glossAllostasisTitle", defKey: "glossAllostasisDef" },
+  { id: "defensiveSwitch", titleKey: "glossDefensiveTitle", defKey: "glossDefensiveDef" },
 ];
 
 export function moduleStateBadge(
@@ -136,6 +138,10 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
     studies?.pharma?.pilot?.contrasts.find((c) =>
       c.contrast_name.includes("rdl_antag100_vs_veh"),
     ) ?? studies?.pharma?.pilot?.contrasts[0];
+  const stressL3Gate = studies?.stress?.l3_gate ?? null;
+  const stressPrimary =
+    studies?.stress?.pilot?.contrasts.find((c) => c.contrast_name.includes("10001_")) ??
+    studies?.stress?.pilot?.contrasts[0];
   const primaryBench = benchmarks[0]?.report;
 
   if (uiMode === "simple") {
@@ -426,6 +432,53 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
                     onExploreCircuit3D({
                       datasetId: "malecns_v1_0",
                       seedIds: "523539, 558778, 10592, 902566, 811380",
+                      hops: 1,
+                      direction: "both",
+                      minSynapses: 15,
+                      maxNodes: 75,
+                    })
+                  }
+                >
+                  {t("open3dBtn")}
+                </button>
+              </div>
+            </div>
+
+            <div className="story-card">
+              <div>
+                <div className="card-header" style={{ marginBottom: 6 }}>
+                  <h3>{t("simpleStressTitle")}</h3>
+                  <StatusBadge
+                    label={stressL3Gate?.overall_passed ? t("stateExperimental") : t("statePlanned")}
+                    tone={stressL3Gate?.overall_passed ? "info" : "neutral"}
+                  />
+                </div>
+                <div className="story-card-metric">
+                  {stressPrimary
+                    ? `${stressPrimary.mean_difference_hz >= 0 ? "+" : ""}${stressPrimary.mean_difference_hz.toFixed(1)} Hz`
+                    : stressL3Gate
+                      ? `${stressL3Gate.gates.chronic_allostatic_overload_separation.chronic_vs_acute_load_ratio.toFixed(1)}x Load`
+                      : t("noneDash")}
+                </div>
+                <p style={{ fontSize: "0.83rem", color: "var(--text-secondary)", marginBottom: 0 }}>
+                  {stressPrimary || stressL3Gate ? t("simpleStressSummary") : t("simpleMissingNote")}
+                </p>
+              </div>
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                <button
+                  type="button"
+                  className="btn btn-sm"
+                  onClick={() => onNavigateModule("stress")}
+                >
+                  {t("readStoryBtn")}
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-secondary btn-sm"
+                  onClick={() =>
+                    onExploreCircuit3D({
+                      datasetId: "malecns_v1_0",
+                      seedIds: "10001, 10010, 11177, 10783, 13109, 11832",
                       hops: 1,
                       direction: "both",
                       minSynapses: 15,

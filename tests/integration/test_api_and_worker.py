@@ -196,6 +196,8 @@ def test_api_and_worker_full_fixture_lifecycle_security_cancel_and_backup(tmp_pa
             assert model_ids["receptor_conductance_modulation_v1"]["model_level"] == "L2"
             assert "leloup_goldbeter_1998_two_process_v1" in model_ids
             assert model_ids["leloup_goldbeter_1998_two_process_v1"]["model_level"] == "L3"
+            assert "stress_allostatic_reactive_scope_v1" in model_ids
+            assert model_ids["stress_allostatic_reactive_scope_v1"]["model_level"] == "L3"
 
             # Verify /api/v1/studies module UI state taxonomy (§10)
             studies_res = client.get("/api/v1/studies")
@@ -205,6 +207,7 @@ def test_api_and_worker_full_fixture_lifecycle_security_cancel_and_backup(tmp_pa
             assert "addiction" in studies_body
             assert "neuro" in studies_body
             assert "pharma" in studies_body
+            assert "stress" in studies_body
             allowed_states = {
                 "planned",
                 "experimental",

@@ -162,7 +162,7 @@ export const ModelsProtocolsView: React.FC<ModelsProtocolsViewProps> = ({
                 <StatusBadge
                   label={
                     m.model_level === "L3"
-                      ? `L3 ODE · solver: ${m.solver}`
+                      ? `${m.model_id.includes("stress") ? "L3 Stress" : "L3 ODE"} · solver: ${m.solver}`
                       : m.model_level === "L2"
                         ? `${m.model_id.includes("receptor") ? "L2 Pharmacology" : "L2 Plasticity"} · solver: ${m.solver}`
                         : m.model_level === "L0"

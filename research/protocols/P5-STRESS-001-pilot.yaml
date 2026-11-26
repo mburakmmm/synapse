@@ -1,0 +1,602 @@
+schema_version: '1.0'
+protocol_id: P5-STRESS-001-PILOT
+revision: 1
+status: draft
+analysis_intent: exploratory
+question: In adult male Drosophila MaleCNS v1.0, how do L3 allostatic states (acute
+  threat drive vs chronic defensive inhibitory-reserve erosion on DNp01/DNp09) modulate
+  escape (DNp01, DNp11) and freezing (DNp09) firing proxies relative to sham and Hungarian-matched
+  off-pathway visual and inhibitory controls?
+hypothesis: Exploratory pilot (N=3 paired seeds) testing threat rate scaling (30 Hz
+  vs 60 Hz on LC4+LC9), chronic inhibitory-reserve reduction (0.5x and 0.0x mask onto
+  DNp01/DNp09), and sensory sensitization + reserve erosion (1.4x LC4/LC9 + 0.5x gate)
+  against Hungarian-matched LC* visual and off-pathway GABA/GLUT controls.
+biological_unit: malecns_v1_0_single_male_specimen
+simulation_unit: paired_seed_run
+sources:
+- dataset_id: malecns_v1_0
+  release: v1.0
+  manifest_sha256: 6df05f9f76e98e55f5e4f13e195ebd604ec41c644751c47a79f9855a92d5f496
+model:
+  id: synapse_lif_v1
+  revision: '1.0'
+  parameter_manifest_sha256: 33d49431529574cddc721a3628ed1c65ad2e36890e2720fe6ef921837348bece
+  backend: brian2_cpu
+  parameters:
+    v_rest_v: -0.052
+    v_reset_v: -0.052
+    v_threshold_v: -0.045
+    tau_m_s: 0.02
+    tau_syn_s: 0.005
+    t_ref_s: 0.0022
+    delay_s: 0.0018
+    w_syn_v: 0.000275
+    r_m_ohm: 10000000.0
+    dt_s: 0.0001
+    solver: exact
+    dg_unless_refractory: false
+    unknown_nt_policy: zero_effect
+    parameter_source: Reference Drosophila LIF defaults (Kakaria & de Bivort 2017;
+      Jurgensen et al. 2021; Lazar et al. 2021; Paul et al. 2015; Shiu et al. 2024)
+conditions:
+- id: sham_zero_stimulus
+  interventions:
+  - kind: sham
+    description: zero_stressor_negative_control
+- id: acute_threat_baseline_30hz
+  interventions:
+  - kind: poisson_rate
+    target_neuron_ids:
+    - '17478'
+    - '17653'
+    - '518439'
+    - '20859'
+    - '29469'
+    - '32597'
+    - '533129'
+    - '22847'
+    - '16128'
+    - '512366'
+    - '27829'
+    - '515476'
+    - '524899'
+    - '17270'
+    - '17668'
+    - '24338'
+    - '12032'
+    - '12349'
+    - '16917'
+    - '20399'
+    - '25484'
+    - '47141'
+    - '523984'
+    - '61298'
+    - '38555'
+    - '148364'
+    - '54889'
+    - '33309'
+    - '43059'
+    - '40131'
+    - '523458'
+    - '31570'
+    - '43058'
+    - '36408'
+    - '521515'
+    - '29017'
+    - '38856'
+    - '40675'
+    - '30351'
+    - '40255'
+    rate_hz: 30.0
+    weight_v: 0.06875
+    start_s: 0.1
+    end_s: 0.5
+    disable_refractory: true
+- id: acute_threat_high_60hz
+  interventions:
+  - kind: poisson_rate
+    target_neuron_ids:
+    - '17478'
+    - '17653'
+    - '518439'
+    - '20859'
+    - '29469'
+    - '32597'
+    - '533129'
+    - '22847'
+    - '16128'
+    - '512366'
+    - '27829'
+    - '515476'
+    - '524899'
+    - '17270'
+    - '17668'
+    - '24338'
+    - '12032'
+    - '12349'
+    - '16917'
+    - '20399'
+    - '25484'
+    - '47141'
+    - '523984'
+    - '61298'
+    - '38555'
+    - '148364'
+    - '54889'
+    - '33309'
+    - '43059'
+    - '40131'
+    - '523458'
+    - '31570'
+    - '43058'
+    - '36408'
+    - '521515'
+    - '29017'
+    - '38856'
+    - '40675'
+    - '30351'
+    - '40255'
+    rate_hz: 60.0
+    weight_v: 0.06875
+    start_s: 0.1
+    end_s: 0.5
+    disable_refractory: true
+- id: chronic_allostatic_reserve_drop
+  interventions:
+  - kind: poisson_rate
+    target_neuron_ids:
+    - '17478'
+    - '17653'
+    - '518439'
+    - '20859'
+    - '29469'
+    - '32597'
+    - '533129'
+    - '22847'
+    - '16128'
+    - '512366'
+    - '27829'
+    - '515476'
+    - '524899'
+    - '17270'
+    - '17668'
+    - '24338'
+    - '12032'
+    - '12349'
+    - '16917'
+    - '20399'
+    - '25484'
+    - '47141'
+    - '523984'
+    - '61298'
+    - '38555'
+    - '148364'
+    - '54889'
+    - '33309'
+    - '43059'
+    - '40131'
+    - '523458'
+    - '31570'
+    - '43058'
+    - '36408'
+    - '521515'
+    - '29017'
+    - '38856'
+    - '40675'
+    - '30351'
+    - '40255'
+    rate_hz: 30.0
+    weight_v: 0.06875
+    start_s: 0.1
+    end_s: 0.5
+    disable_refractory: true
+  - kind: edge_gain_modulation
+    target_neuron_ids:
+    - '10074'
+    - '11391'
+    - '11572'
+    - '13109'
+    - '13274'
+    - '10315'
+    - '531985'
+    - '11205'
+    - '11361'
+    - '10797'
+    - '11832'
+    - '11848'
+    - '10263'
+    - '10689'
+    - '10246'
+    - '10184'
+    - '16931'
+    - '10323'
+    - '529031'
+    - '10147'
+    - '12614'
+    - '10297'
+    - '10128'
+    - '532569'
+    - '17144'
+    - '17404'
+    - '511752'
+    - '555227'
+    - '14899'
+    - '523643'
+    scope: outgoing
+    factor: 0.5
+- id: chronic_allostatic_reserve_depletion
+  interventions:
+  - kind: poisson_rate
+    target_neuron_ids:
+    - '17478'
+    - '17653'
+    - '518439'
+    - '20859'
+    - '29469'
+    - '32597'
+    - '533129'
+    - '22847'
+    - '16128'
+    - '512366'
+    - '27829'
+    - '515476'
+    - '524899'
+    - '17270'
+    - '17668'
+    - '24338'
+    - '12032'
+    - '12349'
+    - '16917'
+    - '20399'
+    - '25484'
+    - '47141'
+    - '523984'
+    - '61298'
+    - '38555'
+    - '148364'
+    - '54889'
+    - '33309'
+    - '43059'
+    - '40131'
+    - '523458'
+    - '31570'
+    - '43058'
+    - '36408'
+    - '521515'
+    - '29017'
+    - '38856'
+    - '40675'
+    - '30351'
+    - '40255'
+    rate_hz: 30.0
+    weight_v: 0.06875
+    start_s: 0.1
+    end_s: 0.5
+    disable_refractory: true
+  - kind: edge_mask
+    pre_neuron_ids:
+    - '10074'
+    - '11391'
+    - '11572'
+    - '13109'
+    - '13274'
+    - '10315'
+    - '531985'
+    - '11205'
+    - '11361'
+    - '10797'
+    - '11832'
+    - '11848'
+    - '10263'
+    - '10689'
+    - '10246'
+    - '10184'
+    - '16931'
+    - '10323'
+    - '529031'
+    - '10147'
+    - '12614'
+    - '10297'
+    - '10128'
+    - '532569'
+    - '17144'
+    - '17404'
+    - '511752'
+    - '555227'
+    - '14899'
+    - '523643'
+    post_neuron_ids:
+    - '10001'
+    - '10010'
+    - '10783'
+    - '11177'
+    factor: 0.0
+- id: chronic_arousal_sensory_sensitization
+  interventions:
+  - kind: poisson_rate
+    target_neuron_ids:
+    - '17478'
+    - '17653'
+    - '518439'
+    - '20859'
+    - '29469'
+    - '32597'
+    - '533129'
+    - '22847'
+    - '16128'
+    - '512366'
+    - '27829'
+    - '515476'
+    - '524899'
+    - '17270'
+    - '17668'
+    - '24338'
+    - '12032'
+    - '12349'
+    - '16917'
+    - '20399'
+    - '25484'
+    - '47141'
+    - '523984'
+    - '61298'
+    - '38555'
+    - '148364'
+    - '54889'
+    - '33309'
+    - '43059'
+    - '40131'
+    - '523458'
+    - '31570'
+    - '43058'
+    - '36408'
+    - '521515'
+    - '29017'
+    - '38856'
+    - '40675'
+    - '30351'
+    - '40255'
+    rate_hz: 30.0
+    weight_v: 0.06875
+    start_s: 0.1
+    end_s: 0.5
+    disable_refractory: true
+  - kind: edge_gain_modulation
+    target_neuron_ids:
+    - '17478'
+    - '17653'
+    - '518439'
+    - '20859'
+    - '29469'
+    - '32597'
+    - '533129'
+    - '22847'
+    - '16128'
+    - '512366'
+    - '27829'
+    - '515476'
+    - '524899'
+    - '17270'
+    - '17668'
+    - '24338'
+    - '12032'
+    - '12349'
+    - '16917'
+    - '20399'
+    - '25484'
+    - '47141'
+    - '523984'
+    - '61298'
+    - '38555'
+    - '148364'
+    - '54889'
+    - '33309'
+    - '43059'
+    - '40131'
+    - '523458'
+    - '31570'
+    - '43058'
+    - '36408'
+    - '521515'
+    - '29017'
+    - '38856'
+    - '40675'
+    - '30351'
+    - '40255'
+    scope: outgoing
+    factor: 1.4
+  - kind: edge_gain_modulation
+    target_neuron_ids:
+    - '10074'
+    - '11391'
+    - '11572'
+    - '13109'
+    - '13274'
+    - '10315'
+    - '531985'
+    - '11205'
+    - '11361'
+    - '10797'
+    - '11832'
+    - '11848'
+    - '10263'
+    - '10689'
+    - '10246'
+    - '10184'
+    - '16931'
+    - '10323'
+    - '529031'
+    - '10147'
+    - '12614'
+    - '10297'
+    - '10128'
+    - '532569'
+    - '17144'
+    - '17404'
+    - '511752'
+    - '555227'
+    - '14899'
+    - '523643'
+    scope: outgoing
+    factor: 0.5
+- id: matched_ctrl_nondefensive_visual_60hz
+  interventions:
+  - kind: poisson_rate
+    target_neuron_ids:
+    - '518095'
+    - '28915'
+    - '514106'
+    - '42562'
+    - '28504'
+    - '15976'
+    - '17188'
+    - '25558'
+    - '45805'
+    - '37050'
+    - '22307'
+    - '44418'
+    - '19540'
+    - '48317'
+    - '25220'
+    - '36805'
+    - '12458'
+    - '517599'
+    - '515250'
+    - '33695'
+    - '51723'
+    - '40343'
+    - '54975'
+    - '44153'
+    - '38319'
+    - '31456'
+    - '53449'
+    - '23887'
+    - '33332'
+    - '28954'
+    - '38726'
+    - '36794'
+    - '55266'
+    - '42865'
+    - '31202'
+    - '39155'
+    - '82516'
+    - '30330'
+    - '526560'
+    - '28877'
+    rate_hz: 60.0
+    weight_v: 0.06875
+    start_s: 0.1
+    end_s: 0.5
+    disable_refractory: true
+- id: matched_ctrl_offpathway_inh_depletion
+  interventions:
+  - kind: poisson_rate
+    target_neuron_ids:
+    - '17478'
+    - '17653'
+    - '518439'
+    - '20859'
+    - '29469'
+    - '32597'
+    - '533129'
+    - '22847'
+    - '16128'
+    - '512366'
+    - '27829'
+    - '515476'
+    - '524899'
+    - '17270'
+    - '17668'
+    - '24338'
+    - '12032'
+    - '12349'
+    - '16917'
+    - '20399'
+    - '25484'
+    - '47141'
+    - '523984'
+    - '61298'
+    - '38555'
+    - '148364'
+    - '54889'
+    - '33309'
+    - '43059'
+    - '40131'
+    - '523458'
+    - '31570'
+    - '43058'
+    - '36408'
+    - '521515'
+    - '29017'
+    - '38856'
+    - '40675'
+    - '30351'
+    - '40255'
+    rate_hz: 30.0
+    weight_v: 0.06875
+    start_s: 0.1
+    end_s: 0.5
+    disable_refractory: true
+  - kind: edge_gain_modulation
+    target_neuron_ids:
+    - '10136'
+    - '801266'
+    - '800234'
+    - '802039'
+    - '63846'
+    - '64334'
+    - '16865'
+    - '155253'
+    - '800402'
+    - '801118'
+    - '32102'
+    - '523985'
+    - '13556'
+    - '800984'
+    - '524363'
+    - '520337'
+    - '47022'
+    - '170107'
+    - '11156'
+    - '551294'
+    - '801698'
+    - '512662'
+    - '11447'
+    - '515767'
+    - '525266'
+    - '13258'
+    - '801752'
+    - '19170'
+    - '10581'
+    - '14580'
+    scope: outgoing
+    factor: 0.0
+stimulus_schedule:
+  duration_s: 0.6
+  pre_window_s:
+  - 0.0
+  - 0.1
+  stim_window_s:
+  - 0.1
+  - 0.5
+  post_window_s:
+  - 0.5
+  - 0.6
+  stimuli: []
+measurement_window:
+  start_s: 0.0
+  end_s: 0.6
+seeds:
+  strategy: paired
+  master: 20261180
+  replicates: 3
+analysis:
+  primary_endpoint: defensive_dnp01_dnp09_firing_rate_hz
+  estimand: paired_condition_difference_hz_exploratory
+  uncertainty_method: percentile_bootstrap_2000_exact_sign_flip
+  multiplicity_policy: exploratory_unadjusted_plus_bh_fdr_preview
+  exclusion_policy: no_posthoc_run_dropping_failed_runs_reported_separately
+  acceptance_criteria: 'Pilot calibration: sham==0 spikes, 24/24 succeeded, defensive
+    DNs responsive and separated from matched visual/inhibitory controls'
+resources:
+  max_wall_seconds: 600.0
+  max_output_bytes: 536870912
