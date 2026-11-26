@@ -25,14 +25,17 @@ from synapse_core import (
     LIFParameters,
     MBPlasticityParameters,
     PlasticityTrajectory,
+    TopologyAnalysisParameters,
     TwoProcessTrajectory,
     extract_bounded_subgraph,
     run_conditioning_paradigm,
+    run_progressive_ablation_curve,
     run_shift_work_experiment,
     simulate_conditioning_schedule,
     validate_model_spec,
     verify_circadian_homeostatic_gates,
     verify_plasticity_paradigm_gates,
+    verify_topology_ablation_gates,
 )
 from synapse_data import (
     build_default_registry,
@@ -204,10 +207,20 @@ def _cmd_model_list(args: argparse.Namespace) -> int:
     shiu_lif = LIFParameters.shiu2024_reference()
     plasticity_l2 = MBPlasticityParameters()
     circadian_l3 = CircadianHomeostaticParameters()
+    topology_l0 = TopologyAnalysisParameters()
     backend = Brian2CPUBackend()
     caps = backend.capabilities()
     payload = {
         "models": [
+            {
+                "model_id": topology_l0.model_id,
+                "model_revision": topology_l0.model_revision,
+                "model_level": topology_l0.model_level,
+                "parameter_manifest_sha256": topology_l0.canonical_sha256(),
+                "solver": "csgraph_dijkstra",
+                "dt_s": 0.0,
+                "parameter_source": topology_l0.parameter_source,
+            },
             {
                 "model_id": default_lif.model_id,
                 "model_revision": default_lif.model_revision,
@@ -790,6 +803,263 @@ def _cmd_plasticity_paradigm(args: argparse.Namespace) -> int:
     return 0
 
 
+def _write_l0_attack_curve_figure(
+    attack_summary: dict[str, Any],
+    figures_dir: Path,
+) -> None:
+    figures_dir.mkdir(parents=True, exist_ok=True)
+    pts = attack_summary["curve_points"]
+    tgt_pts = sorted(
+        [p for p in pts if p["arm_type"] == "targeted_cell_loss"], key=lambda r: r["step_k"]
+    )
+    ctrl_pts = sorted(
+        [p for p in pts if p["arm_type"] == "matched_random_cell_loss"], key=lambda r: r["step_k"]
+    )
+
+    fig = Figure(figsize=(8.2, 4.6), dpi=200)
+    FigureCanvasAgg(fig)
+    ax1 = fig.add_subplot(121)
+    ax2 = fig.add_subplot(122)
+
+    xs_t = [p["step_k"] for p in tgt_pts]
+    xs_c = [p["step_k"] for p in ctrl_pts]
+    ax1.plot(
+        xs_t,
+        [p["weighted_eff_ratio"] for p in tgt_pts],
+        marker="o",
+        linewidth=2.0,
+        color="#D55E00",
+        label="Targeted hub loss",
+    )
+    ax1.plot(
+        xs_c,
+        [p["weighted_eff_ratio"] for p in ctrl_pts],
+        marker="s",
+        linewidth=2.0,
+        linestyle="--",
+        color="#0072B2",
+        label="Matched-random ctrl",
+    )
+    ax1.set_ylim(0.0, 1.08)
+    ax1.set_xticks(xs_t)
+    ax1.set_xlabel("Ablated neurons (k)")
+    ax1.set_ylabel("Weighted pathway efficiency ratio")
+    ax1.set_title("Pathway Efficiency vs Cell Loss", fontsize=10, fontweight="bold")
+    ax1.legend(loc="lower left", frameon=False, fontsize=8)
+    ax1.spines["top"].set_visible(False)
+    ax1.spines["right"].set_visible(False)
+
+    ax2.plot(
+        xs_t,
+        [p["three_hop_flow_ratio"] for p in tgt_pts],
+        marker="o",
+        linewidth=2.0,
+        color="#D55E00",
+        label="Targeted hub loss",
+    )
+    ax2.plot(
+        xs_c,
+        [p["three_hop_flow_ratio"] for p in ctrl_pts],
+        marker="s",
+        linewidth=2.0,
+        linestyle="--",
+        color="#0072B2",
+        label="Matched-random ctrl",
+    )
+    ax2.set_ylim(0.0, 1.08)
+    ax2.set_xticks(xs_t)
+    ax2.set_xlabel("Ablated neurons (k)")
+    ax2.set_ylabel("3-hop exc flow ratio")
+    ax2.set_title("Multi-Hop Throughput Retention", fontsize=10, fontweight="bold")
+    ax2.spines["top"].set_visible(False)
+    ax2.spines["right"].set_visible(False)
+
+    fig.suptitle(
+        f"L0 Progressive Connectome Attack ({attack_summary['dataset_id']}, RUO)",
+        fontsize=11,
+        fontweight="bold",
+    )
+    fig.tight_layout(rect=(0.0, 0.0, 1.0, 0.94))
+    fig.savefig(figures_dir / "l0_attack_curve.svg")
+    fig.savefig(figures_dir / "l0_attack_curve.png", dpi=200)
+
+
+def _write_l0_ablation_dissociation_figure(
+    attack_summary: dict[str, Any],
+    figures_dir: Path,
+) -> None:
+    figures_dir.mkdir(parents=True, exist_ok=True)
+    pts = attack_summary["curve_points"]
+    syn_arms = attack_summary["synapse_ablation_arms"]
+    k12_tgt = next(
+        p for p in pts if p["arm_type"] == "targeted_cell_loss" and int(p["step_k"]) == 12
+    )
+    k12_ctrl = next(
+        p for p in pts if p["arm_type"] == "matched_random_cell_loss" and int(p["step_k"]) == 12
+    )
+    items = [
+        ("Intact", attack_summary["baseline"]),
+        ("Ctrl Cells (k=12)", k12_ctrl),
+        ("Hub Syn 50%", syn_arms["targeted_synapse_loss_50pct"]),
+        ("Hub Syn 100%", syn_arms["targeted_synapse_loss_100pct"]),
+        ("Hub Cells (k=12)", k12_tgt),
+    ]
+    if "matched_random_synapse_loss" in syn_arms:
+        items.insert(2, ("Ctrl Syn 100%", syn_arms["matched_random_synapse_loss"]))
+
+    labels = [x[0] for x in items]
+    eff_vals = [float(x[1]["weighted_eff_ratio"]) for x in items]
+    flow_vals = [float(x[1]["three_hop_flow_ratio"]) for x in items]
+    xs = list(range(len(labels)))
+    width = 0.36
+
+    fig = Figure(figsize=(8.4, 4.5), dpi=200)
+    FigureCanvasAgg(fig)
+    ax = fig.add_subplot(111)
+    ax.bar(
+        [x - width / 2 for x in xs],
+        eff_vals,
+        width=width,
+        color="#0072B2",
+        label="Weighted efficiency ratio",
+    )
+    ax.bar(
+        [x + width / 2 for x in xs],
+        flow_vals,
+        width=width,
+        color="#D55E00",
+        label="3-hop flow ratio",
+    )
+    ax.set_xticks(xs)
+    ax.set_xticklabels(labels, rotation=15, ha="right", fontsize=8.5)
+    ax.set_ylim(0.0, 1.12)
+    ax.set_ylabel("Retention ratio vs intact baseline")
+    ax.set_title(
+        f"L0 Cell Loss vs Synapse Loss Dissociation ({attack_summary['dataset_id']}, RUO)",
+        fontsize=10.5,
+        fontweight="bold",
+    )
+    ax.legend(loc="upper right", frameon=False, fontsize=8)
+    ax.spines["top"].set_visible(False)
+    ax.spines["right"].set_visible(False)
+    fig.tight_layout()
+    fig.savefig(figures_dir / "l0_ablation_dissociation.svg")
+    fig.savefig(figures_dir / "l0_ablation_dissociation.png", dpi=200)
+
+
+def _cmd_topology_verify(args: argparse.Namespace) -> int:
+    params = TopologyAnalysisParameters()
+    report = verify_topology_ablation_gates(params)
+    report["generated_at_utc"] = datetime.now(UTC).isoformat()
+    report["source_provenance"] = collect_source_provenance(_repo_root())
+    if args.out_dir is not None:
+        out_dir = Path(args.out_dir)
+        out_dir.mkdir(parents=True, exist_ok=True)
+        (out_dir / "l0_verification_gate.json").write_text(
+            json.dumps(report, indent=2),
+            encoding="utf-8",
+        )
+    _emit(report, as_json=args.json)
+    return 0 if report["overall_passed"] else 3
+
+
+def _cmd_topology_attack(args: argparse.Namespace) -> int:
+    params = TopologyAnalysisParameters()
+    gate_report = verify_topology_ablation_gates(params)
+    if not gate_report["overall_passed"]:
+        _emit(gate_report, as_json=args.json)
+        return 3
+
+    targets_doc = json.loads(Path(args.targets_json).read_text(encoding="utf-8"))
+    graph, manifest, manifest_sha = load_graph_from_dataset(Path(args.dataset_dir))
+    src_ids = targets_doc.get("source_sugar_grn_ids") or targets_doc["source_neuron_ids"]
+    tgt_ids = targets_doc.get("readout_mn9_ids") or targets_doc["target_neuron_ids"]
+    hub_ids = targets_doc["targeted_premotor_hub_ids"]
+    ctrl_ids = targets_doc["matched_control_neuron_ids"]
+    ctrl_syn = targets_doc.get("matched_control_synapse_ablation") or {}
+    ctrl_syn_pre = ctrl_syn.get("pre_neuron_ids") or ()
+    ctrl_syn_post = ctrl_syn.get("post_neuron_ids") or ()
+
+    attack_full = run_progressive_ablation_curve(
+        graph,
+        source_neuron_ids=src_ids,
+        target_neuron_ids=tgt_ids,
+        targeted_hub_ids=hub_ids,
+        matched_control_ids=ctrl_ids,
+        ctrl_syn_pre_ids=ctrl_syn_pre,
+        ctrl_syn_post_ids=ctrl_syn_post,
+        params=params,
+    )
+    now_utc = datetime.now(UTC).isoformat()
+    src_prov = collect_source_provenance(_repo_root())
+    gate_report["generated_at_utc"] = now_utc
+    gate_report["source_provenance"] = src_prov
+
+    def _strip_edge_sample(pt: dict[str, Any]) -> dict[str, Any]:
+        audit_slim = {k: v for k, v in pt["audit"].items() if k != "removed_edges_sample"}
+        return {**pt, "audit": audit_slim}
+
+    summary_payload = {
+        "schema_version": attack_full["schema_version"],
+        "model_id": attack_full["model_id"],
+        "model_level": attack_full["model_level"],
+        "parameter_manifest_sha256": attack_full["parameter_manifest_sha256"],
+        "dataset_id": attack_full["dataset_id"],
+        "release": str(manifest["release"]),
+        "specimen_id": attack_full["specimen_id"],
+        "dataset_manifest_sha256": manifest_sha,
+        "source_graph_sha256": attack_full["source_graph_sha256"],
+        "generated_at_utc": now_utc,
+        "source_provenance": src_prov,
+        "gate_overall_passed": bool(gate_report["overall_passed"]),
+        "baseline": _strip_edge_sample(attack_full["baseline"]),
+        "curve_points": [_strip_edge_sample(p) for p in attack_full["curve_points"]],
+        "synapse_ablation_arms": {
+            k: _strip_edge_sample(v) for k, v in attack_full["synapse_ablation_arms"].items()
+        },
+    }
+
+    out_dir = Path(args.out_dir)
+    out_dir.mkdir(parents=True, exist_ok=True)
+    (out_dir / "l0_verification_gate.json").write_text(
+        json.dumps(gate_report, indent=2),
+        encoding="utf-8",
+    )
+    (out_dir / "l0_ablation_summary.json").write_text(
+        json.dumps(summary_payload, indent=2),
+        encoding="utf-8",
+    )
+    (out_dir / "l0_ablation_audit.json").write_text(
+        json.dumps(attack_full, indent=2),
+        encoding="utf-8",
+    )
+    curve_rows = [
+        {
+            "arm_type": p["arm_type"],
+            "step_k": int(p["step_k"]),
+            "ablation_id": p["ablation_id"],
+            "removed_node_count": int(p["removed_node_count"]),
+            "removed_edge_count": int(p["removed_edge_count"]),
+            "removed_synapse_count": float(p["removed_synapse_count"]),
+            "weighted_eff_ratio": float(p["weighted_eff_ratio"]),
+            "three_hop_flow_ratio": float(p["three_hop_flow_ratio"]),
+            "target_exc_syn_retention": float(p["target_exc_syn_retention"]),
+            "largest_wcc_fraction": float(p["metrics"]["largest_wcc_fraction"]),
+            "largest_scc_fraction": float(p["metrics"]["largest_scc_fraction"]),
+            "reachability_fraction": float(p["metrics"]["reachability_fraction"]),
+        }
+        for p in [
+            *attack_full["curve_points"],
+            *attack_full["synapse_ablation_arms"].values(),
+        ]
+    ]
+    pl.DataFrame(curve_rows).write_parquet(out_dir / "l0_attack_curve.parquet")
+    _write_l0_attack_curve_figure(summary_payload, out_dir / "figures")
+    _write_l0_ablation_dissociation_figure(summary_payload, out_dir / "figures")
+    _emit(summary_payload, as_json=args.json)
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="synapse",
@@ -1018,6 +1288,27 @@ def build_parser() -> argparse.ArgumentParser:
     p_plas_par.add_argument("--out-dir", default=None)
     p_plas_par.add_argument("--json", action="store_true")
     p_plas_par.set_defaults(func=_cmd_plasticity_paradigm)
+
+    # topology (Phase 5C Neuro L0 graph fragmentation & exact cell/synapse ablation audit)
+    p_topo = sub.add_parser(
+        "topology", help="Verify L0 graph ablation rules and run progressive attack curves"
+    )
+    topo_sub = p_topo.add_subparsers(dest="topology_cmd", required=True)
+    p_topo_ver = topo_sub.add_parser(
+        "verify", help="Verify L0 fragmentation, bridge dissociation & reverse Dijkstra parity"
+    )
+    p_topo_ver.add_argument("--out-dir", default=None)
+    p_topo_ver.add_argument("--json", action="store_true")
+    p_topo_ver.set_defaults(func=_cmd_topology_verify)
+
+    p_topo_att = topo_sub.add_parser(
+        "attack", help="Run gated L0 progressive attack curve & exact edge ablation audit"
+    )
+    p_topo_att.add_argument("--dataset-dir", required=True)
+    p_topo_att.add_argument("--targets-json", required=True)
+    p_topo_att.add_argument("--out-dir", required=True)
+    p_topo_att.add_argument("--json", action="store_true")
+    p_topo_att.set_defaults(func=_cmd_topology_attack)
 
     return parser
 

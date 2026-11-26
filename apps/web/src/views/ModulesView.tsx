@@ -8,7 +8,36 @@ import { useI18n } from "../i18n/LanguageContext";
 
 import type { CircuitPresetRequest } from "./DatasetsView";
 
-export type ModuleSectionTab = "addiction" | "sleep" | "pain" | "metabolic" | "benchmark" | "planned";
+export type ModuleSectionTab =
+  | "neuro"
+  | "addiction"
+  | "sleep"
+  | "pain"
+  | "metabolic"
+  | "benchmark"
+  | "planned";
+
+const NEURO_CONDITIONS_ORDER = [
+  "sham_zero_stimulus",
+  "intact_baseline_100hz",
+  "matched_random_cell_loss_12",
+  "matched_random_synapse_loss",
+  "targeted_synapse_loss_50pct",
+  "targeted_synapse_loss_100pct",
+  "targeted_cell_loss_top6",
+  "targeted_cell_loss_top12",
+];
+
+const NEURO_COND_SHORT: Record<string, string> = {
+  sham_zero_stimulus: "Sham 0",
+  intact_baseline_100hz: "Intact 100Hz",
+  matched_random_cell_loss_12: "Ctrl Cells (12)",
+  matched_random_synapse_loss: "Ctrl Syn (24e)",
+  targeted_synapse_loss_50pct: "Hub Syn 50%",
+  targeted_synapse_loss_100pct: "Hub Syn 100%",
+  targeted_cell_loss_top6: "Hub Cells (6)",
+  targeted_cell_loss_top12: "Hub Cells (12)",
+};
 
 const ADDICTION_CONDITIONS_ORDER = [
   "sham_zero_stimulus",
@@ -115,8 +144,93 @@ export const ModulesView: React.FC<ModulesViewProps> = ({
   const addL2Gate = studies?.addiction?.l2_gate ?? null;
   const addL2Paradigm = studies?.addiction?.l2_paradigm ?? null;
   const addPilot = studies?.addiction?.pilot ?? null;
+  const neuroL0Gate = studies?.neuro?.l0_gate ?? null;
+  const neuroL0Summary = studies?.neuro?.l0_summary ?? null;
+  const neuroMalecns = studies?.neuro?.malecns_l0_audit ?? null;
+  const neuroPilot = studies?.neuro?.pilot ?? null;
   const metConf = studies?.metabolic.confirmatory ?? [];
   const metRob = studies?.metabolic.robustness ?? {};
+
+  const neuroL0CurveTraces = useMemo<PlotlyTrace[]>(() => {
+    const pts = neuroL0Summary?.curve_points ?? [];
+    if (pts.length === 0) return [];
+    const tgt = pts
+      .filter((p) => p.arm_type === "targeted_cell_loss")
+      .sort((a, b) => a.step_k - b.step_k);
+    const ctrl = pts
+      .filter((p) => p.arm_type === "matched_random_cell_loss")
+      .sort((a, b) => a.step_k - b.step_k);
+    return [
+      {
+        type: "scatter",
+        mode: "lines+markers",
+        name: "Targeted Hub Efficiency Ratio",
+        x: tgt.map((p) => p.step_k),
+        y: tgt.map((p) => p.weighted_eff_ratio),
+        line: { color: "#D55E00", width: 2.5 },
+        marker: { size: 7, color: "#D55E00" },
+      },
+      {
+        type: "scatter",
+        mode: "lines+markers",
+        name: "Matched-Ctrl Efficiency Ratio",
+        x: ctrl.map((p) => p.step_k),
+        y: ctrl.map((p) => p.weighted_eff_ratio),
+        line: { color: "#0072B2", width: 2, dash: "dash" },
+        marker: { size: 7, color: "#0072B2" },
+      },
+      {
+        type: "scatter",
+        mode: "lines+markers",
+        name: "Targeted 3-Hop Flow Ratio",
+        x: tgt.map((p) => p.step_k),
+        y: tgt.map((p) => p.three_hop_flow_ratio),
+        line: { color: "#CC79A7", width: 2.5 },
+        marker: { size: 7, color: "#CC79A7" },
+      },
+      {
+        type: "scatter",
+        mode: "lines+markers",
+        name: "Matched-Ctrl 3-Hop Flow Ratio",
+        x: ctrl.map((p) => p.step_k),
+        y: ctrl.map((p) => p.three_hop_flow_ratio),
+        line: { color: "#009E73", width: 2, dash: "dash" },
+        marker: { size: 7, color: "#009E73" },
+      },
+    ];
+  }, [neuroL0Summary]);
+
+  const neuroL1DegradTraces = useMemo<PlotlyTrace[]>(() => {
+    const condMap = neuroPilot?.condition_readout_means;
+    if (!condMap) return [];
+    const xLabels = NEURO_CONDITIONS_ORDER.map((c) => NEURO_COND_SHORT[c] ?? c);
+    return [
+      {
+        type: "bar",
+        name: "MN9_right (...660219265)",
+        x: xLabels,
+        y: NEURO_CONDITIONS_ORDER.map((c) => condMap[c]?.mn9_right_mean_hz ?? 0),
+        error_y: {
+          type: "data",
+          array: NEURO_CONDITIONS_ORDER.map((c) => condMap[c]?.mn9_right_sd_hz ?? 0),
+          visible: true,
+        },
+        marker: { color: "#D55E00" },
+      },
+      {
+        type: "bar",
+        name: "MN9_left (...645521262)",
+        x: xLabels,
+        y: NEURO_CONDITIONS_ORDER.map((c) => condMap[c]?.mn9_left_mean_hz ?? 0),
+        error_y: {
+          type: "data",
+          array: NEURO_CONDITIONS_ORDER.map((c) => condMap[c]?.mn9_left_sd_hz ?? 0),
+          visible: true,
+        },
+        marker: { color: "#0072B2" },
+      },
+    ];
+  }, [neuroPilot]);
 
   const addL2PiTraces = useMemo<PlotlyTrace[]>(() => {
     if (!addL2Paradigm) return [];
@@ -434,6 +548,18 @@ export const ModulesView: React.FC<ModulesViewProps> = ({
         <button
           type="button"
           className="pill-btn"
+          aria-pressed={activeSubTab === "neuro"}
+          onClick={() => onSelectSubTab("neuro")}
+        >
+          <span>{t("tabNeuro")}</span>
+          <StatusBadge
+            label={neuroL0Gate || neuroPilot ? t("stateExperimental") : t("statePlanned")}
+            tone={neuroL0Gate || neuroPilot ? "info" : "neutral"}
+          />
+        </button>
+        <button
+          type="button"
+          className="pill-btn"
           aria-pressed={activeSubTab === "addiction"}
           onClick={() => onSelectSubTab("addiction")}
         >
@@ -495,6 +621,342 @@ export const ModulesView: React.FC<ModulesViewProps> = ({
           <StatusBadge label={t("statePlanned")} tone="neutral" />
         </button>
       </div>
+
+      {activeSubTab === "neuro" && (
+        <>
+          {!neuroL0Gate && !neuroPilot ? (
+            <div className="card">
+              <div className="empty-state">
+                <strong>{t("modulesMissingTitle")}</strong>
+                <p style={{ marginBottom: 0 }}>{t("modulesMissingBody")}</p>
+              </div>
+            </div>
+          ) : (
+            <>
+              <div className="card">
+                <div className="card-header">
+                  <div>
+                    <h2>{t("neuroBannerTitle")}</h2>
+                    <p className="card-subtitle mono">
+                      neuro_topology_ablation_v1 (L0) + flywire_fafb_v630 · shiu2024_lif (L1){" "}
+                      {neuroPilot?.git_commits?.[0] ? `· git ${neuroPilot.git_commits[0].slice(0, 8)}` : ""}
+                    </p>
+                  </div>
+                  <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                    <StatusBadge label={t("stateExperimental")} tone="info" />
+                    <StatusBadge label={t("ruoBadge")} tone="ruo" />
+                    <button
+                      type="button"
+                      className="btn btn-sm"
+                      onClick={() =>
+                        onExploreCircuit3D({
+                          datasetId: "flywire_fafb_v630",
+                          seedIds:
+                            "720575940660219265, 720575940645521262, 720575940623211725, 720575940619853515, 720575940607272649, 720575940626038714",
+                          hops: 1,
+                          direction: "both",
+                          minSynapses: 15,
+                          maxNodes: 75,
+                        })
+                      }
+                    >
+                      {t("exploreIn3d")}
+                    </button>
+                  </div>
+                </div>
+
+                {neuroL0Gate && (
+                  <div className="kpi-grid">
+                    <div className="kpi-card">
+                      <div className="kpi-label">{t("neuroGateChain")}</div>
+                      <div className="kpi-value">
+                        {neuroL0Gate.gates.chain_cut_disconnects.cut_largest_wcc_fraction.toFixed(
+                          2,
+                        )}{" "}
+                        WCC
+                      </div>
+                      <div className="kpi-sub">
+                        <StatusBadge
+                          label={
+                            neuroL0Gate.gates.chain_cut_disconnects.passed
+                              ? t("statusPass")
+                              : t("statusFail")
+                          }
+                          tone={neuroL0Gate.gates.chain_cut_disconnects.passed ? "ok" : "warn"}
+                        />
+                      </div>
+                    </div>
+                    <div className="kpi-card">
+                      <div className="kpi-label">{t("neuroGateBridge")}</div>
+                      <div className="kpi-value">
+                        {neuroL0Gate.gates.parallel_bridge_node_vs_edge_dissociation.edge_cut_3hop_flow.toFixed(
+                          0,
+                        )}{" "}
+                        vs 0
+                      </div>
+                      <div className="kpi-sub">
+                        <StatusBadge
+                          label={
+                            neuroL0Gate.gates.parallel_bridge_node_vs_edge_dissociation.passed
+                              ? t("statusPass")
+                              : t("statusFail")
+                          }
+                          tone={
+                            neuroL0Gate.gates.parallel_bridge_node_vs_edge_dissociation.passed
+                              ? "ok"
+                              : "warn"
+                          }
+                        />
+                      </div>
+                    </div>
+                    <div className="kpi-card">
+                      <div className="kpi-label">{t("neuroGateParity")}</div>
+                      <div className="kpi-value">
+                        {neuroL0Gate.gates.asymmetric_orientation_and_reverse_dijkstra_parity.reverse_dijkstra_weighted_eff.toFixed(
+                          2,
+                        )}
+                      </div>
+                      <div className="kpi-sub">
+                        <StatusBadge
+                          label={
+                            neuroL0Gate.gates.asymmetric_orientation_and_reverse_dijkstra_parity
+                              .passed
+                              ? t("statusPass")
+                              : t("statusFail")
+                          }
+                          tone={
+                            neuroL0Gate.gates.asymmetric_orientation_and_reverse_dijkstra_parity
+                              .passed
+                              ? "ok"
+                              : "warn"
+                          }
+                        />
+                      </div>
+                    </div>
+                    <div className="kpi-card">
+                      <div className="kpi-label">{t("neuroGateFrac")}</div>
+                      <div className="kpi-value">
+                        {neuroL0Gate.gates.fractional_synapse_scaling_monotonicity.flow_half.toFixed(
+                          0,
+                        )}{" "}
+                        / 200
+                      </div>
+                      <div className="kpi-sub">
+                        <StatusBadge
+                          label={
+                            neuroL0Gate.gates.fractional_synapse_scaling_monotonicity.passed
+                              ? t("statusPass")
+                              : t("statusFail")
+                          }
+                          tone={
+                            neuroL0Gate.gates.fractional_synapse_scaling_monotonicity.passed
+                              ? "ok"
+                              : "warn"
+                          }
+                        />
+                      </div>
+                    </div>
+                    <div className="kpi-card">
+                      <div className="kpi-label">{t("neuroGateCtrl")}</div>
+                      <div className="kpi-value">
+                        {String(
+                          neuroL0Gate.gates.isolated_control_invariance_and_immutability
+                            .graph_sha_unchanged,
+                        )}
+                      </div>
+                      <div className="kpi-sub">
+                        <StatusBadge
+                          label={
+                            neuroL0Gate.gates.isolated_control_invariance_and_immutability.passed
+                              ? t("statusPass")
+                              : t("statusFail")
+                          }
+                          tone={
+                            neuroL0Gate.gates.isolated_control_invariance_and_immutability.passed
+                              ? "ok"
+                              : "warn"
+                          }
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {uiMode === "simple" && (
+                <div className="notice-box" style={{ marginBottom: 12 }}>
+                  <strong>{t("simpleNeuroTitle")}: </strong>
+                  {t("simpleNeuroSummary")}
+                </div>
+              )}
+
+              <div className="grid-2">
+                {neuroL0Summary && (
+                  <div className="card">
+                    <div className="card-header">
+                      <h3>{t("neuroChartL0CurveTitle")}</h3>
+                    </div>
+                    <PlotlyChart
+                      theme={theme}
+                      ariaLabel={t("neuroChartL0CurveTitle")}
+                      traces={neuroL0CurveTraces}
+                      layout={{
+                        height: 320,
+                        xaxis: { title: "Ablated Hubs / Controls (k)" },
+                        yaxis: { title: "Ratio vs Intact", range: [0, 1.08] },
+                        margin: { l: 55, r: 20, t: 25, b: 55 },
+                      }}
+                    />
+                  </div>
+                )}
+
+                {neuroPilot && (
+                  <div className="card">
+                    <div className="card-header">
+                      <h3>{t("neuroChartL1DegradTitle")}</h3>
+                      <span className="mono" style={{ fontSize: "0.78rem" }}>
+                        {neuroPilot.succeeded_run_count}/{neuroPilot.total_runs} succeeded · sham=
+                        {neuroPilot.sham_max_spikes}
+                      </span>
+                    </div>
+                    <PlotlyChart
+                      theme={theme}
+                      ariaLabel={t("neuroChartL1DegradTitle")}
+                      traces={neuroL1DegradTraces}
+                      layout={{
+                        barmode: "group",
+                        height: 320,
+                        yaxis: { title: t("chartYAxisHz"), rangemode: "tozero" },
+                        xaxis: { tickangle: -18 },
+                        margin: { l: 55, r: 20, t: 25, b: 85 },
+                      }}
+                    />
+                  </div>
+                )}
+              </div>
+
+              {uiMode === "expert" ? (
+                <>
+                  {neuroPilot && (
+                    <div className="card">
+                      <div className="card-header">
+                        <h3>{t("neuroAuditTableTitle")}</h3>
+                      </div>
+                      <div className="table-wrap">
+                        <table>
+                          <thead>
+                            <tr>
+                              <th>{t("colContrast")}</th>
+                              <th>{t("colNeuron")}</th>
+                              <th>{t("colBaseMean")}</th>
+                              <th>{t("colTreatMean")}</th>
+                              <th>{t("colDelta")}</th>
+                              <th>{t("colCi95")}</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {neuroPilot.contrasts.map((row) => (
+                              <tr key={row.contrast_name}>
+                                <td className="mono">{row.contrast_name}</td>
+                                <td className="mono">{row.neuron_id}</td>
+                                <td>
+                                  {row.baseline_mean_hz.toFixed(3)} ±{" "}
+                                  {row.baseline_sd_hz.toFixed(3)}
+                                </td>
+                                <td>
+                                  {row.treatment_mean_hz.toFixed(3)} ±{" "}
+                                  {row.treatment_sd_hz.toFixed(3)}
+                                </td>
+                                <td>
+                                  <strong>
+                                    {row.mean_difference_hz >= 0 ? "+" : ""}
+                                    {row.mean_difference_hz.toFixed(3)}
+                                  </strong>{" "}
+                                  ± {row.sd_difference_hz.toFixed(3)}
+                                </td>
+                                <td className="mono">
+                                  [{row.bootstrap_ci95_low_hz.toFixed(3)},{" "}
+                                  {row.bootstrap_ci95_high_hz.toFixed(3)}]
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  )}
+
+                  {neuroMalecns && (
+                    <div className="card">
+                      <div className="card-header">
+                        <div>
+                          <h3>{t("neuroMalecnsTitle")}</h3>
+                          <p className="card-subtitle mono">
+                            {neuroMalecns.dataset_id} ({neuroMalecns.specimen_id}) · max|SMD|=
+                            {neuroMalecns.matched_control_max_abs_smd.toFixed(4)}
+                          </p>
+                        </div>
+                        <StatusBadge label={t("bioRuoBadge")} tone="info" />
+                      </div>
+                      <p style={{ fontSize: "0.84rem", color: "var(--text-secondary)", marginTop: 0 }}>
+                        {neuroMalecns.specimen_isolation_note}
+                      </p>
+                      <div className="meta-strip">
+                        {neuroMalecns.curve_points
+                          .filter((p) => p.step_k === 12)
+                          .map((p) => (
+                            <span key={p.ablation_id} className="mono">
+                              {p.arm_type} (k=12): eff={p.weighted_eff_ratio.toFixed(4)} · 3hop=
+                              {p.three_hop_flow_ratio.toFixed(4)}
+                            </span>
+                          ))}
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="alert" role="note">
+                    <div>
+                      <strong>{t("neuroLimitsTitle")}: </strong>
+                      <span>{t("neuroLimitsBody")}</span>
+                    </div>
+                  </div>
+                </>
+              ) : (
+                neuroPilot && (
+                  <details className="tech-details">
+                    <summary>{t("showTechDetails")}</summary>
+                    <div className="table-wrap">
+                      <table>
+                        <thead>
+                          <tr>
+                            <th>{t("colContrast")}</th>
+                            <th>{t("colNeuron")}</th>
+                            <th>{t("colDelta")}</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {neuroPilot.contrasts.map((row) => (
+                            <tr key={row.contrast_name}>
+                              <td className="mono">{row.contrast_name}</td>
+                              <td className="mono">{row.neuron_id}</td>
+                              <td>
+                                <strong>
+                                  {row.mean_difference_hz >= 0 ? "+" : ""}
+                                  {row.mean_difference_hz.toFixed(3)} Hz
+                                </strong>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </details>
+                )
+              )}
+            </>
+          )}
+        </>
+      )}
 
       {activeSubTab === "addiction" && (
         <>

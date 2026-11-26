@@ -67,6 +67,15 @@ const PRESET_CONFIGS: Record<string, Omit<CircuitPresetRequest, "nonce">> = {
     minSynapses: 5,
     maxNodes: 75,
   },
+  flywire_neuro: {
+    datasetId: "flywire_fafb_v630",
+    seedIds:
+      "720575940660219265, 720575940645521262, 720575940623211725, 720575940619853515, 720575940607272649, 720575940626038714",
+    hops: 1,
+    direction: "both",
+    minSynapses: 15,
+    maxNodes: 75,
+  },
   synthetic_microcircuit_v1: {
     datasetId: "synthetic_microcircuit_v1",
     seedIds: "9007199254740993",
@@ -674,13 +683,22 @@ export const DatasetsView: React.FC<DatasetsViewProps> = ({
             </>
           )}
           {hasDatasetOnDisk("flywire_fafb_v630") && (
-            <button
-              type="button"
-              className="pill-btn"
-              onClick={() => handleApplyPreset(PRESET_CONFIGS.flywire_fafb_v630)}
-            >
-              {t("presetMetabolic")}
-            </button>
+            <>
+              <button
+                type="button"
+                className="pill-btn"
+                onClick={() => handleApplyPreset(PRESET_CONFIGS.flywire_fafb_v630)}
+              >
+                {t("presetMetabolic")}
+              </button>
+              <button
+                type="button"
+                className="pill-btn"
+                onClick={() => handleApplyPreset(PRESET_CONFIGS.flywire_neuro)}
+              >
+                {t("presetNeuro")}
+              </button>
+            </>
           )}
           {hasDatasetOnDisk("synthetic_microcircuit_v1") && (
             <button

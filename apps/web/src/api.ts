@@ -106,7 +106,7 @@ export interface DatasetPlanResponse {
 export interface ModelSummary {
   model_id: string;
   model_revision: string;
-  model_level?: "L1" | "L2" | "L3";
+  model_level?: "L0" | "L1" | "L2" | "L3";
   parameter_manifest_sha256: string;
   solver: string;
   dt_s: number;
@@ -614,6 +614,158 @@ export interface AddictionStudyData {
   pilot: AddictionPilotSummary | null;
 }
 
+export interface NeuroL0GateReport {
+  model_id: string;
+  model_level: string;
+  parameter_manifest_sha256: string;
+  overall_passed: boolean;
+  gates: {
+    chain_cut_disconnects: {
+      passed: boolean;
+      baseline_reachability: number;
+      cut_reachability: number;
+      cut_wcc_count: number;
+      cut_largest_wcc_fraction: number;
+      removed_edge_count: number;
+    };
+    parallel_bridge_node_vs_edge_dissociation: {
+      passed: boolean;
+      edge_cut_removed_edges: number;
+      node_cut_removed_edges: number;
+      edge_cut_weighted_eff: number;
+      node_cut_weighted_eff: number;
+      edge_cut_3hop_flow: number;
+      node_cut_3hop_flow: number;
+    };
+    asymmetric_orientation_and_reverse_dijkstra_parity: {
+      passed: boolean;
+      forward_reachability: number;
+      transpose_reachability: number;
+      reverse_dijkstra_weighted_eff: number;
+      expected_forward_weighted_eff: number;
+    };
+    fractional_synapse_scaling_monotonicity: {
+      passed: boolean;
+      flow_full: number;
+      flow_half: number;
+      flow_zero: number;
+      lost_synapses_half: number;
+    };
+    isolated_control_invariance_and_immutability: {
+      passed: boolean;
+      graph_sha_unchanged: boolean;
+      ctrl_weighted_eff: number;
+      baseline_weighted_eff: number;
+      ctrl_2hop_flow: number;
+    };
+  };
+}
+
+export interface NeuroAblationPoint {
+  arm_type: string;
+  step_k: number;
+  ablation_id: string;
+  weighted_eff_ratio: number;
+  three_hop_flow_ratio: number;
+  target_exc_syn_retention: number;
+  removed_node_count: number;
+  removed_edge_count: number;
+  removed_synapse_count: number;
+  audit: {
+    ablation_id: string;
+    ablation_kind: string;
+    removed_neuron_ids: string[];
+    removed_node_count: number;
+    removed_edge_count: number;
+    removed_synapse_count: number;
+    removed_synapse_fraction: number;
+    removed_edges_sha256: string;
+    ablation_manifest_sha256: string;
+  };
+  metrics: {
+    n_total_nodes: number;
+    n_active_nodes: number;
+    n_active_edges: number;
+    total_active_synapses: number;
+    wcc_count: number;
+    largest_wcc_nodes: number;
+    largest_wcc_fraction: number;
+    scc_count: number;
+    largest_scc_nodes: number;
+    largest_scc_fraction: number;
+    reachability_fraction: number;
+    unweighted_harmonic_efficiency: number;
+    weighted_pathway_efficiency: number;
+    two_hop_exc_flow: number;
+    three_hop_exc_flow: number;
+    target_exc_in_synapses: number;
+  };
+}
+
+export interface NeuroL0Summary {
+  schema_version: string;
+  model_id: string;
+  model_level: string;
+  parameter_manifest_sha256: string;
+  dataset_id: string;
+  release: string;
+  specimen_id: string;
+  source_graph_sha256: string;
+  gate_overall_passed: boolean;
+  baseline: NeuroAblationPoint;
+  curve_points: NeuroAblationPoint[];
+  synapse_ablation_arms: Record<string, NeuroAblationPoint>;
+}
+
+export interface NeuroMalecnsL0Audit {
+  dataset_id: string;
+  release: string;
+  specimen_id: string;
+  specimen_isolation_note: string;
+  source_graph_sha256: string;
+  matched_control_max_abs_smd: number;
+  baseline: NeuroAblationPoint;
+  curve_points: NeuroAblationPoint[];
+  synapse_ablation_arms: Record<string, NeuroAblationPoint>;
+}
+
+export interface NeuroPilotSummary {
+  protocol_id: string;
+  dataset_id: string;
+  total_runs: number;
+  succeeded_run_count: number;
+  failed_run_count: number;
+  sham_count: number;
+  sham_max_spikes: number;
+  wall_total_s: number;
+  run_wall_mean_s: number;
+  git_commits: string[];
+  condition_readout_means: Record<
+    string,
+    {
+      mn9_right_mean_hz: number;
+      mn9_right_sd_hz: number;
+      mn9_right_retention_ratio: number;
+      mn9_left_mean_hz: number;
+      mn9_left_sd_hz: number;
+      mn9_left_retention_ratio: number;
+      l0_removed_node_count?: number;
+      l0_removed_edge_count?: number;
+      l0_removed_synapse_count?: number;
+      l0_weighted_eff_ratio?: number;
+      l0_three_hop_flow_ratio?: number;
+    }
+  >;
+  contrasts: SleepPilotContrast[];
+}
+
+export interface NeuroStudyData {
+  l0_gate: NeuroL0GateReport | null;
+  l0_summary: NeuroL0Summary | null;
+  malecns_l0_audit: NeuroMalecnsL0Audit | null;
+  pilot: NeuroPilotSummary | null;
+}
+
 export interface StudiesResponse {
   modules: ResearchModuleItem[];
   metabolic: {
@@ -637,6 +789,7 @@ export interface StudiesResponse {
   };
   sleep?: SleepStudyData;
   addiction?: AddictionStudyData;
+  neuro?: NeuroStudyData;
 }
 
 async function requestJson<T>(path: string, init?: RequestInit): Promise<T> {

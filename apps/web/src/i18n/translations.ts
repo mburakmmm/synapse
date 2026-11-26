@@ -126,9 +126,9 @@ export const TRANSLATIONS = {
     modAddictionName: "Addiction & Reward Learning (P5-ADD-001)",
     modAddictionDesc:
       "Experimental: verified L2 MB three-factor dopamine plasticity (5/5 gates) paired with L1 MaleCNS 24/24 exploratory pilot (confirmatory freeze pending; NOT clinical dependence).",
-    modNeuroName: "Neurodegeneration & Resilience",
+    modNeuroName: "Neurodegeneration & Resilience (P5-NEURO-001)",
     modNeuroDesc:
-      "Planned: targeted vs. random cell/synapse ablation tracking fragmentation and validated motor/learning proxies.",
+      "Experimental: verified L0 fragmentation/ablation gates (5/5) + L1 FlyWire 24/24 motor-degradation pilot and specimen-isolated MaleCNS L0 audit (confirmatory freeze pending; NOT clinical).",
     modPharmaName: "Pharmacology & Receptor Modulation",
     modPharmaDesc:
       "Planned: species-specific receptor localization and kinetic parameters required before named compound simulation.",
@@ -141,6 +141,7 @@ export const TRANSLATIONS = {
     modulesMissingTitle: "Local Simulation Artifacts Not Found Under runs/",
     modulesMissingBody:
       "Live scientific summary JSONs under runs/ are intentionally gitignored. Run confirmatory scripts locally or inspect offline test fixtures; zero synthetic numbers are fabricated here.",
+    tabNeuro: "Neuro · P5-NEURO-001",
     tabAddiction: "Addiction · P5-ADD-001",
     tabSleep: "Sleep · P5-SLEEP-001",
     tabPain: "Pain · P5-PAIN-001",
@@ -241,6 +242,7 @@ export const TRANSLATIONS = {
     presetSleep: "Sleep & Circadian (malecns_v1_0)",
     presetAddiction: "Reward Learning MB (malecns_v1_0)",
     presetMetabolic: "Metabolic MN9 (flywire_fafb_v630)",
+    presetNeuro: "Premotor Hub Ablation (flywire_fafb_v630)",
     presetSynth: "Synthetic Microcircuit",
     exploreIn3d: "Explore Circuit in 3D",
     datasetPlanBtn: "Fetch Plan & License",
@@ -459,6 +461,29 @@ export const TRANSLATIONS = {
     addLimitsTitle: "Mandatory RUO Non-Clinical & Point-Neuron Limitations",
     addLimitsBody:
       "Learned Preference Index (PI) and MBON firing shifts are Drosophila cue-conditioning proxies—NOT human clinical dependence, craving, or addiction diagnosis. L1 malecns_v1_0 samples frozen L2 weight snapshots with zero direct DA/OCT/SER synaptic weights and single-compartment somatic APL hyper-inhibition onto MBON01/05/11. Confirmatory P5-ADD-001.yaml remains unfrozen (draft).",
+    simpleNeuroTitle: "Network Ablation & Motor Resilience (L0 + Female Brain)",
+    simpleNeuroSummary:
+      "Verified L0 graph fragmentation and exact ablation audits pass 5/5 gates; ablating top-12 feeding premotor hubs degraded structural efficiency (60.3%) and collapsed MN9 motor output in L1 simulations while matched-random cell and synapse controls left motor output intact.",
+    glossAblationTitle: "Targeted vs Random Ablation",
+    glossAblationDef:
+      "Removing specific high-throughput hub neurons or synapses vs. removing equally connected unrelated control neurons to test circuit vulnerability.",
+    glossFragTitle: "Network Fragmentation (WCC / SCC)",
+    glossFragDef:
+      "Structural breakdown into disconnected subnetworks and efficiency loss measured strictly over surviving neurons without inventing dynamics.",
+    neuroBannerTitle: "Phase 5C: L0 Connectome Fragmentation & L1 FlyWire MN9 Degradation Pilot",
+    neuroGatesTitle: "Mandatory L0 Topology & Ablation Audit Verification (5/5 Gates)",
+    neuroGateChain: "Chain Cut Disconnect",
+    neuroGateBridge: "Node vs Edge Dissociation",
+    neuroGateParity: "Asymmetric Dijkstra Parity",
+    neuroGateFrac: "Fractional Synapse Scaling",
+    neuroGateCtrl: "Isolated Control Invariance",
+    neuroChartL0CurveTitle: "L0 Progressive Attack: Weighted Efficiency & 3-Hop Flow (Targeted vs Matched Ctrl)",
+    neuroChartL1DegradTitle: "L1 Pilot FlyWire MN9_right & MN9_left Firing Across Cell vs Synapse Loss (Hz, N=3)",
+    neuroAuditTableTitle: "Exact Ablation Audit & Coupled L0/L1 Degradation Summary",
+    neuroMalecnsTitle: "Specimen-Isolated MaleCNS v1.0 L0 Structural Comparison (Zero ID Pooling)",
+    neuroLimitsTitle: "Mandatory RUO Non-Clinical & Static-Ablation Limits",
+    neuroLimitsBody:
+      "Fly proboscis motor firing reduction (MN9_right / MN9_left) and L0 efficiency curves are computational circuit proxies—NOT human Parkinson's, Alzheimer's, aging, or clinical diagnosis. L1 neuron_silencing and edge_mask represent instantaneous structural deficits without slow glia clearance or homeostatic plasticity. Confirmatory P5-NEURO-001.yaml remains unfrozen (draft).",
   },
   tr: {
     // Document & Branding
@@ -583,9 +608,9 @@ export const TRANSLATIONS = {
     modAddictionName: "Bağımlılık ve Ödül Öğrenmesi (P5-ADD-001)",
     modAddictionDesc:
       "Deneysel: doğrulanmış L2 MB üç-faktörlü dopamin plastisitesi (5/5 kapı) ve L1 MaleCNS 24/24 keşifsel pilot (doğrulayıcı dondurma onay bekliyor; klinik bağımlılık DEĞİLDİR).",
-    modNeuroName: "Nörodejenerasyon ve Ağ Dayanıklılığı",
+    modNeuroName: "Nörodejenerasyon ve Ağ Dayanıklılığı (P5-NEURO-001)",
     modNeuroDesc:
-      "Planlandı: hedefli ve rastgele hücre/sinaps kaybında ağ parçalanması ve doğrulanmış motor/öğrenme proksileri.",
+      "Deneysel: doğrulanmış L0 ağ parçalanması/ablasyon kapıları (5/5) + L1 FlyWire 24/24 motor-kaybı pilotu ve örneklemi izole MaleCNS L0 denetimi (doğrulayıcı dondurma onay bekliyor; klinik DEĞİLDİR).",
     modPharmaName: "Farmakoloji ve Reseptör Modülasyonu",
     modPharmaDesc:
       "Planlandı: isimli bileşik simülasyonlarından önce türe özgü reseptör konumlanması ve kinetik kanıt kapısı.",
@@ -598,6 +623,7 @@ export const TRANSLATIONS = {
     modulesMissingTitle: "Yerel runs/ Altında Simülasyon Çıktıları Bulunamadı",
     modulesMissingBody:
       "runs/ altındaki simülasyon özet JSON dosyaları Git dışında tutulur. Yerel koşu sonuçları varsa otomatik okunur; sahte veri kesinlikle üretilmez.",
+    tabNeuro: "Nöro · P5-NEURO-001",
     tabAddiction: "Bağımlılık · P5-ADD-001",
     tabSleep: "Uyku · P5-SLEEP-001",
     tabPain: "Ağrı · P5-PAIN-001",
@@ -703,6 +729,7 @@ export const TRANSLATIONS = {
     presetSleep: "Uyku ve Sirkadiyen Devre (malecns_v1_0)",
     presetAddiction: "Ödül Öğrenmesi MB Devresi (malecns_v1_0)",
     presetMetabolic: "Metabolik MN9 Devresi (flywire_fafb_v630)",
+    presetNeuro: "Premotor Hub Ablasyonu (flywire_fafb_v630)",
     presetSynth: "Sentetik Mikrodevre",
     exploreIn3d: "Devreyi 3B İncele",
     datasetPlanBtn: "İndirme Planı ve Lisans",
@@ -921,6 +948,29 @@ export const TRANSLATIONS = {
     addLimitsTitle: "Zorunlu RUO Klinik-Dışı Kapsam ve Nokta-Nöron Sınırları",
     addLimitsBody:
       "Öğrenilmiş Tercih İndeksi (PI) ve MBON ateşleme farkları Drosophila koku-koşullanma proksileridir — insanlarda klinik bağımlılık, aşerme veya tanı DEĞİLDİR. L1 malecns_v1_0 koşuları donmuş L2 ağırlık kesitlerini DA/OCT/SER sıfır doğrudan sinaps ağırlığıyla örnekler ve MBON01/05/11 üzerinde somatik APL aşırı-baskılaması gösterir. Doğrulayıcı P5-ADD-001.yaml henüz dondurulmamıştır (draft).",
+    simpleNeuroTitle: "Ağ Ablasyonu ve Motor Dayanıklılık Hikayesi (L0 + Dişi Beyin)",
+    simpleNeuroSummary:
+      "Doğrulanmış L0 graf parçalanması ve kesin kenar denetimi 5/5 kapıyı geçti; beslenme devresindeki en kritik 12 premotor hub nöronun silinmesi yapısal verimliliği (%60.3) ve L1 MN9 motor çıktısını belirgin düşürürken, eşleştirilmiş rastgele hücre ve sinaps kontrolleri motor çıktıyı korudu.",
+    glossAblationTitle: "Hedefli vs Rastgele Ablasyon",
+    glossAblationDef:
+      "Yüksek akışlı kritik aktarım nöronlarını/sinapslarını çıkarmayı, aynı bağlantı boyutundaki ilgisiz kontrol nöronlarıyla kıyaslayarak devre kırılganlığını ölçmektir.",
+    glossFragTitle: "Ağ Parçalanması (WCC / SCC)",
+    glossFragDef:
+      "Hayatta kalan nöronlar üzerinde kopuk bileşenlere ayrılmayı ve yönlü en kısa yol verimliliği kaybını ölçen salt yapısal graf analizidir.",
+    neuroBannerTitle: "Faz 5C: L0 Konnektom Parçalanması ve L1 FlyWire MN9 Motor Kaybı Pilotu",
+    neuroGatesTitle: "Zorunlu L0 Topoloji ve Ablasyon Denetimi Doğrulaması (5/5 Kapı)",
+    neuroGateChain: "Zincir Kesme Kopuşu",
+    neuroGateBridge: "Hücre vs Sinaps Ayrışması",
+    neuroGateParity: "Asimetrik Dijkstra Paritesi",
+    neuroGateFrac: "Kısmi Sinaps Ölçekleme",
+    neuroGateCtrl: "İzole Kontrol Değişmezliği",
+    neuroChartL0CurveTitle: "L0 Kademeli Saldırı: Ağırlıklı Verimlilik ve 3-Adımlı Akış (Hedefli vs Eşli Kontrol)",
+    neuroChartL1DegradTitle: "L1 Pilot Hücre vs Sinaps Kaybında FlyWire MN9_right ve MN9_left Hızları (Hz, N=3)",
+    neuroAuditTableTitle: "Kesin Ablasyon Denetimi ve Eşleştirilmiş L0/L1 Çıktı Özeti",
+    neuroMalecnsTitle: "Örneklemi İzole MaleCNS v1.0 L0 Yapısal Karşılaştırması (Sıfır ID Havuzu)",
+    neuroLimitsTitle: "Zorunlu RUO Klinik-Dışı Kapsam ve Statik Ablasyon Sınırları",
+    neuroLimitsBody:
+      "Sinek proboskis motor nöronu (MN9_right / MN9_left) ateşleme düşüşü ve L0 verimlilik eğrileri hesaplamalı devre proksileridir — insan Parkinson hastalığı, Alzheimer, yaşlanma veya klinik tanı DEĞİLDİR. L1 neuron_silencing ve edge_mask yavaş glia temizliği veya homeostatik telafi içermeyen anlık kesitlerdir. Doğrulayıcı P5-NEURO-001.yaml henüz dondurulmamıştır (draft).",
   },
 } as const;
 

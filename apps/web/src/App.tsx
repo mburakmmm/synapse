@@ -246,7 +246,8 @@ export const App: React.FC = () => {
         ];
 
   const handleNavigateModule = (moduleId: string) => {
-    if (moduleId === "addiction") setModuleSubTab("addiction");
+    if (moduleId === "neuro") setModuleSubTab("neuro");
+    else if (moduleId === "addiction") setModuleSubTab("addiction");
     else if (moduleId === "sleep") setModuleSubTab("sleep");
     else if (moduleId === "pain") setModuleSubTab("pain");
     else if (moduleId === "metabolic") setModuleSubTab("metabolic");

@@ -1,0 +1,228 @@
+schema_version: '1.0'
+protocol_id: P5-NEURO-001-PILOT
+revision: 1
+status: draft
+analysis_intent: exploratory
+question: 'Exploratory pilot: How do progressive targeted premotor hub cell death
+  vs. direct hub->MN9 synapse loss and matched-random controls degrade feeding-motor
+  output (MN9_right, MN9_left) in FlyWire FAFB v630 (RUO)?'
+hypothesis: Under 100 Hz sugar-GRN drive on flywire_fafb_v630, ablating static L0
+  top-12 premotor hubs (60.5% of MN9 excitatory synapses) suppresses MN9 firing sharply
+  relative to intact baseline and matched-random cell/synapse controls, while isolating
+  whole-cell loss vs. direct synapse loss.
+biological_unit: connectome_specimen
+simulation_unit: paired_seed_run
+sources:
+- dataset_id: flywire_fafb_v630
+  release: v630
+  manifest_sha256: f6965c945c801571371f6f593cdc9d1fc2f6cb8cbe32def898d1640069b4acf9
+model:
+  id: shiu2024_lif
+  revision: '1.0'
+  parameter_manifest_sha256: 12bc0160d0476aa4c65e8276d077e7e51afc45724e17eb667f6256763c9fa2e5
+  backend: brian2_cpu
+  parameters:
+    v_rest_v: -0.052
+    v_reset_v: -0.052
+    v_threshold_v: -0.045
+    tau_m_s: 0.02
+    tau_syn_s: 0.005
+    t_ref_s: 0.0022
+    delay_s: 0.0018
+    w_syn_v: 0.000275
+    r_m_ohm: 10000000.0
+    dt_s: 0.0001
+    solver: linear
+    dg_unless_refractory: true
+    unknown_nt_policy: zero_effect
+    parameter_source: Shiu et al. Nature 2024 (10.1038/s41586-024-07763-9); philshiu/Drosophila_brain_model@91bdd1e7dcf193f3e7ca5a8933497fcef63b7960
+conditions:
+- id: sham_zero_stimulus
+  interventions:
+  - kind: sham
+    description: zero-stimulus negative control (expected 0 spikes)
+- id: intact_baseline_100hz
+  interventions:
+  - kind: poisson_rate
+    target_neuron_ids: &id001
+    - '720575940624963786'
+    - '720575940630233916'
+    - '720575940637568838'
+    - '720575940638202345'
+    - '720575940617000768'
+    - '720575940630797113'
+    - '720575940632889389'
+    - '720575940621754367'
+    - '720575940621502051'
+    - '720575940640649691'
+    - '720575940639332736'
+    - '720575940616885538'
+    - '720575940639198653'
+    - '720575940620900446'
+    - '720575940617937543'
+    - '720575940632425919'
+    - '720575940633143833'
+    - '720575940612670570'
+    - '720575940628853239'
+    - '720575940629176663'
+    - '720575940611875570'
+    rate_hz: 100.0
+    weight_v: 0.06875
+    start_s: 0.0
+    end_s: 1.0
+    disable_refractory: true
+- id: targeted_cell_loss_top6
+  interventions:
+  - kind: poisson_rate
+    target_neuron_ids: *id001
+    rate_hz: 100.0
+    weight_v: 0.06875
+    start_s: 0.0
+    end_s: 1.0
+    disable_refractory: true
+  - kind: neuron_silencing
+    target_neuron_ids:
+    - '720575940623211725'
+    - '720575940619853515'
+    - '720575940607272649'
+    - '720575940627847752'
+    - '720575940632252743'
+    - '720575940626038714'
+    mode: both_zero
+- id: targeted_cell_loss_top12
+  interventions:
+  - kind: poisson_rate
+    target_neuron_ids: *id001
+    rate_hz: 100.0
+    weight_v: 0.06875
+    start_s: 0.0
+    end_s: 1.0
+    disable_refractory: true
+  - kind: neuron_silencing
+    target_neuron_ids: &id002
+    - '720575940623211725'
+    - '720575940619853515'
+    - '720575940607272649'
+    - '720575940627847752'
+    - '720575940632252743'
+    - '720575940626038714'
+    - '720575940609407939'
+    - '720575940615671106'
+    - '720575940611151406'
+    - '720575940635055039'
+    - '720575940611442296'
+    - '720575940621261296'
+    mode: both_zero
+- id: matched_random_cell_loss_12
+  interventions:
+  - kind: poisson_rate
+    target_neuron_ids: *id001
+    rate_hz: 100.0
+    weight_v: 0.06875
+    start_s: 0.0
+    end_s: 1.0
+    disable_refractory: true
+  - kind: neuron_silencing
+    target_neuron_ids:
+    - '720575940634180703'
+    - '720575940625561406'
+    - '720575940604458668'
+    - '720575940627162450'
+    - '720575940626856344'
+    - '720575940625567674'
+    - '720575940644968215'
+    - '720575940623355114'
+    - '720575940609739669'
+    - '720575940636880959'
+    - '720575940620171892'
+    - '720575940624891941'
+    mode: both_zero
+- id: targeted_synapse_loss_50pct
+  interventions:
+  - kind: poisson_rate
+    target_neuron_ids: *id001
+    rate_hz: 100.0
+    weight_v: 0.06875
+    start_s: 0.0
+    end_s: 1.0
+    disable_refractory: true
+  - kind: edge_mask
+    pre_neuron_ids: *id002
+    post_neuron_ids: &id003
+    - '720575940660219265'
+    - '720575940645521262'
+    factor: 0.5
+- id: targeted_synapse_loss_100pct
+  interventions:
+  - kind: poisson_rate
+    target_neuron_ids: *id001
+    rate_hz: 100.0
+    weight_v: 0.06875
+    start_s: 0.0
+    end_s: 1.0
+    disable_refractory: true
+  - kind: edge_mask
+    pre_neuron_ids: *id002
+    post_neuron_ids: *id003
+    factor: 0.0
+- id: matched_random_synapse_loss
+  interventions:
+  - kind: poisson_rate
+    target_neuron_ids: *id001
+    rate_hz: 100.0
+    weight_v: 0.06875
+    start_s: 0.0
+    end_s: 1.0
+    disable_refractory: true
+  - kind: edge_mask
+    pre_neuron_ids:
+    - '720575940609258850'
+    - '720575940614646726'
+    - '720575940650416505'
+    - '720575940623089996'
+    - '720575940652554657'
+    - '720575940618987600'
+    - '720575940630318533'
+    - '720575940632176045'
+    - '720575940617513506'
+    - '720575940616095883'
+    - '720575940626513410'
+    - '720575940628451856'
+    - '720575940630610425'
+    - '720575940619411147'
+    - '720575940617203997'
+    - '720575940637375721'
+    - '720575940630183286'
+    - '720575940619931119'
+    - '720575940608977347'
+    - '720575940636000631'
+    - '720575940606056905'
+    - '720575940622920074'
+    - '720575940627105301'
+    - '720575940659611777'
+    post_neuron_ids:
+    - '720575940631423116'
+    - '720575940623733235'
+    factor: 0.0
+stimulus_schedule:
+  duration_s: 1.0
+  stimuli: []
+measurement_window:
+  start_s: 0.0
+  end_s: 1.0
+seeds:
+  strategy: paired
+  master: 20261160
+  replicates: 3
+analysis:
+  primary_endpoint: mn9_right_firing_rate_hz
+  target_neuron_id: '720575940660219265'
+  secondary_neuron_id: '720575940645521262'
+  estimand: paired_condition_difference
+  uncertainty_method: seed_ensemble_percentile_bootstrap_95ci
+  multiplicity_policy: exploratory_unadjusted_pilot
+  exclusion_policy: include_all_completed_report_all_failed
+  acceptance_criteria: exploratory_pilot_calibration_and_sham_zero_check_only
+resources:
+  max_wall_seconds: 360.0
+  max_output_bytes: 104857600

@@ -79,11 +79,11 @@ function createApiFetchMock() {
           {
             module_id: "neuro",
             phase: "phase5c",
-            ui_state: "planned",
-            simulation_phase: "planned",
-            dataset_id: null,
-            protocol_id: null,
-            available_on_disk: false,
+            ui_state: "experimental",
+            simulation_phase: "l0_verified_and_l1_pilot_complete",
+            dataset_id: "flywire_fafb_v630",
+            protocol_id: "P5-NEURO-001-PILOT",
+            available_on_disk: true,
           },
           {
             module_id: "pharma",
@@ -408,6 +408,295 @@ function createApiFetchMock() {
             ],
           },
         },
+        neuro: {
+          l0_gate: {
+            model_id: "neuro_topology_ablation_v1",
+            model_level: "L0",
+            parameter_manifest_sha256: "l0sha",
+            overall_passed: true,
+            gates: {
+              chain_cut_disconnects: {
+                passed: true,
+                baseline_reachability: 1.0,
+                cut_reachability: 0.0,
+                cut_wcc_count: 2,
+                cut_largest_wcc_fraction: 0.4,
+                removed_edge_count: 2,
+              },
+              parallel_bridge_node_vs_edge_dissociation: {
+                passed: true,
+                edge_cut_removed_edges: 1,
+                node_cut_removed_edges: 3,
+                edge_cut_weighted_eff: 6.666667,
+                node_cut_weighted_eff: 4.0,
+                edge_cut_3hop_flow: 8000.0,
+                node_cut_3hop_flow: 0.0,
+              },
+              asymmetric_orientation_and_reverse_dijkstra_parity: {
+                passed: true,
+                forward_reachability: 1.0,
+                transpose_reachability: 0.0,
+                reverse_dijkstra_weighted_eff: 7.261905,
+                expected_forward_weighted_eff: 7.261905,
+              },
+              fractional_synapse_scaling_monotonicity: {
+                passed: true,
+                flow_full: 200.0,
+                flow_half: 100.0,
+                flow_zero: 0.0,
+                lost_synapses_half: 10.0,
+              },
+              isolated_control_invariance_and_immutability: {
+                passed: true,
+                graph_sha_unchanged: true,
+                ctrl_weighted_eff: 6.666667,
+                baseline_weighted_eff: 6.666667,
+                ctrl_2hop_flow: 200.0,
+              },
+            },
+          },
+          l0_summary: {
+            schema_version: "1.0",
+            model_id: "neuro_topology_ablation_v1",
+            model_level: "L0",
+            parameter_manifest_sha256: "l0sha",
+            dataset_id: "flywire_fafb_v630",
+            release: "v630",
+            specimen_id: "flywire_fafb_female_01",
+            source_graph_sha256: "c8fc14b9",
+            gate_overall_passed: true,
+            baseline: {
+              arm_type: "intact_baseline",
+              step_k: 0,
+              ablation_id: "intact_baseline",
+              weighted_eff_ratio: 1.0,
+              three_hop_flow_ratio: 1.0,
+              target_exc_syn_retention: 1.0,
+              removed_node_count: 0,
+              removed_edge_count: 0,
+              removed_synapse_count: 0,
+              audit: {
+                ablation_id: "intact_baseline",
+                ablation_kind: "none",
+                removed_neuron_ids: [],
+                removed_node_count: 0,
+                removed_edge_count: 0,
+                removed_synapse_count: 0,
+                removed_synapse_fraction: 0,
+                removed_edges_sha256: "e0",
+                ablation_manifest_sha256: "m0",
+              },
+              metrics: {
+                n_total_nodes: 127400,
+                n_active_nodes: 127400,
+                n_active_edges: 14687178,
+                total_active_synapses: 52793639,
+                wcc_count: 56,
+                largest_wcc_nodes: 127247,
+                largest_wcc_fraction: 0.9988,
+                scc_count: 1047,
+                largest_scc_nodes: 126326,
+                largest_scc_fraction: 0.9916,
+                reachability_fraction: 1.0,
+                unweighted_harmonic_efficiency: 0.4921,
+                weighted_pathway_efficiency: 13.3052,
+                two_hop_exc_flow: 162165.0,
+                three_hop_exc_flow: 29762199.0,
+                target_exc_in_synapses: 5244.0,
+              },
+            },
+            curve_points: [
+              {
+                arm_type: "targeted_cell_loss",
+                step_k: 0,
+                ablation_id: "intact_baseline",
+                weighted_eff_ratio: 1.0,
+                three_hop_flow_ratio: 1.0,
+                target_exc_syn_retention: 1.0,
+                removed_node_count: 0,
+                removed_edge_count: 0,
+                removed_synapse_count: 0,
+                audit: {
+                  ablation_id: "intact_baseline",
+                  ablation_kind: "none",
+                  removed_neuron_ids: [],
+                  removed_node_count: 0,
+                  removed_edge_count: 0,
+                  removed_synapse_count: 0,
+                  removed_synapse_fraction: 0,
+                  removed_edges_sha256: "e0",
+                  ablation_manifest_sha256: "m0",
+                },
+                metrics: {
+                  n_total_nodes: 127400,
+                  n_active_nodes: 127400,
+                  n_active_edges: 14687178,
+                  total_active_synapses: 52793639,
+                  wcc_count: 56,
+                  largest_wcc_nodes: 127247,
+                  largest_wcc_fraction: 0.9988,
+                  scc_count: 1047,
+                  largest_scc_nodes: 126326,
+                  largest_scc_fraction: 0.9916,
+                  reachability_fraction: 1.0,
+                  unweighted_harmonic_efficiency: 0.4921,
+                  weighted_pathway_efficiency: 13.3052,
+                  two_hop_exc_flow: 162165.0,
+                  three_hop_exc_flow: 29762199.0,
+                  target_exc_in_synapses: 5244.0,
+                },
+              },
+              {
+                arm_type: "targeted_cell_loss",
+                step_k: 12,
+                ablation_id: "targeted_cell_loss_k12",
+                weighted_eff_ratio: 0.6027,
+                three_hop_flow_ratio: 0.0843,
+                target_exc_syn_retention: 0.3955,
+                removed_node_count: 12,
+                removed_edge_count: 5237,
+                removed_synapse_count: 59593,
+                audit: {
+                  ablation_id: "targeted_cell_loss_k12",
+                  ablation_kind: "node_ablation",
+                  removed_neuron_ids: [],
+                  removed_node_count: 12,
+                  removed_edge_count: 5237,
+                  removed_synapse_count: 59593,
+                  removed_synapse_fraction: 0.0011,
+                  removed_edges_sha256: "e12",
+                  ablation_manifest_sha256: "m12",
+                },
+                metrics: {
+                  n_total_nodes: 127400,
+                  n_active_nodes: 127388,
+                  n_active_edges: 14681941,
+                  total_active_synapses: 52734046,
+                  wcc_count: 56,
+                  largest_wcc_nodes: 127235,
+                  largest_wcc_fraction: 0.9987,
+                  scc_count: 1047,
+                  largest_scc_nodes: 126314,
+                  largest_scc_fraction: 0.9915,
+                  reachability_fraction: 1.0,
+                  unweighted_harmonic_efficiency: 0.4921,
+                  weighted_pathway_efficiency: 8.0194,
+                  two_hop_exc_flow: 10000.0,
+                  three_hop_exc_flow: 2508502.0,
+                  target_exc_in_synapses: 2074.0,
+                },
+              },
+            ],
+            synapse_ablation_arms: {},
+          },
+          malecns_l0_audit: {
+            dataset_id: "malecns_v1_0",
+            release: "v1.0",
+            specimen_id: "malecns_male_01",
+            specimen_isolation_note:
+              "Strictly isolated MaleCNS v1.0 L0 audit; zero neuron IDs pooled with FlyWire v630.",
+            source_graph_sha256: "ef532405",
+            matched_control_max_abs_smd: 0.1094,
+            baseline: {
+              arm_type: "intact_baseline",
+              step_k: 0,
+              ablation_id: "intact_baseline",
+              weighted_eff_ratio: 1.0,
+              three_hop_flow_ratio: 1.0,
+              target_exc_syn_retention: 1.0,
+              removed_node_count: 0,
+              removed_edge_count: 0,
+              removed_synapse_count: 0,
+              audit: {
+                ablation_id: "intact_baseline",
+                ablation_kind: "none",
+                removed_neuron_ids: [],
+                removed_node_count: 0,
+                removed_edge_count: 0,
+                removed_synapse_count: 0,
+                removed_synapse_fraction: 0,
+                removed_edges_sha256: "m0",
+                ablation_manifest_sha256: "mm0",
+              },
+              metrics: {
+                n_total_nodes: 211577,
+                n_active_nodes: 211577,
+                n_active_edges: 26028386,
+                total_active_synapses: 125365933,
+                wcc_count: 203,
+                largest_wcc_nodes: 211145,
+                largest_wcc_fraction: 0.998,
+                scc_count: 2000,
+                largest_scc_nodes: 208000,
+                largest_scc_fraction: 0.983,
+                reachability_fraction: 1.0,
+                unweighted_harmonic_efficiency: 0.48,
+                weighted_pathway_efficiency: 10.0,
+                two_hop_exc_flow: 50000.0,
+                three_hop_exc_flow: 1000000.0,
+                target_exc_in_synapses: 3000.0,
+              },
+            },
+            curve_points: [],
+            synapse_ablation_arms: {},
+          },
+          pilot: {
+            protocol_id: "P5-NEURO-001-PILOT",
+            dataset_id: "flywire_fafb_v630",
+            total_runs: 24,
+            succeeded_run_count: 24,
+            failed_run_count: 0,
+            sham_count: 3,
+            sham_max_spikes: 0,
+            wall_total_s: 540.0,
+            run_wall_mean_s: 22.5,
+            git_commits: ["982e2da"],
+            condition_readout_means: {
+              sham_zero_stimulus: {
+                mn9_right_mean_hz: 0.0,
+                mn9_right_sd_hz: 0.0,
+                mn9_right_retention_ratio: 0.0,
+                mn9_left_mean_hz: 0.0,
+                mn9_left_sd_hz: 0.0,
+                mn9_left_retention_ratio: 0.0,
+              },
+              intact_baseline_100hz: {
+                mn9_right_mean_hz: 68.333,
+                mn9_right_sd_hz: 3.215,
+                mn9_right_retention_ratio: 1.0,
+                mn9_left_mean_hz: 50.0,
+                mn9_left_sd_hz: 2.0,
+                mn9_left_retention_ratio: 1.0,
+              },
+              targeted_cell_loss_top12: {
+                mn9_right_mean_hz: 12.0,
+                mn9_right_sd_hz: 2.0,
+                mn9_right_retention_ratio: 0.1756,
+                mn9_left_mean_hz: 4.0,
+                mn9_left_sd_hz: 1.0,
+                mn9_left_retention_ratio: 0.08,
+              },
+            },
+            contrasts: [
+              {
+                contrast_name: "mn9r_cell_loss_top12_vs_intact",
+                neuron_id: "720575940660219265",
+                baseline_condition: "intact_baseline_100hz",
+                treatment_condition: "targeted_cell_loss_top12",
+                n_pairs: 3,
+                failed_run_count: 0,
+                baseline_mean_hz: 68.333,
+                baseline_sd_hz: 3.215,
+                treatment_mean_hz: 12.0,
+                treatment_sd_hz: 2.0,
+                mean_difference_hz: -56.333,
+                sd_difference_hz: 1.528,
+                bootstrap_ci95_low_hz: -58.0,
+                bootstrap_ci95_high_hz: -55.0,
+              },
+            ],
+          },
+        },
       });
     }
     if (target.endsWith("/api/v1/datasets")) {
@@ -485,6 +774,16 @@ function createApiFetchMock() {
     if (target.endsWith("/api/v1/models")) {
       return mockJsonResponse({
         models: [
+          {
+            model_id: "neuro_topology_ablation_v1",
+            model_revision: "1.0",
+            model_level: "L0",
+            parameter_manifest_sha256: "l0sha",
+            solver: "csgraph_dijkstra",
+            dt_s: 0.0,
+            parameter_source: "Albert 2000 / Lin 2024",
+            parameters: { min_synapse_threshold: 1, excitatory_only_pathway: true },
+          },
           {
             model_id: "shiu2024_lif",
             model_revision: "1.0",
@@ -745,10 +1044,13 @@ describe("SYNAPSE Research Workbench UI", () => {
     expect(window.localStorage.getItem("synapse.uiMode")).toBe("expert");
     expect(await screen.findByText(/128\.5 \/ 512 GB/)).toBeInTheDocument();
 
-    // Modules tab: real Addiction, Sleep, Pain, Metabolic, and Planned modules
+    // Modules tab: real Neuro, Addiction, Sleep, Pain, Metabolic, and Planned modules
     fireEvent.click(screen.getByRole("tab", { name: /Research Modules/ }));
     expect(await screen.findByText("120 / 120")).toBeInTheDocument();
     expect(screen.getByText("+20.667")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /Neuro · P5-NEURO-001/ }));
+    expect(await screen.findByText(/8000 vs 0/)).toBeInTheDocument();
+    expect(screen.getByText("-56.333")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: /Addiction · P5-ADD-001/ }));
     expect(await screen.findByText(/\+0\.331 PI/)).toBeInTheDocument();
     expect(screen.getByText("-31.667")).toBeInTheDocument();
@@ -758,7 +1060,7 @@ describe("SYNAPSE Research Workbench UI", () => {
     fireEvent.click(screen.getByRole("button", { name: /Metabolic · P4-MET-001/ }));
     expect(await screen.findByText("+30.900")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: /Planned Modules/ }));
-    expect(screen.getByText(/Neurodegeneration & Resilience/)).toBeInTheDocument();
+    expect(screen.getByText(/Pharmacology & Receptor Modulation/)).toBeInTheDocument();
 
     // Datasets & Circuits tab: 64-bit string ID + confidence column + 3D/2D controls
     fireEvent.click(screen.getByRole("tab", { name: /Datasets & Circuits/ }));
@@ -769,8 +1071,9 @@ describe("SYNAPSE Research Workbench UI", () => {
     expect(screen.getByText("0.98")).toBeInTheDocument();
     expect(screen.getByText("SYNTHETIC FIXTURE — NOT BIOLOGICAL DATA")).toBeInTheDocument();
 
-    // Models & Protocols tab: Quick Form -> Draft YAML Builder + L2/L3 badges + Validate + disabled freeze button
+    // Models & Protocols tab: Quick Form -> Draft YAML Builder + L0/L2/L3 badges + Validate + disabled freeze button
     fireEvent.click(screen.getByRole("tab", { name: /Models & Protocols/ }));
+    expect(screen.getByText(/L0 Topology · solver: csgraph_dijkstra/)).toBeInTheDocument();
     expect(screen.getByText(/L2 Plasticity · solver: rk4/)).toBeInTheDocument();
     expect(screen.getByText(/L3 ODE · solver: RK45/)).toBeInTheDocument();
     expect(screen.queryByText(/dg=undefined/)).not.toBeInTheDocument();
@@ -836,9 +1139,11 @@ describe("SYNAPSE Research Workbench UI", () => {
     expect(screen.getByRole("tab", { name: /3B Beyin Devresi/ })).toBeInTheDocument();
     expect(screen.getByText("Uyku ve Biyolojik Saat Hikayesi (L3 + Erkek Beyin)")).toBeInTheDocument();
     expect(screen.getByText("Ödül Öğrenmesi ve Sönme Hikayesi (L2 + Erkek MB)")).toBeInTheDocument();
+    expect(screen.getByText("Ağ Ablasyonu ve Motor Dayanıklılık Hikayesi (L0 + Dişi Beyin)")).toBeInTheDocument();
     expect(screen.getByText("Sade Bilimsel Terimler Sözlüğü")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /Sirkadiyen Saat/ })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /Sinaptik Plastisite/ })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Hedefli vs Rastgele Ablasyon/ })).toBeInTheDocument();
     expect(document.documentElement.lang).toBe("tr");
     expect(window.localStorage.getItem("synapse.lang")).toBe("tr");
 

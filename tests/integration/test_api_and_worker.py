@@ -188,6 +188,8 @@ def test_api_and_worker_full_fixture_lifecycle_security_cancel_and_backup(tmp_pa
             models_res = client.get("/api/v1/models")
             assert models_res.status_code == 200
             model_ids = {m["model_id"]: m for m in models_res.json()["models"]}
+            assert "neuro_topology_ablation_v1" in model_ids
+            assert model_ids["neuro_topology_ablation_v1"]["model_level"] == "L0"
             assert "mb_dopamine_plasticity_v1" in model_ids
             assert model_ids["mb_dopamine_plasticity_v1"]["model_level"] == "L2"
             assert "leloup_goldbeter_1998_two_process_v1" in model_ids
@@ -199,6 +201,7 @@ def test_api_and_worker_full_fixture_lifecycle_security_cancel_and_backup(tmp_pa
             studies_body = studies_res.json()
             assert "sleep" in studies_body
             assert "addiction" in studies_body
+            assert "neuro" in studies_body
             allowed_states = {
                 "planned",
                 "experimental",

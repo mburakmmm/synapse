@@ -335,3 +335,50 @@ sources:
         url: "https://doi.org/10.7554/eLife.56954"
         peer_review_status: "peer_reviewed"
         claim_scope: "Compartmentalized electrotonic localization of APL GABAergic inhibition in MB neuropils (explaining somatic point-neuron over-inhibition artifact)"
+
+  - id: phase5c_neuro_sources
+    purpose: "Verified peer-reviewed literature basis for L0 connectome error/attack vulnerability, efficiency metrics, and Drosophila proboscis motor circuit mapping"
+    retrieved_at_utc: "2026-11-23"
+    references:
+      - ref_id: albert2000_nature
+        citation_short: "Albert R, Jeong H, Barabasi AL (2000) Nature 406(6794):378-382"
+        doi: "10.1038/35019019"
+        url: "https://doi.org/10.1038/35019019"
+        peer_review_status: "peer_reviewed"
+        claim_scope: "Foundational dissociation between error tolerance (random node removal) and targeted hub attack vulnerability in heterogeneous complex networks"
+      - ref_id: latora2001_prl
+        citation_short: "Latora V, Marchiori M (2001) Phys Rev Lett 87(19):198701"
+        doi: "10.1103/PhysRevLett.87.198701"
+        url: "https://doi.org/10.1103/PhysRevLett.87.198701"
+        peer_review_status: "peer_reviewed"
+        claim_scope: "Harmonic global/local network efficiency defined cleanly across disconnected components via inverse shortest-path distances"
+      - ref_id: rubinov2010_neuroimage
+        citation_short: "Rubinov M, Sporns O (2010) NeuroImage 52(3):1059-1069"
+        doi: "10.1016/j.neuroimage.2009.10.003"
+        url: "https://doi.org/10.1016/j.neuroimage.2009.10.003"
+        peer_review_status: "peer_reviewed"
+        claim_scope: "Standardization of weighted/directed graph measures for brain connectomes including efficiency, component fragmentation, and lesion resilience"
+      - ref_id: fornito2015_nrn
+        citation_short: "Fornito A, Zalesky A, Breakspear M (2015) Nat Rev Neurosci 16(3):159-172"
+        doi: "10.1038/nrn3901"
+        url: "https://doi.org/10.1038/nrn3901"
+        peer_review_status: "peer_reviewed"
+        claim_scope: "Connectomic hub vulnerability and network degeneration frameworks (framing structural vulnerability strictly without clinical extrapolation)"
+      - ref_id: aerts2016_brain
+        citation_short: "Aerts H, Fias W, Caeyenberghs K, Marinazzo D (2016) Brain 139(12):3063-3083"
+        doi: "10.1093/brain/aww194"
+        url: "https://doi.org/10.1093/brain/aww194"
+        peer_review_status: "peer_reviewed"
+        claim_scope: "Comparative impact of localized node vs edge lesions and centrality-dependent degradation on structural and functional brain networks"
+      - ref_id: mckellar2020_elife
+        citation_short: "McKellar CE, Siwanowicz I, Dickson BJ, Simpson JH (2020) eLife 9:e54978"
+        doi: "10.7554/eLife.54978"
+        url: "https://doi.org/10.7554/eLife.54978"
+        peer_review_status: "peer_reviewed"
+        claim_scope: "Motor neuron organization for Drosophila proboscis extension including MN9 anchoring the feeding-motor readout"
+      - ref_id: lin2024_nature
+        citation_short: "Lin A, Dorkenwald S, Seung HS et al. (2024) Nature 634(8032):153-165"
+        doi: "10.1038/s41586-024-07968-y"
+        url: "https://doi.org/10.1038/s41586-024-07968-y"
+        peer_review_status: "peer_reviewed"
+        claim_scope: "Whole-brain Drosophila connectome network statistics, strongly connected components, and hub/path architecture in FlyWire FAFB"

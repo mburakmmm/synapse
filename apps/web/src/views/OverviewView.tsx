@@ -68,6 +68,8 @@ const GLOSSARY_KEYS: Array<{
   { id: "homeostat", titleKey: "glossHomeostatTitle", defKey: "glossHomeostatDef" },
   { id: "plasticity", titleKey: "glossPlasticityTitle", defKey: "glossPlasticityDef" },
   { id: "extinction", titleKey: "glossExtinctionTitle", defKey: "glossExtinctionDef" },
+  { id: "ablation", titleKey: "glossAblationTitle", defKey: "glossAblationDef" },
+  { id: "fragmentation", titleKey: "glossFragTitle", defKey: "glossFragDef" },
 ];
 
 export function moduleStateBadge(
@@ -121,6 +123,12 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
   const addictionPrimary =
     studies?.addiction?.pilot?.contrasts.find((c) => c.contrast_name.includes("acq")) ??
     studies?.addiction?.pilot?.contrasts[0];
+  const neuroL0Gate = studies?.neuro?.l0_gate ?? null;
+  const neuroL0Summary = studies?.neuro?.l0_summary ?? null;
+  const neuroPrimary =
+    studies?.neuro?.pilot?.contrasts.find((c) =>
+      c.contrast_name.includes("mn9r_cell_loss_top12_vs_intact"),
+    ) ?? studies?.neuro?.pilot?.contrasts[0];
   const primaryBench = benchmarks[0]?.report;
 
   if (uiMode === "simple") {
@@ -315,6 +323,58 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
                       hops: 1,
                       direction: "both",
                       minSynapses: 30,
+                      maxNodes: 75,
+                    })
+                  }
+                >
+                  {t("open3dBtn")}
+                </button>
+              </div>
+            </div>
+
+            <div className="story-card">
+              <div>
+                <div className="card-header" style={{ marginBottom: 6 }}>
+                  <h3>{t("simpleNeuroTitle")}</h3>
+                  <StatusBadge
+                    label={neuroL0Gate?.overall_passed ? t("stateExperimental") : t("statePlanned")}
+                    tone={neuroL0Gate?.overall_passed ? "info" : "neutral"}
+                  />
+                </div>
+                <div className="story-card-metric">
+                  {neuroPrimary
+                    ? `${neuroPrimary.mean_difference_hz >= 0 ? "+" : ""}${neuroPrimary.mean_difference_hz.toFixed(1)} Hz`
+                    : neuroL0Summary
+                      ? `${(
+                          (neuroL0Summary.curve_points.find(
+                            (p) => p.arm_type === "targeted_cell_loss" && p.step_k === 12,
+                          )?.weighted_eff_ratio ?? 1) * 100
+                        ).toFixed(1)}% L0 Eff`
+                      : t("noneDash")}
+                </div>
+                <p style={{ fontSize: "0.83rem", color: "var(--text-secondary)", marginBottom: 0 }}>
+                  {neuroPrimary || neuroL0Gate ? t("simpleNeuroSummary") : t("simpleMissingNote")}
+                </p>
+              </div>
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                <button
+                  type="button"
+                  className="btn btn-sm"
+                  onClick={() => onNavigateModule("neuro")}
+                >
+                  {t("readStoryBtn")}
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-secondary btn-sm"
+                  onClick={() =>
+                    onExploreCircuit3D({
+                      datasetId: "flywire_fafb_v630",
+                      seedIds:
+                        "720575940660219265, 720575940645521262, 720575940623211725, 720575940619853515, 720575940607272649, 720575940626038714",
+                      hops: 1,
+                      direction: "both",
+                      minSynapses: 15,
                       maxNodes: 75,
                     })
                   }

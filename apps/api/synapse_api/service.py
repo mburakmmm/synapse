@@ -20,6 +20,7 @@ from synapse_core import (
     DirectedConnectomeGraph,
     LIFParameters,
     MBPlasticityParameters,
+    TopologyAnalysisParameters,
     extract_bounded_subgraph,
     validate_model_spec,
 )
@@ -339,7 +340,25 @@ def _serialize_circadian_model_entry(params: CircadianHomeostaticParameters) -> 
     }
 
 
+def _serialize_topology_model_entry(params: TopologyAnalysisParameters) -> dict[str, Any]:
+    return {
+        "model_id": params.model_id,
+        "model_revision": params.model_revision,
+        "model_level": params.model_level,
+        "parameter_manifest_sha256": params.canonical_sha256(),
+        "solver": "csgraph_dijkstra",
+        "dt_s": 0.0,
+        "parameter_source": params.parameter_source,
+        "parameters": {
+            "min_synapse_threshold": params.min_synapse_threshold,
+            "excitatory_only_pathway": params.excitatory_only_pathway,
+            "distance_weighting": params.distance_weighting,
+        },
+    }
+
+
 def list_models_and_backends() -> dict[str, Any]:
+    topology_l0 = TopologyAnalysisParameters()
     default_lif = LIFParameters()
     shiu_lif = LIFParameters.shiu2024_reference()
     plasticity_l2 = MBPlasticityParameters()
@@ -347,6 +366,7 @@ def list_models_and_backends() -> dict[str, Any]:
     cpu_caps = Brian2CPUBackend().capabilities()
     return {
         "models": [
+            _serialize_topology_model_entry(topology_l0),
             _serialize_model_entry(default_lif),
             _serialize_model_entry(shiu_lif),
             _serialize_plasticity_model_entry(plasticity_l2),
@@ -840,6 +860,13 @@ def list_research_studies(settings: Settings) -> dict[str, Any]:
             "failed_run_count": add_win_raw.get("failed_run_count", 0),
         }
 
+    neuro_l0_dir = settings.runs_root / "phase5c_neuro001_l0_topology"
+    neuro_l0_gate = _read_json_if_file(neuro_l0_dir / "l0_verification_gate.json")
+    neuro_l0_summary = _read_json_if_file(neuro_l0_dir / "l0_ablation_summary.json")
+    neuro_malecns_audit = _read_json_if_file(neuro_l0_dir / "malecns_l0_structural_audit.json")
+    neuro_pilot_dir = settings.runs_root / "phase5c_neuro001_exploratory_pilot"
+    neuro_pilot = _read_json_if_file(neuro_pilot_dir / "pilot_summary.json")
+
     met_available = len(met_conf_list) > 0
     pain_available = pain_conf is not None
     sleep_available = sleep_l3_gate is not None or sleep_pilot is not None
@@ -857,6 +884,14 @@ def list_research_studies(settings: Settings) -> dict[str, Any]:
         addiction_phase = "l2_verified"
     else:
         addiction_phase = "planned"
+
+    neuro_available = neuro_l0_gate is not None or neuro_pilot is not None
+    if neuro_l0_gate is not None and neuro_pilot is not None:
+        neuro_phase = "l0_verified_and_l1_pilot_complete"
+    elif neuro_l0_gate is not None:
+        neuro_phase = "l0_verified"
+    else:
+        neuro_phase = "planned"
 
     modules = [
         {
@@ -911,11 +946,11 @@ def list_research_studies(settings: Settings) -> dict[str, Any]:
         {
             "module_id": "neuro",
             "phase": "phase5c",
-            "ui_state": "planned",
-            "simulation_phase": "planned",
-            "dataset_id": None,
-            "protocol_id": None,
-            "available_on_disk": False,
+            "ui_state": "experimental" if neuro_available else "planned",
+            "simulation_phase": neuro_phase,
+            "dataset_id": "flywire_fafb_v630" if neuro_available else None,
+            "protocol_id": "P5-NEURO-001-PILOT" if neuro_pilot is not None else None,
+            "available_on_disk": neuro_available,
         },
         {
             "module_id": "pharma",
@@ -959,6 +994,12 @@ def list_research_studies(settings: Settings) -> dict[str, Any]:
             "l2_paradigm": add_l2_paradigm,
             "pilot": add_pilot,
             "windowed": add_win_trimmed,
+        },
+        "neuro": {
+            "l0_gate": neuro_l0_gate,
+            "l0_summary": neuro_l0_summary,
+            "malecns_l0_audit": neuro_malecns_audit,
+            "pilot": neuro_pilot,
         },
     }
 
