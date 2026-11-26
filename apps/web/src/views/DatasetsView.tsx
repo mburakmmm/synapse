@@ -59,6 +59,14 @@ const PRESET_CONFIGS: Record<string, Omit<CircuitPresetRequest, "nonce">> = {
     minSynapses: 30,
     maxNodes: 75,
   },
+  malecns_pharma: {
+    datasetId: "malecns_v1_0",
+    seedIds: "523539, 558778, 10592, 902566, 811380",
+    hops: 1,
+    direction: "both",
+    minSynapses: 15,
+    maxNodes: 75,
+  },
   flywire_fafb_v630: {
     datasetId: "flywire_fafb_v630",
     seedIds: "720575940660219265, 720575940645521262",
@@ -679,6 +687,13 @@ export const DatasetsView: React.FC<DatasetsViewProps> = ({
                 onClick={() => handleApplyPreset(PRESET_CONFIGS.malecns_addiction)}
               >
                 {t("presetAddiction")}
+              </button>
+              <button
+                type="button"
+                className="pill-btn"
+                onClick={() => handleApplyPreset(PRESET_CONFIGS.malecns_pharma)}
+              >
+                {t("presetPharma")}
               </button>
             </>
           )}

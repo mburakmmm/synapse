@@ -9,6 +9,7 @@ import { useI18n } from "../i18n/LanguageContext";
 import type { CircuitPresetRequest } from "./DatasetsView";
 
 export type ModuleSectionTab =
+  | "pharma"
   | "neuro"
   | "addiction"
   | "sleep"
@@ -16,6 +17,28 @@ export type ModuleSectionTab =
   | "metabolic"
   | "benchmark"
   | "planned";
+
+const PHARMA_CONDITIONS_ORDER = [
+  "sham_zero_stimulus",
+  "vehicle_baseline_40hz",
+  "rdl_gaba_antag_50pct",
+  "rdl_gaba_antag_100pct",
+  "rdl_gaba_pam_175pct",
+  "nachr_ach_atten_50pct",
+  "combined_rdl_pam_plus_nachr_atten",
+  "matched_ctrl_rdl_antag_100pct",
+];
+
+const PHARMA_COND_SHORT: Record<string, string> = {
+  sham_zero_stimulus: "Sham 0",
+  vehicle_baseline_40hz: "Vehicle 40Hz",
+  rdl_gaba_antag_50pct: "Rdl Antag 50%",
+  rdl_gaba_antag_100pct: "Rdl Block 100%",
+  rdl_gaba_pam_175pct: "Rdl PAM 1.75x",
+  nachr_ach_atten_50pct: "nAChR 50%",
+  combined_rdl_pam_plus_nachr_atten: "PAM + nAChR",
+  matched_ctrl_rdl_antag_100pct: "Ctrl Rdl 100%",
+};
 
 const NEURO_CONDITIONS_ORDER = [
   "sham_zero_stimulus",
@@ -148,8 +171,88 @@ export const ModulesView: React.FC<ModulesViewProps> = ({
   const neuroL0Summary = studies?.neuro?.l0_summary ?? null;
   const neuroMalecns = studies?.neuro?.malecns_l0_audit ?? null;
   const neuroPilot = studies?.neuro?.pilot ?? null;
+  const pharmaL2Gate = studies?.pharma?.l2_gate ?? null;
+  const pharmaL2Panel = studies?.pharma?.l2_panel ?? null;
+  const pharmaPilot = studies?.pharma?.pilot ?? null;
   const metConf = studies?.metabolic.confirmatory ?? [];
   const metRob = studies?.metabolic.robustness ?? {};
+
+  const pharmaL2CurveTraces = useMemo<PlotlyTrace[]>(() => {
+    if (!pharmaL2Panel) return [];
+    const rdlAntag = pharmaL2Panel.rdl_gaba_a_noncomp_curve;
+    const rdlPam = pharmaL2Panel.rdl_gaba_a_pam_curve;
+    const achNoncomp = pharmaL2Panel.nachr_ach_noncomp_curve;
+    return [
+      {
+        type: "scatter",
+        mode: "lines",
+        name: "Rdl (GABA_A) Antagonist Scale",
+        x: rdlAntag.map((p) => p.log10_ratio),
+        y: rdlAntag.map((p) => p.conductance_scale),
+        line: { color: "#D55E00", width: 2.5 },
+      },
+      {
+        type: "scatter",
+        mode: "lines",
+        name: "Rdl (GABA_A) PAM Gain",
+        x: rdlPam.map((p) => p.log10_ratio),
+        y: rdlPam.map((p) => p.conductance_scale),
+        line: { color: "#009E73", width: 2.5 },
+      },
+      {
+        type: "scatter",
+        mode: "lines",
+        name: "nAChR (ACH) Attenuation Scale",
+        x: achNoncomp.map((p) => p.log10_ratio),
+        y: achNoncomp.map((p) => p.conductance_scale),
+        line: { color: "#0072B2", width: 2, dash: "dash" },
+      },
+    ];
+  }, [pharmaL2Panel]);
+
+  const pharmaL1ReadoutTraces = useMemo<PlotlyTrace[]>(() => {
+    const condMap = pharmaPilot?.condition_readout_means;
+    if (!condMap) return [];
+    const xLabels = PHARMA_CONDITIONS_ORDER.map((c) => PHARMA_COND_SHORT[c] ?? c);
+    return [
+      {
+        type: "bar",
+        name: "523539 (ANXXX027_L)",
+        x: xLabels,
+        y: PHARMA_CONDITIONS_ORDER.map((c) => condMap[c]?.anxxx027_l_523539_mean_hz ?? 0),
+        error_y: {
+          type: "data",
+          array: PHARMA_CONDITIONS_ORDER.map((c) => condMap[c]?.anxxx027_l_523539_sd_hz ?? 0),
+          visible: true,
+        },
+        marker: { color: "#D55E00" },
+      },
+      {
+        type: "bar",
+        name: "558778 (AN08B012_R)",
+        x: xLabels,
+        y: PHARMA_CONDITIONS_ORDER.map((c) => condMap[c]?.an08b012_r_558778_mean_hz ?? 0),
+        error_y: {
+          type: "data",
+          array: PHARMA_CONDITIONS_ORDER.map((c) => condMap[c]?.an08b012_r_558778_sd_hz ?? 0),
+          visible: true,
+        },
+        marker: { color: "#0072B2" },
+      },
+      {
+        type: "bar",
+        name: "10592 (AN08B012_L)",
+        x: xLabels,
+        y: PHARMA_CONDITIONS_ORDER.map((c) => condMap[c]?.an08b012_l_10592_mean_hz ?? 0),
+        error_y: {
+          type: "data",
+          array: PHARMA_CONDITIONS_ORDER.map((c) => condMap[c]?.an08b012_l_10592_sd_hz ?? 0),
+          visible: true,
+        },
+        marker: { color: "#009E73" },
+      },
+    ];
+  }, [pharmaPilot]);
 
   const neuroL0CurveTraces = useMemo<PlotlyTrace[]>(() => {
     const pts = neuroL0Summary?.curve_points ?? [];
@@ -548,6 +651,18 @@ export const ModulesView: React.FC<ModulesViewProps> = ({
         <button
           type="button"
           className="pill-btn"
+          aria-pressed={activeSubTab === "pharma"}
+          onClick={() => onSelectSubTab("pharma")}
+        >
+          <span>{t("tabPharma")}</span>
+          <StatusBadge
+            label={pharmaL2Gate || pharmaPilot ? t("stateExperimental") : t("statePlanned")}
+            tone={pharmaL2Gate || pharmaPilot ? "info" : "neutral"}
+          />
+        </button>
+        <button
+          type="button"
+          className="pill-btn"
           aria-pressed={activeSubTab === "neuro"}
           onClick={() => onSelectSubTab("neuro")}
         >
@@ -621,6 +736,354 @@ export const ModulesView: React.FC<ModulesViewProps> = ({
           <StatusBadge label={t("statePlanned")} tone="neutral" />
         </button>
       </div>
+
+      {activeSubTab === "pharma" && (
+        <>
+          {!pharmaL2Gate && !pharmaPilot ? (
+            <div className="card">
+              <div className="empty-state">
+                <strong>{t("modulesMissingTitle")}</strong>
+                <p style={{ marginBottom: 0 }}>{t("modulesMissingBody")}</p>
+              </div>
+            </div>
+          ) : (
+            <>
+              <div className="card">
+                <div className="card-header">
+                  <div>
+                    <h2>{t("pharmaBannerTitle")}</h2>
+                    <p className="card-subtitle mono">
+                      receptor_conductance_modulation_v1 (L2) + malecns_v1_0 · synapse_lif_v1 (L1){" "}
+                      {pharmaPilot?.git_commits?.[0] ? `· git ${pharmaPilot.git_commits[0].slice(0, 8)}` : ""}
+                    </p>
+                  </div>
+                  <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                    <StatusBadge label={t("stateExperimental")} tone="info" />
+                    <StatusBadge label={t("ruoBadge")} tone="ruo" />
+                    <button
+                      type="button"
+                      className="btn btn-sm"
+                      onClick={() =>
+                        onExploreCircuit3D({
+                          datasetId: "malecns_v1_0",
+                          seedIds: "523539, 558778, 10592, 902566, 811380",
+                          hops: 1,
+                          direction: "both",
+                          minSynapses: 15,
+                          maxNodes: 75,
+                        })
+                      }
+                    >
+                      {t("exploreIn3d")}
+                    </button>
+                  </div>
+                </div>
+
+                {pharmaL2Gate && (
+                  <div className="kpi-grid">
+                    <div className="kpi-card">
+                      <div className="kpi-label">{t("pharmaGateHill")}</div>
+                      <div className="kpi-value">0 / 0.5 / 1.0</div>
+                      <div className="kpi-sub">
+                        <StatusBadge
+                          label={
+                            pharmaL2Gate.gates.hill_boundary_and_half_max.passed
+                              ? t("statusPass")
+                              : t("statusFail")
+                          }
+                          tone={pharmaL2Gate.gates.hill_boundary_and_half_max.passed ? "ok" : "warn"}
+                        />
+                      </div>
+                    </div>
+                    <div className="kpi-card">
+                      <div className="kpi-label">{t("pharmaGateSchild")}</div>
+                      <div className="kpi-value">
+                        {pharmaL2Gate.gates.schild_linearity_and_slope.schild_slope.toFixed(6)}
+                      </div>
+                      <div className="kpi-sub">
+                        <StatusBadge
+                          label={
+                            pharmaL2Gate.gates.schild_linearity_and_slope.passed
+                              ? t("statusPass")
+                              : t("statusFail")
+                          }
+                          tone={
+                            pharmaL2Gate.gates.schild_linearity_and_slope.passed ? "ok" : "warn"
+                          }
+                        />
+                      </div>
+                    </div>
+                    <div className="kpi-card">
+                      <div className="kpi-label">{t("pharmaGateBidir")}</div>
+                      <div className="kpi-value">
+                        {pharmaL2Gate.gates.noncompetitive_vs_pam_directionality.antag_scale_at_ic50.toFixed(
+                          1,
+                        )}{" "}
+                        vs{" "}
+                        {pharmaL2Gate.gates.noncompetitive_vs_pam_directionality.pam_scale_at_km.toFixed(
+                          1,
+                        )}
+                      </div>
+                      <div className="kpi-sub">
+                        <StatusBadge
+                          label={
+                            pharmaL2Gate.gates.noncompetitive_vs_pam_directionality.passed
+                              ? t("statusPass")
+                              : t("statusFail")
+                          }
+                          tone={
+                            pharmaL2Gate.gates.noncompetitive_vs_pam_directionality.passed
+                              ? "ok"
+                              : "warn"
+                          }
+                        />
+                      </div>
+                    </div>
+                    <div className="kpi-card">
+                      <div className="kpi-label">{t("pharmaGateBliss")}</div>
+                      <div className="kpi-value">
+                        {pharmaL2Gate.gates.bliss_independence_identity.bliss_0_5_plus_0_5.toFixed(
+                          2,
+                        )}{" "}
+                        /{" "}
+                        {pharmaL2Gate.gates.bliss_independence_identity.bliss_0_3_plus_0_4.toFixed(
+                          2,
+                        )}
+                      </div>
+                      <div className="kpi-sub">
+                        <StatusBadge
+                          label={
+                            pharmaL2Gate.gates.bliss_independence_identity.passed
+                              ? t("statusPass")
+                              : t("statusFail")
+                          }
+                          tone={
+                            pharmaL2Gate.gates.bliss_independence_identity.passed ? "ok" : "warn"
+                          }
+                        />
+                      </div>
+                    </div>
+                    <div className="kpi-card">
+                      <div className="kpi-label">{t("pharmaGateRuo")}</div>
+                      <div className="kpi-value">
+                        named={String(pharmaL2Gate.gates.ruo_dose_independent_guard.named_compound_gate_enabled)}
+                      </div>
+                      <div className="kpi-sub">
+                        <StatusBadge
+                          label={
+                            pharmaL2Gate.gates.ruo_dose_independent_guard.passed
+                              ? t("statusPass")
+                              : t("statusFail")
+                          }
+                          tone={pharmaL2Gate.gates.ruo_dose_independent_guard.passed ? "ok" : "warn"}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {uiMode === "simple" && (
+                <div className="notice-box" style={{ marginBottom: 12 }}>
+                  <strong>{t("simplePharmaTitle")}: </strong>
+                  {t("simplePharmaSummary")}
+                </div>
+              )}
+
+              <div className="grid-2">
+                {pharmaL2Panel && (
+                  <div className="card">
+                    <div className="card-header">
+                      <h3>{t("pharmaChartL2Title")}</h3>
+                    </div>
+                    <PlotlyChart
+                      theme={theme}
+                      ariaLabel={t("pharmaChartL2Title")}
+                      traces={pharmaL2CurveTraces}
+                      layout={{
+                        height: 320,
+                        xaxis: { title: "log10([Ligand] / Reference Affinity)" },
+                        yaxis: { title: "Conductance Scale Factor", range: [0, 2.1] },
+                        margin: { l: 55, r: 20, t: 25, b: 55 },
+                      }}
+                    />
+                  </div>
+                )}
+
+                {pharmaPilot && (
+                  <div className="card">
+                    <div className="card-header">
+                      <h3>{t("pharmaChartL1Title")}</h3>
+                      <span className="mono" style={{ fontSize: "0.78rem" }}>
+                        {pharmaPilot.succeeded_run_count}/{pharmaPilot.total_runs} succeeded · sham=
+                        {pharmaPilot.sham_max_spikes}
+                      </span>
+                    </div>
+                    <PlotlyChart
+                      theme={theme}
+                      ariaLabel={t("pharmaChartL1Title")}
+                      traces={pharmaL1ReadoutTraces}
+                      layout={{
+                        barmode: "group",
+                        height: 320,
+                        yaxis: { title: t("chartYAxisHz"), rangemode: "tozero" },
+                        xaxis: { tickangle: -18 },
+                        margin: { l: 55, r: 20, t: 25, b: 85 },
+                      }}
+                    />
+                  </div>
+                )}
+              </div>
+
+              {uiMode === "expert" ? (
+                <>
+                  {pharmaL2Panel && (
+                    <div className="card">
+                      <div className="card-header">
+                        <h3>{t("pharmaSnapshotTableTitle")}</h3>
+                      </div>
+                      <div className="table-wrap">
+                        <table>
+                          <thead>
+                            <tr>
+                              <th>{t("colContrast")}</th>
+                              <th>Target</th>
+                              <th>Ratio / Label</th>
+                              <th>Rdl Scale</th>
+                              <th>nAChR Scale</th>
+                              <th>523539 (Hz)</th>
+                              <th>558778 (Hz)</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {pharmaL2Panel.l1_coupling_snapshots.map((snap) => {
+                              const ro = pharmaPilot?.condition_readout_means?.[snap.condition_id];
+                              return (
+                                <tr key={snap.condition_id}>
+                                  <td className="mono">{snap.condition_id}</td>
+                                  <td>{snap.receptor_target}</td>
+                                  <td className="mono">{snap.normalized_ratio_label}</td>
+                                  <td className="mono">{snap.rdl_gaba_scale.toFixed(2)}x</td>
+                                  <td className="mono">{snap.nachr_ach_scale.toFixed(2)}x</td>
+                                  <td className="mono">
+                                    {ro ? ro.anxxx027_l_523539_mean_hz.toFixed(3) : t("noneDash")}
+                                  </td>
+                                  <td className="mono">
+                                    {ro ? ro.an08b012_r_558778_mean_hz.toFixed(3) : t("noneDash")}
+                                  </td>
+                                </tr>
+                              );
+                            })}
+                          </tbody>
+                        </table>
+                      </div>
+                      {pharmaPilot?.bliss_evaluation && (
+                        <div className="meta-strip" style={{ marginTop: 10 }}>
+                          <span className="mono">
+                            523539 Bliss null={pharmaPilot.bliss_evaluation.expected_bliss_suppression_523539.toFixed(4)}{" "}
+                            vs observed={pharmaPilot.bliss_evaluation.observed_combined_suppression_523539.toFixed(4)}{" "}
+                            (excess={pharmaPilot.bliss_evaluation.bliss_excess_vs_null_523539 >= 0 ? "+" : ""}
+                            {pharmaPilot.bliss_evaluation.bliss_excess_vs_null_523539.toFixed(4)})
+                          </span>
+                          <span className="mono">
+                            558778 Bliss null={pharmaPilot.bliss_evaluation.expected_bliss_suppression_558778.toFixed(4)}{" "}
+                            vs observed={pharmaPilot.bliss_evaluation.observed_combined_suppression_558778.toFixed(4)}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {pharmaPilot && (
+                    <div className="card">
+                      <div className="card-header">
+                        <h3>{t("pharmaContrastsTitle")}</h3>
+                      </div>
+                      <div className="table-wrap">
+                        <table>
+                          <thead>
+                            <tr>
+                              <th>{t("colContrast")}</th>
+                              <th>{t("colNeuron")}</th>
+                              <th>{t("colBaseMean")}</th>
+                              <th>{t("colTreatMean")}</th>
+                              <th>{t("colDelta")}</th>
+                              <th>{t("colCi95")}</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {pharmaPilot.contrasts.map((row) => (
+                              <tr key={row.contrast_name}>
+                                <td className="mono">{row.contrast_name}</td>
+                                <td className="mono">{row.neuron_id}</td>
+                                <td>
+                                  {row.baseline_mean_hz.toFixed(3)} ± {row.baseline_sd_hz.toFixed(3)}
+                                </td>
+                                <td>
+                                  {row.treatment_mean_hz.toFixed(3)} ± {row.treatment_sd_hz.toFixed(3)}
+                                </td>
+                                <td>
+                                  <strong>
+                                    {row.mean_difference_hz >= 0 ? "+" : ""}
+                                    {row.mean_difference_hz.toFixed(3)}
+                                  </strong>{" "}
+                                  ± {row.sd_difference_hz.toFixed(3)}
+                                </td>
+                                <td className="mono">
+                                  [{row.bootstrap_ci95_low_hz.toFixed(3)},{" "}
+                                  {row.bootstrap_ci95_high_hz.toFixed(3)}]
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="alert" role="note">
+                    <div>
+                      <strong>{t("pharmaLimitsTitle")}: </strong>
+                      <span>{t("pharmaLimitsBody")}</span>
+                    </div>
+                  </div>
+                </>
+              ) : (
+                pharmaPilot && (
+                  <details className="tech-details">
+                    <summary>{t("showTechDetails")}</summary>
+                    <div className="table-wrap">
+                      <table>
+                        <thead>
+                          <tr>
+                            <th>{t("colContrast")}</th>
+                            <th>{t("colNeuron")}</th>
+                            <th>{t("colDelta")}</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {pharmaPilot.contrasts.map((row) => (
+                            <tr key={row.contrast_name}>
+                              <td className="mono">{row.contrast_name}</td>
+                              <td className="mono">{row.neuron_id}</td>
+                              <td>
+                                <strong>
+                                  {row.mean_difference_hz >= 0 ? "+" : ""}
+                                  {row.mean_difference_hz.toFixed(3)} Hz
+                                </strong>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </details>
+                )
+              )}
+            </>
+          )}
+        </>
+      )}
 
       {activeSubTab === "neuro" && (
         <>

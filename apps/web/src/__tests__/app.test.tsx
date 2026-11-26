@@ -88,11 +88,11 @@ function createApiFetchMock() {
           {
             module_id: "pharma",
             phase: "phase5c",
-            ui_state: "planned",
-            simulation_phase: "planned",
-            dataset_id: null,
-            protocol_id: null,
-            available_on_disk: false,
+            ui_state: "experimental",
+            simulation_phase: "l2_verified_and_l1_pilot_complete",
+            dataset_id: "malecns_v1_0",
+            protocol_id: "P5-PHARMA-001-PILOT",
+            available_on_disk: true,
           },
           {
             module_id: "stress",
@@ -697,6 +697,138 @@ function createApiFetchMock() {
             ],
           },
         },
+        pharma: {
+          l2_gate: {
+            model_id: "receptor_conductance_modulation_v1",
+            model_level: "L2",
+            solver: "analytic_hill_schild",
+            parameter_manifest_sha256: "pharma_l2_sha",
+            overall_passed: true,
+            gates: {
+              hill_boundary_and_half_max: { passed: true, checks: [] },
+              schild_linearity_and_slope: {
+                passed: true,
+                schild_slope: 1.0,
+                schild_intercept: 0.0,
+                r_squared: 1.0,
+                max_dose_ratio_abs_error: 0.0,
+                points: [],
+              },
+              noncompetitive_vs_pam_directionality: {
+                passed: true,
+                antag_strictly_decreasing: true,
+                pam_strictly_increasing: true,
+                antag_scale_at_ic50: 0.5,
+                pam_scale_at_km: 1.5,
+              },
+              bliss_independence_identity: {
+                passed: true,
+                bliss_0_5_plus_0_5: 0.75,
+                bliss_0_3_plus_0_4: 0.58,
+                symmetry_abs_diff: 0.0,
+              },
+              ruo_dose_independent_guard: {
+                passed: true,
+                named_compound_gate_enabled: false,
+                unit_system: "dimensionless_affinity_ratios",
+              },
+            },
+          },
+          l2_panel: {
+            model_id: "receptor_conductance_modulation_v1",
+            parameter_manifest_sha256: "pharma_l2_sha",
+            named_compound_gate_enabled: false,
+            gate_overall_passed: true,
+            rdl_gaba_a_noncomp_curve: [
+              { ratio_ic50: 0.1, log10_ratio: -1.0, conductance_scale: 0.975 },
+              { ratio_ic50: 1.0, log10_ratio: 0.0, conductance_scale: 0.5 },
+            ],
+            rdl_gaba_a_pam_curve: [
+              { ratio_km: 0.1, log10_ratio: -1.0, conductance_scale: 1.06 },
+              { ratio_km: 1.0, log10_ratio: 0.0, conductance_scale: 1.5 },
+            ],
+            nachr_ach_noncomp_curve: [
+              { ratio_ic50: 0.1, log10_ratio: -1.0, conductance_scale: 0.95 },
+              { ratio_ic50: 1.0, log10_ratio: 0.0, conductance_scale: 0.5 },
+            ],
+            l1_coupling_snapshots: [
+              {
+                condition_id: "vehicle_baseline_40hz",
+                receptor_target: "none_vehicle",
+                mechanism: "baseline",
+                normalized_ratio_label: "[I]=0, [M]=0",
+                rdl_gaba_scale: 1.0,
+                nachr_ach_scale: 1.0,
+                matched_ctrl_rdl_scale: 1.0,
+              },
+              {
+                condition_id: "rdl_gaba_antag_100pct",
+                receptor_target: "Rdl (GABA_A)",
+                mechanism: "noncompetitive_block_asymptote",
+                normalized_ratio_label: "[I]/IC50 -> inf",
+                rdl_gaba_scale: 0.0,
+                nachr_ach_scale: 1.0,
+                matched_ctrl_rdl_scale: 1.0,
+              },
+            ],
+          },
+          pilot: {
+            protocol_id: "P5-PHARMA-001-PILOT",
+            dataset_id: "malecns_v1_0",
+            total_runs: 24,
+            succeeded_run_count: 24,
+            failed_run_count: 0,
+            sham_count: 3,
+            sham_max_spikes: 0,
+            wall_total_s: 600.0,
+            run_wall_mean_s: 25.0,
+            git_commits: ["5f807ef"],
+            condition_readout_means: {
+              sham_zero_stimulus: {
+                anxxx027_l_523539_mean_hz: 0.0,
+                anxxx027_l_523539_sd_hz: 0.0,
+                an08b012_r_558778_mean_hz: 0.0,
+                an08b012_r_558778_sd_hz: 0.0,
+                an08b012_l_10592_mean_hz: 0.0,
+                an08b012_l_10592_sd_hz: 0.0,
+              },
+              vehicle_baseline_40hz: {
+                anxxx027_l_523539_mean_hz: 60.0,
+                anxxx027_l_523539_sd_hz: 2.0,
+                an08b012_r_558778_mean_hz: 70.0,
+                an08b012_r_558778_sd_hz: 2.5,
+                an08b012_l_10592_mean_hz: 65.0,
+                an08b012_l_10592_sd_hz: 2.0,
+              },
+              rdl_gaba_antag_100pct: {
+                anxxx027_l_523539_mean_hz: 84.0,
+                anxxx027_l_523539_sd_hz: 2.0,
+                an08b012_r_558778_mean_hz: 82.0,
+                an08b012_r_558778_sd_hz: 2.0,
+                an08b012_l_10592_mean_hz: 75.0,
+                an08b012_l_10592_sd_hz: 2.0,
+              },
+            },
+            contrasts: [
+              {
+                contrast_name: "523539_rdl_antag100_vs_veh",
+                neuron_id: "523539",
+                baseline_condition: "vehicle_baseline_40hz",
+                treatment_condition: "rdl_gaba_antag_100pct",
+                n_pairs: 3,
+                failed_run_count: 0,
+                baseline_mean_hz: 60.0,
+                baseline_sd_hz: 2.0,
+                treatment_mean_hz: 84.0,
+                treatment_sd_hz: 2.0,
+                mean_difference_hz: 24.0,
+                sd_difference_hz: 1.0,
+                bootstrap_ci95_low_hz: 23.0,
+                bootstrap_ci95_high_hz: 25.0,
+              },
+            ],
+          },
+        },
       });
     }
     if (target.endsWith("/api/v1/datasets")) {
@@ -804,6 +936,16 @@ function createApiFetchMock() {
             dt_s: 0.05,
             parameter_source: "Aso 2014 / Felsenberg 2018",
             parameters: { tau_e_s: 4.0, eta_ltd_pam: 0.09 },
+          },
+          {
+            model_id: "receptor_conductance_modulation_v1",
+            model_revision: "1.0",
+            model_level: "L2",
+            parameter_manifest_sha256: "pharmasha",
+            solver: "analytic_hill_schild",
+            dt_s: 0.0,
+            parameter_source: "Bliss 1939 / Schild 1959 / Matsuda 2020",
+            parameters: { rdl_gaba_a_hill_n: 1.6, nachr_ach_hill_n: 1.3 },
           },
           {
             model_id: "leloup_goldbeter_1998_two_process_v1",
@@ -1044,10 +1186,13 @@ describe("SYNAPSE Research Workbench UI", () => {
     expect(window.localStorage.getItem("synapse.uiMode")).toBe("expert");
     expect(await screen.findByText(/128\.5 \/ 512 GB/)).toBeInTheDocument();
 
-    // Modules tab: real Neuro, Addiction, Sleep, Pain, Metabolic, and Planned modules
+    // Modules tab: real Pharma, Neuro, Addiction, Sleep, Pain, Metabolic, and Planned modules
     fireEvent.click(screen.getByRole("tab", { name: /Research Modules/ }));
     expect(await screen.findByText("120 / 120")).toBeInTheDocument();
     expect(screen.getByText("+20.667")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /Pharma · P5-PHARMA-001/ }));
+    expect(await screen.findByText(/1\.000000/)).toBeInTheDocument();
+    expect(screen.getByText("+24.000")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: /Neuro · P5-NEURO-001/ }));
     expect(await screen.findByText(/8000 vs 0/)).toBeInTheDocument();
     expect(screen.getByText("-56.333")).toBeInTheDocument();
@@ -1060,7 +1205,7 @@ describe("SYNAPSE Research Workbench UI", () => {
     fireEvent.click(screen.getByRole("button", { name: /Metabolic · P4-MET-001/ }));
     expect(await screen.findByText("+30.900")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: /Planned Modules/ }));
-    expect(screen.getByText(/Pharmacology & Receptor Modulation/)).toBeInTheDocument();
+    expect(screen.getByText(/Stress Circuitry/)).toBeInTheDocument();
 
     // Datasets & Circuits tab: 64-bit string ID + confidence column + 3D/2D controls
     fireEvent.click(screen.getByRole("tab", { name: /Datasets & Circuits/ }));
@@ -1075,6 +1220,9 @@ describe("SYNAPSE Research Workbench UI", () => {
     fireEvent.click(screen.getByRole("tab", { name: /Models & Protocols/ }));
     expect(screen.getByText(/L0 Topology · solver: csgraph_dijkstra/)).toBeInTheDocument();
     expect(screen.getByText(/L2 Plasticity · solver: rk4/)).toBeInTheDocument();
+    expect(
+      screen.getByText(/L2 Pharmacology · solver: analytic_hill_schild/),
+    ).toBeInTheDocument();
     expect(screen.getByText(/L3 ODE · solver: RK45/)).toBeInTheDocument();
     expect(screen.queryByText(/dg=undefined/)).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Generate Draft YAML" }));

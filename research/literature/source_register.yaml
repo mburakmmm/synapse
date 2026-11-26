@@ -382,3 +382,60 @@ sources:
         url: "https://doi.org/10.1038/s41586-024-07968-y"
         peer_review_status: "peer_reviewed"
         claim_scope: "Whole-brain Drosophila connectome network statistics, strongly connected components, and hub/path architecture in FlyWire FAFB"
+
+  - id: phase5c_pharma_sources
+    purpose: "Verified peer-reviewed literature basis for L2 dose-independent Drosophila receptor kinetics (Hill, Schild, Rdl GABA_A, neuronal nAChR) and Bliss independence"
+    retrieved_at_utc: "2026-11-26"
+    references:
+      - ref_id: bliss1939_annapplbiol
+        citation_short: "Bliss CI (1939) Ann Appl Biol 26(3):585-615"
+        doi: "10.1111/j.1744-7348.1939.tb06990.x"
+        url: "https://doi.org/10.1111/j.1744-7348.1939.tb06990.x"
+        peer_review_status: "peer_reviewed"
+        claim_scope: "Original formulation of Bliss independence joint-action null model E_AB = E_A + E_B - E_A*E_B for independent target sites"
+      - ref_id: arunlakshana1959_bjp
+        citation_short: "Arunlakshana O, Schild HO (1959) Br J Pharmacol Chemother 14(1):48-58"
+        doi: "10.1111/j.1476-5381.1959.tb00928.x"
+        url: "https://doi.org/10.1111/j.1476-5381.1959.tb00928.x"
+        peer_review_status: "peer_reviewed"
+        claim_scope: "Quantitative Schild regression log10(DR - 1) vs log10([B]) verifying unit-slope competitive receptor antagonism"
+      - ref_id: ffrenchconstant1993_nature
+        citation_short: "ffrench-Constant RH, Rocheleau TA, Steichen JC, Chalmers AE (1993) Nature 363:449-451"
+        doi: "10.1038/363449a0"
+        url: "https://doi.org/10.1038/363449a0"
+        peer_review_status: "peer_reviewed"
+        claim_scope: "Identification and heterologous pharmacology of Drosophila Rdl GABA-gated chloride channel subunits"
+      - ref_id: lee1999_jneurosci
+        citation_short: "Lee D, O'Dowd DK (1999) J Neurosci 19(13):5311-5321"
+        doi: "10.1523/JNEUROSCI.19-13-05311.1999"
+        pmid: "10377342"
+        pmcid: "PMC6782340"
+        url: "https://doi.org/10.1523/JNEUROSCI.19-13-05311.1999"
+        peer_review_status: "peer_reviewed"
+        claim_scope: "Fast excitatory cholinergic synaptic transmission in Drosophila central neurons mediated by functional nicotinic ACh receptors"
+      - ref_id: su2003_jneurosci
+        citation_short: "Su H, O'Dowd DK (2003) J Neurosci 23(27):9246-9253"
+        doi: "10.1523/JNEUROSCI.23-27-09246.2003"
+        pmid: "14534259"
+        pmcid: "PMC6740836"
+        url: "https://doi.org/10.1523/JNEUROSCI.23-27-09246.2003"
+        peer_review_status: "peer_reviewed"
+        claim_scope: "Fast inhibitory synaptic currents in Drosophila Kenyon cells mediated by picrotoxin/fipronil-sensitive Rdl-like GABA receptors"
+      - ref_id: buckingham2005_insectsci
+        citation_short: "Buckingham SD, Sattelle DB (2005) Comprehensive Molecular Insect Science Vol 5:107-142"
+        doi: "10.1016/B0-44-451924-6/00095-8"
+        url: "https://doi.org/10.1016/B0-44-451924-6/00095-8"
+        peer_review_status: "peer_reviewed"
+        claim_scope: "Insect GABA receptor pharmacology, Rdl homomer Hill cooperativity, and allosteric site modulation without clinical extrapolation"
+      - ref_id: liu2007_neuron
+        citation_short: "Liu X, Krause WC, Davis RL (2007) Neuron 56(6):1090-1102"
+        doi: "10.1016/j.neuron.2007.10.036"
+        url: "https://doi.org/10.1016/j.neuron.2007.10.036"
+        peer_review_status: "peer_reviewed"
+        claim_scope: "Drosophila GABAA receptor Rdl suppresses olfactory associative plasticity via inhibitory gating in vivo"
+      - ref_id: matsuda2020_annurev
+        citation_short: "Matsuda K, Ihara M, Sattelle DB (2020) Annu Rev Pharmacol Toxicol 60:241-255"
+        doi: "10.1146/annurev-pharmtox-010818-021747"
+        url: "https://doi.org/10.1146/annurev-pharmtox-010818-021747"
+        peer_review_status: "peer_reviewed"
+        claim_scope: "Mechanistic diversity and agonist/antagonist pharmacology of insect nicotinic acetylcholine receptors"

@@ -1,0 +1,573 @@
+schema_version: '1.0'
+protocol_id: P5-PHARMA-001-PILOT
+revision: 1
+status: draft
+analysis_intent: exploratory
+question: In adult male Drosophila MaleCNS v1.0, how does L2 dose-independent receptor
+  modulation (bidirectional Rdl GABA_A antagonism/PAM and orthogonal nAChR ACH attenuation)
+  shift ascending relay (523539, 558778, 10592) activity relative to vehicle baseline,
+  zero-stimulus sham, matched VNC GABA controls, and Bliss independence dual-target
+  expectations?
+hypothesis: Exploratory pilot (N=3 paired seeds) testing Rdl noncompetitive block
+  (50%/100% disinhibition), Rdl positive allosteric modulation (1.75x suppression),
+  nAChR 50% attenuation, off-pathway matched VNC GABA specificity, and combined dual-target
+  suppression against the Bliss independence null.
+biological_unit: malecns_v1_0_single_male_specimen
+simulation_unit: paired_seed_run
+sources:
+- dataset_id: malecns_v1_0
+  release: v1.0
+  manifest_sha256: 6df05f9f76e98e55f5e4f13e195ebd604ec41c644751c47a79f9855a92d5f496
+model:
+  id: synapse_lif_v1
+  revision: '1.0'
+  parameter_manifest_sha256: 33d49431529574cddc721a3628ed1c65ad2e36890e2720fe6ef921837348bece
+  backend: brian2_cpu
+  parameters:
+    v_rest_v: -0.052
+    v_reset_v: -0.052
+    v_threshold_v: -0.045
+    tau_m_s: 0.02
+    tau_syn_s: 0.005
+    t_ref_s: 0.0022
+    delay_s: 0.0018
+    w_syn_v: 0.000275
+    r_m_ohm: 10000000.0
+    dt_s: 0.0001
+    solver: exact
+    dg_unless_refractory: false
+    unknown_nt_policy: zero_effect
+    parameter_source: Reference Drosophila LIF defaults (Kakaria & de Bivort 2017;
+      Jurgensen et al. 2021; Lazar et al. 2021; Paul et al. 2015; Shiu et al. 2024)
+conditions:
+- id: sham_zero_stimulus
+  interventions:
+  - kind: sham
+    description: zero_stimulus_negative_control
+- id: vehicle_baseline_40hz
+  interventions:
+  - kind: poisson_rate
+    target_neuron_ids:
+    - '803882'
+    - '905611'
+    - '808678'
+    - '810360'
+    - '807667'
+    - '809687'
+    - '805181'
+    - '813513'
+    - '813710'
+    - '812579'
+    - '813176'
+    - '816275'
+    - '812772'
+    - '813045'
+    - '813519'
+    - '807995'
+    - '808495'
+    - '812260'
+    - '813166'
+    - '813574'
+    - '813828'
+    - '813895'
+    - '813815'
+    - '814863'
+    - '816909'
+    - '902813'
+    - '909772'
+    - '912333'
+    - '813756'
+    - '814236'
+    rate_hz: 40.0
+    weight_v: 0.06875
+    start_s: 0.1
+    end_s: 0.5
+    disable_refractory: true
+- id: rdl_gaba_antag_50pct
+  interventions:
+  - kind: poisson_rate
+    target_neuron_ids:
+    - '803882'
+    - '905611'
+    - '808678'
+    - '810360'
+    - '807667'
+    - '809687'
+    - '805181'
+    - '813513'
+    - '813710'
+    - '812579'
+    - '813176'
+    - '816275'
+    - '812772'
+    - '813045'
+    - '813519'
+    - '807995'
+    - '808495'
+    - '812260'
+    - '813166'
+    - '813574'
+    - '813828'
+    - '813895'
+    - '813815'
+    - '814863'
+    - '816909'
+    - '902813'
+    - '909772'
+    - '912333'
+    - '813756'
+    - '814236'
+    rate_hz: 40.0
+    weight_v: 0.06875
+    start_s: 0.1
+    end_s: 0.5
+    disable_refractory: true
+  - kind: edge_gain_modulation
+    target_neuron_ids:
+    - '902566'
+    - '811380'
+    - '800671'
+    - '800098'
+    - '800433'
+    - '800826'
+    - '800092'
+    - '804356'
+    - '800532'
+    - '801256'
+    - '812816'
+    - '802800'
+    - '800320'
+    - '907619'
+    - '802758'
+    - '903623'
+    - '805844'
+    - '804006'
+    - '800281'
+    - '905022'
+    - '911616'
+    - '800763'
+    - '803586'
+    - '808960'
+    - '800717'
+    - '806693'
+    scope: outgoing
+    factor: 0.5
+- id: rdl_gaba_antag_100pct
+  interventions:
+  - kind: poisson_rate
+    target_neuron_ids:
+    - '803882'
+    - '905611'
+    - '808678'
+    - '810360'
+    - '807667'
+    - '809687'
+    - '805181'
+    - '813513'
+    - '813710'
+    - '812579'
+    - '813176'
+    - '816275'
+    - '812772'
+    - '813045'
+    - '813519'
+    - '807995'
+    - '808495'
+    - '812260'
+    - '813166'
+    - '813574'
+    - '813828'
+    - '813895'
+    - '813815'
+    - '814863'
+    - '816909'
+    - '902813'
+    - '909772'
+    - '912333'
+    - '813756'
+    - '814236'
+    rate_hz: 40.0
+    weight_v: 0.06875
+    start_s: 0.1
+    end_s: 0.5
+    disable_refractory: true
+  - kind: edge_mask
+    pre_neuron_ids:
+    - '902566'
+    - '811380'
+    - '800671'
+    - '800098'
+    - '800433'
+    - '800826'
+    - '800092'
+    - '804356'
+    - '800532'
+    - '801256'
+    - '812816'
+    - '802800'
+    - '800320'
+    - '907619'
+    - '802758'
+    - '903623'
+    - '805844'
+    - '804006'
+    - '800281'
+    - '905022'
+    - '911616'
+    - '800763'
+    - '803586'
+    - '808960'
+    - '800717'
+    - '806693'
+    post_neuron_ids:
+    - '10592'
+    - '13166'
+    - '15070'
+    - '558778'
+    - '523539'
+    - '14994'
+    factor: 0.0
+- id: rdl_gaba_pam_175pct
+  interventions:
+  - kind: poisson_rate
+    target_neuron_ids:
+    - '803882'
+    - '905611'
+    - '808678'
+    - '810360'
+    - '807667'
+    - '809687'
+    - '805181'
+    - '813513'
+    - '813710'
+    - '812579'
+    - '813176'
+    - '816275'
+    - '812772'
+    - '813045'
+    - '813519'
+    - '807995'
+    - '808495'
+    - '812260'
+    - '813166'
+    - '813574'
+    - '813828'
+    - '813895'
+    - '813815'
+    - '814863'
+    - '816909'
+    - '902813'
+    - '909772'
+    - '912333'
+    - '813756'
+    - '814236'
+    rate_hz: 40.0
+    weight_v: 0.06875
+    start_s: 0.1
+    end_s: 0.5
+    disable_refractory: true
+  - kind: edge_gain_modulation
+    target_neuron_ids:
+    - '902566'
+    - '811380'
+    - '800671'
+    - '800098'
+    - '800433'
+    - '800826'
+    - '800092'
+    - '804356'
+    - '800532'
+    - '801256'
+    - '812816'
+    - '802800'
+    - '800320'
+    - '907619'
+    - '802758'
+    - '903623'
+    - '805844'
+    - '804006'
+    - '800281'
+    - '905022'
+    - '911616'
+    - '800763'
+    - '803586'
+    - '808960'
+    - '800717'
+    - '806693'
+    scope: outgoing
+    factor: 1.75
+- id: nachr_ach_atten_50pct
+  interventions:
+  - kind: poisson_rate
+    target_neuron_ids:
+    - '803882'
+    - '905611'
+    - '808678'
+    - '810360'
+    - '807667'
+    - '809687'
+    - '805181'
+    - '813513'
+    - '813710'
+    - '812579'
+    - '813176'
+    - '816275'
+    - '812772'
+    - '813045'
+    - '813519'
+    - '807995'
+    - '808495'
+    - '812260'
+    - '813166'
+    - '813574'
+    - '813828'
+    - '813895'
+    - '813815'
+    - '814863'
+    - '816909'
+    - '902813'
+    - '909772'
+    - '912333'
+    - '813756'
+    - '814236'
+    rate_hz: 40.0
+    weight_v: 0.06875
+    start_s: 0.1
+    end_s: 0.5
+    disable_refractory: true
+  - kind: edge_gain_modulation
+    target_neuron_ids:
+    - '803882'
+    - '905611'
+    - '808678'
+    - '810360'
+    - '807667'
+    - '809687'
+    - '805181'
+    - '813513'
+    - '813710'
+    - '812579'
+    - '813176'
+    - '816275'
+    - '812772'
+    - '813045'
+    - '813519'
+    - '807995'
+    - '808495'
+    - '812260'
+    - '813166'
+    - '813574'
+    - '813828'
+    - '813895'
+    - '813815'
+    - '814863'
+    - '816909'
+    - '902813'
+    - '909772'
+    - '912333'
+    - '813756'
+    - '814236'
+    scope: outgoing
+    factor: 0.5
+- id: combined_rdl_pam_plus_nachr_atten
+  interventions:
+  - kind: poisson_rate
+    target_neuron_ids:
+    - '803882'
+    - '905611'
+    - '808678'
+    - '810360'
+    - '807667'
+    - '809687'
+    - '805181'
+    - '813513'
+    - '813710'
+    - '812579'
+    - '813176'
+    - '816275'
+    - '812772'
+    - '813045'
+    - '813519'
+    - '807995'
+    - '808495'
+    - '812260'
+    - '813166'
+    - '813574'
+    - '813828'
+    - '813895'
+    - '813815'
+    - '814863'
+    - '816909'
+    - '902813'
+    - '909772'
+    - '912333'
+    - '813756'
+    - '814236'
+    rate_hz: 40.0
+    weight_v: 0.06875
+    start_s: 0.1
+    end_s: 0.5
+    disable_refractory: true
+  - kind: edge_gain_modulation
+    target_neuron_ids:
+    - '902566'
+    - '811380'
+    - '800671'
+    - '800098'
+    - '800433'
+    - '800826'
+    - '800092'
+    - '804356'
+    - '800532'
+    - '801256'
+    - '812816'
+    - '802800'
+    - '800320'
+    - '907619'
+    - '802758'
+    - '903623'
+    - '805844'
+    - '804006'
+    - '800281'
+    - '905022'
+    - '911616'
+    - '800763'
+    - '803586'
+    - '808960'
+    - '800717'
+    - '806693'
+    scope: outgoing
+    factor: 1.75
+  - kind: edge_gain_modulation
+    target_neuron_ids:
+    - '803882'
+    - '905611'
+    - '808678'
+    - '810360'
+    - '807667'
+    - '809687'
+    - '805181'
+    - '813513'
+    - '813710'
+    - '812579'
+    - '813176'
+    - '816275'
+    - '812772'
+    - '813045'
+    - '813519'
+    - '807995'
+    - '808495'
+    - '812260'
+    - '813166'
+    - '813574'
+    - '813828'
+    - '813895'
+    - '813815'
+    - '814863'
+    - '816909'
+    - '902813'
+    - '909772'
+    - '912333'
+    - '813756'
+    - '814236'
+    scope: outgoing
+    factor: 0.5
+- id: matched_ctrl_rdl_antag_100pct
+  interventions:
+  - kind: poisson_rate
+    target_neuron_ids:
+    - '803882'
+    - '905611'
+    - '808678'
+    - '810360'
+    - '807667'
+    - '809687'
+    - '805181'
+    - '813513'
+    - '813710'
+    - '812579'
+    - '813176'
+    - '816275'
+    - '812772'
+    - '813045'
+    - '813519'
+    - '807995'
+    - '808495'
+    - '812260'
+    - '813166'
+    - '813574'
+    - '813828'
+    - '813895'
+    - '813815'
+    - '814863'
+    - '816909'
+    - '902813'
+    - '909772'
+    - '912333'
+    - '813756'
+    - '814236'
+    rate_hz: 40.0
+    weight_v: 0.06875
+    start_s: 0.1
+    end_s: 0.5
+    disable_refractory: true
+  - kind: edge_gain_modulation
+    target_neuron_ids:
+    - '800077'
+    - '813896'
+    - '800455'
+    - '800035'
+    - '800378'
+    - '903727'
+    - '802181'
+    - '804158'
+    - '912294'
+    - '801162'
+    - '811884'
+    - '802183'
+    - '800145'
+    - '802162'
+    - '804453'
+    - '802987'
+    - '803614'
+    - '808742'
+    - '800477'
+    - '902275'
+    - '804500'
+    - '22709'
+    - '803227'
+    - '801254'
+    - '803186'
+    - '808787'
+    scope: outgoing
+    factor: 0.0
+stimulus_schedule:
+  duration_s: 0.6
+  pre_window_s:
+  - 0.0
+  - 0.1
+  stim_window_s:
+  - 0.1
+  - 0.5
+  post_window_s:
+  - 0.5
+  - 0.6
+  stimuli: []
+measurement_window:
+  start_s: 0.0
+  end_s: 0.6
+seeds:
+  strategy: paired
+  master: 20261170
+  replicates: 3
+analysis:
+  primary_endpoint: ascending_relay_windowed_and_mean_firing_rate_hz
+  estimand: paired_condition_difference_and_bliss_excess_hz_exploratory
+  uncertainty_method: percentile_bootstrap_2000_exact_sign_flip
+  multiplicity_policy: exploratory_unadjusted_plus_bh_fdr_preview
+  exclusion_policy: no_posthoc_run_dropping_failed_runs_reported_separately
+  acceptance_criteria: 'Pilot calibration: sham==0 spikes, 24/24 succeeded, bidirectional
+    Rdl modulation and nAChR attenuation separated'
+resources:
+  max_wall_seconds: 600.0
+  max_output_bytes: 536870912

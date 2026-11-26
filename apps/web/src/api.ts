@@ -766,6 +766,133 @@ export interface NeuroStudyData {
   pilot: NeuroPilotSummary | null;
 }
 
+export interface PharmaL2GateReport {
+  model_id: string;
+  model_level: string;
+  solver: string;
+  parameter_manifest_sha256: string;
+  overall_passed: boolean;
+  gates: {
+    hill_boundary_and_half_max: {
+      passed: boolean;
+      checks: Array<{
+        hill_n: number;
+        occ_zero: number;
+        occ_ec50: number;
+        occ_1e6: number;
+        passed: boolean;
+      }>;
+    };
+    schild_linearity_and_slope: {
+      passed: boolean;
+      schild_slope: number;
+      schild_intercept: number;
+      r_squared: number;
+      max_dose_ratio_abs_error: number;
+      points: Array<{
+        antagonist_ratio_ki: number;
+        log10_antagonist_ratio: number;
+        dose_ratio_numeric: number;
+        dose_ratio_exact: number;
+        log10_dr_minus_1: number;
+      }>;
+    };
+    noncompetitive_vs_pam_directionality: {
+      passed: boolean;
+      antag_strictly_decreasing: boolean;
+      pam_strictly_increasing: boolean;
+      antag_scale_at_ic50: number;
+      pam_scale_at_km: number;
+    };
+    bliss_independence_identity: {
+      passed: boolean;
+      bliss_0_5_plus_0_5: number;
+      bliss_0_3_plus_0_4: number;
+      symmetry_abs_diff: number;
+    };
+    ruo_dose_independent_guard: {
+      passed: boolean;
+      named_compound_gate_enabled: boolean;
+      unit_system: string;
+    };
+  };
+}
+
+export interface PharmaL2Panel {
+  model_id: string;
+  parameter_manifest_sha256: string;
+  named_compound_gate_enabled: boolean;
+  gate_overall_passed: boolean;
+  rdl_gaba_a_noncomp_curve: Array<{
+    ratio_ic50: number;
+    log10_ratio: number;
+    conductance_scale: number;
+  }>;
+  rdl_gaba_a_pam_curve: Array<{
+    ratio_km: number;
+    log10_ratio: number;
+    conductance_scale: number;
+  }>;
+  nachr_ach_noncomp_curve: Array<{
+    ratio_ic50: number;
+    log10_ratio: number;
+    conductance_scale: number;
+  }>;
+  l1_coupling_snapshots: Array<{
+    condition_id: string;
+    receptor_target: string;
+    mechanism: string;
+    normalized_ratio_label: string;
+    rdl_gaba_scale: number;
+    nachr_ach_scale: number;
+    matched_ctrl_rdl_scale: number;
+  }>;
+}
+
+export interface PharmaPilotSummary {
+  protocol_id: string;
+  dataset_id: string;
+  total_runs: number;
+  succeeded_run_count: number;
+  failed_run_count: number;
+  sham_count: number;
+  sham_max_spikes: number;
+  wall_total_s: number;
+  run_wall_mean_s: number;
+  git_commits: string[];
+  condition_readout_means: Record<
+    string,
+    {
+      anxxx027_l_523539_mean_hz: number;
+      anxxx027_l_523539_sd_hz: number;
+      an08b012_r_558778_mean_hz: number;
+      an08b012_r_558778_sd_hz: number;
+      an08b012_l_10592_mean_hz: number;
+      an08b012_l_10592_sd_hz: number;
+      fractional_suppression_523539_vs_vehicle?: number | null;
+    }
+  >;
+  bliss_evaluation?: {
+    pam_suppression_fraction_523539: number;
+    nachr_atten_suppression_fraction_523539: number;
+    expected_bliss_suppression_523539: number;
+    observed_combined_suppression_523539: number;
+    bliss_excess_vs_null_523539: number;
+    pam_suppression_fraction_558778: number;
+    nachr_atten_suppression_fraction_558778: number;
+    expected_bliss_suppression_558778: number;
+    observed_combined_suppression_558778: number;
+    bliss_excess_vs_null_558778: number;
+  };
+  contrasts: SleepPilotContrast[];
+}
+
+export interface PharmaStudyData {
+  l2_gate: PharmaL2GateReport | null;
+  l2_panel: PharmaL2Panel | null;
+  pilot: PharmaPilotSummary | null;
+}
+
 export interface StudiesResponse {
   modules: ResearchModuleItem[];
   metabolic: {
@@ -790,6 +917,7 @@ export interface StudiesResponse {
   sleep?: SleepStudyData;
   addiction?: AddictionStudyData;
   neuro?: NeuroStudyData;
+  pharma?: PharmaStudyData;
 }
 
 async function requestJson<T>(path: string, init?: RequestInit): Promise<T> {

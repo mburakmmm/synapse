@@ -70,6 +70,8 @@ const GLOSSARY_KEYS: Array<{
   { id: "extinction", titleKey: "glossExtinctionTitle", defKey: "glossExtinctionDef" },
   { id: "ablation", titleKey: "glossAblationTitle", defKey: "glossAblationDef" },
   { id: "fragmentation", titleKey: "glossFragTitle", defKey: "glossFragDef" },
+  { id: "receptor", titleKey: "glossReceptorTitle", defKey: "glossReceptorDef" },
+  { id: "allosteric", titleKey: "glossAllostericTitle", defKey: "glossAllostericDef" },
 ];
 
 export function moduleStateBadge(
@@ -129,6 +131,11 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
     studies?.neuro?.pilot?.contrasts.find((c) =>
       c.contrast_name.includes("mn9r_cell_loss_top12_vs_intact"),
     ) ?? studies?.neuro?.pilot?.contrasts[0];
+  const pharmaL2Gate = studies?.pharma?.l2_gate ?? null;
+  const pharmaPrimary =
+    studies?.pharma?.pilot?.contrasts.find((c) =>
+      c.contrast_name.includes("rdl_antag100_vs_veh"),
+    ) ?? studies?.pharma?.pilot?.contrasts[0];
   const primaryBench = benchmarks[0]?.report;
 
   if (uiMode === "simple") {
@@ -372,6 +379,53 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
                       datasetId: "flywire_fafb_v630",
                       seedIds:
                         "720575940660219265, 720575940645521262, 720575940623211725, 720575940619853515, 720575940607272649, 720575940626038714",
+                      hops: 1,
+                      direction: "both",
+                      minSynapses: 15,
+                      maxNodes: 75,
+                    })
+                  }
+                >
+                  {t("open3dBtn")}
+                </button>
+              </div>
+            </div>
+
+            <div className="story-card">
+              <div>
+                <div className="card-header" style={{ marginBottom: 6 }}>
+                  <h3>{t("simplePharmaTitle")}</h3>
+                  <StatusBadge
+                    label={pharmaL2Gate?.overall_passed ? t("stateExperimental") : t("statePlanned")}
+                    tone={pharmaL2Gate?.overall_passed ? "info" : "neutral"}
+                  />
+                </div>
+                <div className="story-card-metric">
+                  {pharmaPrimary
+                    ? `${pharmaPrimary.mean_difference_hz >= 0 ? "+" : ""}${pharmaPrimary.mean_difference_hz.toFixed(1)} Hz`
+                    : pharmaL2Gate
+                      ? `Slope ${pharmaL2Gate.gates.schild_linearity_and_slope.schild_slope.toFixed(3)}`
+                      : t("noneDash")}
+                </div>
+                <p style={{ fontSize: "0.83rem", color: "var(--text-secondary)", marginBottom: 0 }}>
+                  {pharmaPrimary || pharmaL2Gate ? t("simplePharmaSummary") : t("simpleMissingNote")}
+                </p>
+              </div>
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                <button
+                  type="button"
+                  className="btn btn-sm"
+                  onClick={() => onNavigateModule("pharma")}
+                >
+                  {t("readStoryBtn")}
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-secondary btn-sm"
+                  onClick={() =>
+                    onExploreCircuit3D({
+                      datasetId: "malecns_v1_0",
+                      seedIds: "523539, 558778, 10592, 902566, 811380",
                       hops: 1,
                       direction: "both",
                       minSynapses: 15,

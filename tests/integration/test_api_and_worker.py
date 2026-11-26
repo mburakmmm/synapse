@@ -192,6 +192,8 @@ def test_api_and_worker_full_fixture_lifecycle_security_cancel_and_backup(tmp_pa
             assert model_ids["neuro_topology_ablation_v1"]["model_level"] == "L0"
             assert "mb_dopamine_plasticity_v1" in model_ids
             assert model_ids["mb_dopamine_plasticity_v1"]["model_level"] == "L2"
+            assert "receptor_conductance_modulation_v1" in model_ids
+            assert model_ids["receptor_conductance_modulation_v1"]["model_level"] == "L2"
             assert "leloup_goldbeter_1998_two_process_v1" in model_ids
             assert model_ids["leloup_goldbeter_1998_two_process_v1"]["model_level"] == "L3"
 
@@ -202,6 +204,7 @@ def test_api_and_worker_full_fixture_lifecycle_security_cancel_and_backup(tmp_pa
             assert "sleep" in studies_body
             assert "addiction" in studies_body
             assert "neuro" in studies_body
+            assert "pharma" in studies_body
             allowed_states = {
                 "planned",
                 "experimental",

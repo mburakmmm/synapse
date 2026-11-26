@@ -164,7 +164,7 @@ export const ModelsProtocolsView: React.FC<ModelsProtocolsViewProps> = ({
                     m.model_level === "L3"
                       ? `L3 ODE · solver: ${m.solver}`
                       : m.model_level === "L2"
-                        ? `L2 Plasticity · solver: ${m.solver}`
+                        ? `${m.model_id.includes("receptor") ? "L2 Pharmacology" : "L2 Plasticity"} · solver: ${m.solver}`
                         : m.model_level === "L0"
                           ? `L0 Topology · solver: ${m.solver}`
                           : `L1 LIF · solver: ${m.solver} · dg=${String(m.dg_unless_refractory)}`

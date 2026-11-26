@@ -129,9 +129,9 @@ export const TRANSLATIONS = {
     modNeuroName: "Neurodegeneration & Resilience (P5-NEURO-001)",
     modNeuroDesc:
       "Experimental: verified L0 fragmentation/ablation gates (5/5) + L1 FlyWire 24/24 motor-degradation pilot and specimen-isolated MaleCNS L0 audit (confirmatory freeze pending; NOT clinical).",
-    modPharmaName: "Pharmacology & Receptor Modulation",
+    modPharmaName: "Pharmacology & Receptor Modulation (P5-PHARMA-001)",
     modPharmaDesc:
-      "Planned: species-specific receptor localization and kinetic parameters required before named compound simulation.",
+      "Experimental: verified L2 dose-independent receptor kinetics (5/5 gates: Hill, Schild slope=1.0, PAM/block, Bliss) + L1 MaleCNS 24/24 exploratory pilot (confirmatory freeze pending; NOT human dosing).",
     modStressName: "Stress Circuitry",
     modStressDesc:
       "Planned: declared fly-level stress signaling circuits; diagnostic human labels strictly excluded.",
@@ -141,6 +141,7 @@ export const TRANSLATIONS = {
     modulesMissingTitle: "Local Simulation Artifacts Not Found Under runs/",
     modulesMissingBody:
       "Live scientific summary JSONs under runs/ are intentionally gitignored. Run confirmatory scripts locally or inspect offline test fixtures; zero synthetic numbers are fabricated here.",
+    tabPharma: "Pharma · P5-PHARMA-001",
     tabNeuro: "Neuro · P5-NEURO-001",
     tabAddiction: "Addiction · P5-ADD-001",
     tabSleep: "Sleep · P5-SLEEP-001",
@@ -241,6 +242,7 @@ export const TRANSLATIONS = {
     presetPain: "Pain VNC (malecns_v1_0)",
     presetSleep: "Sleep & Circadian (malecns_v1_0)",
     presetAddiction: "Reward Learning MB (malecns_v1_0)",
+    presetPharma: "Receptor Modulation (malecns_v1_0)",
     presetMetabolic: "Metabolic MN9 (flywire_fafb_v630)",
     presetNeuro: "Premotor Hub Ablation (flywire_fafb_v630)",
     presetSynth: "Synthetic Microcircuit",
@@ -484,6 +486,29 @@ export const TRANSLATIONS = {
     neuroLimitsTitle: "Mandatory RUO Non-Clinical & Static-Ablation Limits",
     neuroLimitsBody:
       "Fly proboscis motor firing reduction (MN9_right / MN9_left) and L0 efficiency curves are computational circuit proxies—NOT human Parkinson's, Alzheimer's, aging, or clinical diagnosis. L1 neuron_silencing and edge_mask represent instantaneous structural deficits without slow glia clearance or homeostatic plasticity. Confirmatory P5-NEURO-001.yaml remains unfrozen (draft).",
+    simplePharmaTitle: "Receptor Conductance & Dual-Target Balance (L2 + Male Brain)",
+    simplePharmaSummary:
+      "Verified L2 dose-independent Hill/Schild/Bliss kinetics pass 5/5 gates; blocking inhibitory Rdl (GABA_A) receptors amplified tactile relay output while boosting Rdl (PAM) or attenuating excitatory nAChR (ACH) dampened signaling on the intact MaleCNS circuit, with matched off-pathway GABA controls staying silent.",
+    glossReceptorTitle: "Receptor Occupancy (Hill / Schild)",
+    glossReceptorDef:
+      "Mathematical relationship linking dimensionless concentration ratios ([A]/EC50 or [B]/Ki) to receptor binding or parallel competitive curve shifts without prescribing clinical doses.",
+    glossAllostericTitle: "Allosteric PAM vs Bliss Null",
+    glossAllostericDef:
+      "A positive allosteric modulator (PAM) boosts GABA_A braking above 1.0x, whereas the Bliss null tests whether two independent receptor modulators combine multiplicatively without extra synergy.",
+    pharmaBannerTitle: "Phase 5C-2: L2 Dose-Independent Receptor Kinetics & L1 MaleCNS Pilot",
+    pharmaGatesTitle: "Mandatory L2 Receptor Kinetics & Bliss Null Verification (5/5 Gates)",
+    pharmaGateHill: "Hill Occupancy Boundaries",
+    pharmaGateSchild: "Schild Linearity Slope",
+    pharmaGateBidir: "Rdl Block vs PAM",
+    pharmaGateBliss: "Bliss Identity Check",
+    pharmaGateRuo: "Dose-Independent RUO",
+    pharmaChartL2Title: "L2 Bidirectional Rdl (GABA_A) & nAChR Conductance Scaling Curves",
+    pharmaChartL1Title: "L1 Pilot MaleCNS Ascending Readouts Across Receptor Modulations (Hz, N=3)",
+    pharmaSnapshotTableTitle: "L2 -> L1 Conductance Coupling & Bliss Independence Evaluation",
+    pharmaContrastsTitle: "Exploratory L1 Paired Receptor Contrasts & Matched Controls (0.0–0.6 s, N=3)",
+    pharmaLimitsTitle: "Mandatory RUO Non-Clinical & Dose-Independent Boundaries",
+    pharmaLimitsBody:
+      "All L2 curves use dimensionless affinity ratios ([A]/EC50, [B]/Ki, [I]/IC50, [M]/Km) with named_compound_gate_enabled = false—NOT human drugs, patient dosing, or clinical efficacy. L1 weights proxy Rdl/nAChR gain uniformly across predicted GABA/ACH edges without PK/PD metabolism or receptor desensitization. Confirmatory P5-PHARMA-001.yaml remains unfrozen (draft).",
   },
   tr: {
     // Document & Branding
@@ -611,9 +636,9 @@ export const TRANSLATIONS = {
     modNeuroName: "Nörodejenerasyon ve Ağ Dayanıklılığı (P5-NEURO-001)",
     modNeuroDesc:
       "Deneysel: doğrulanmış L0 ağ parçalanması/ablasyon kapıları (5/5) + L1 FlyWire 24/24 motor-kaybı pilotu ve örneklemi izole MaleCNS L0 denetimi (doğrulayıcı dondurma onay bekliyor; klinik DEĞİLDİR).",
-    modPharmaName: "Farmakoloji ve Reseptör Modülasyonu",
+    modPharmaName: "Farmakoloji ve Reseptör Modülasyonu (P5-PHARMA-001)",
     modPharmaDesc:
-      "Planlandı: isimli bileşik simülasyonlarından önce türe özgü reseptör konumlanması ve kinetik kanıt kapısı.",
+      "Deneysel: doğrulanmış L2 dozdan bağımsız reseptör kinetiği (5/5 kapı: Hill, Schild eğimi=1.0, PAM/blok, Bliss) + L1 MaleCNS 24/24 keşifsel pilot (doğrulayıcı dondurma onay bekliyor; insan dozajı DEĞİLDİR).",
     modStressName: "Stres Devreleri",
     modStressDesc:
       "Planlandı: yalnızca sinek düzeyi devre/davranış çıktıları; klinik anksiyete/depresyon tanı etiketleri kesinlikle dışlanır.",
@@ -623,6 +648,7 @@ export const TRANSLATIONS = {
     modulesMissingTitle: "Yerel runs/ Altında Simülasyon Çıktıları Bulunamadı",
     modulesMissingBody:
       "runs/ altındaki simülasyon özet JSON dosyaları Git dışında tutulur. Yerel koşu sonuçları varsa otomatik okunur; sahte veri kesinlikle üretilmez.",
+    tabPharma: "Farmakoloji · P5-PHARMA-001",
     tabNeuro: "Nöro · P5-NEURO-001",
     tabAddiction: "Bağımlılık · P5-ADD-001",
     tabSleep: "Uyku · P5-SLEEP-001",
@@ -728,6 +754,7 @@ export const TRANSLATIONS = {
     presetPain: "Ağrı VNC Devresi (malecns_v1_0)",
     presetSleep: "Uyku ve Sirkadiyen Devre (malecns_v1_0)",
     presetAddiction: "Ödül Öğrenmesi MB Devresi (malecns_v1_0)",
+    presetPharma: "Reseptör Modülasyonu (malecns_v1_0)",
     presetMetabolic: "Metabolik MN9 Devresi (flywire_fafb_v630)",
     presetNeuro: "Premotor Hub Ablasyonu (flywire_fafb_v630)",
     presetSynth: "Sentetik Mikrodevre",
@@ -971,6 +998,29 @@ export const TRANSLATIONS = {
     neuroLimitsTitle: "Zorunlu RUO Klinik-Dışı Kapsam ve Statik Ablasyon Sınırları",
     neuroLimitsBody:
       "Sinek proboskis motor nöronu (MN9_right / MN9_left) ateşleme düşüşü ve L0 verimlilik eğrileri hesaplamalı devre proksileridir — insan Parkinson hastalığı, Alzheimer, yaşlanma veya klinik tanı DEĞİLDİR. L1 neuron_silencing ve edge_mask yavaş glia temizliği veya homeostatik telafi içermeyen anlık kesitlerdir. Doğrulayıcı P5-NEURO-001.yaml henüz dondurulmamıştır (draft).",
+    simplePharmaTitle: "Reseptör İletkenliği ve Çift-Hedef Dengesi (L2 + Erkek Beyin)",
+    simplePharmaSummary:
+      "Doğrulanmış L2 dozdan bağımsız Hill/Schild/Bliss kinetiği 5/5 kapıyı geçti; baskılayıcı Rdl (GABA_A) reseptör bloğu dokunsal aktarım çıktısını artırırken Rdl güçlendirmesi (PAM) veya uyarıcı nAChR (ACH) azaltımı MaleCNS devresinde çıkışı bastırdı; devre-dışı eşli kontrol sessiz kaldı.",
+    glossReceptorTitle: "Reseptör Doluluğu (Hill / Schild)",
+    glossReceptorDef:
+      "Klinik ilaç dozu önermeden, boyutsuz derişim oranlarını ([A]/EC50 veya [B]/Ki) reseptör bağlanmasına veya paralel yarışmacı eğri kaymalarına bağlayan matematiksel ilişkidir.",
+    glossAllostericTitle: "Allosterik PAM vs Bliss Sıfır Modeli",
+    glossAllostericDef:
+      "Pozitif allosterik modülatör (PAM) GABA_A frenini 1.0x üzerine güçlendirirken, Bliss sıfır modeli iki bağımsız reseptör modülatörünün ek sinerji olmadan çarpımsal birleşip birleşmediğini sınar.",
+    pharmaBannerTitle: "Faz 5C-2: L2 Dozdan Bağımsız Reseptör Kinetiği ve L1 MaleCNS Pilotu",
+    pharmaGatesTitle: "Zorunlu L2 Reseptör Kinetiği ve Bliss Sıfır Doğrulaması (5/5 Kapı)",
+    pharmaGateHill: "Hill Doluluk Sınırları",
+    pharmaGateSchild: "Schild Doğrusallık Eğimi",
+    pharmaGateBidir: "Rdl Blok vs PAM",
+    pharmaGateBliss: "Bliss Özdeşlik Kontrolü",
+    pharmaGateRuo: "Dozdan Bağımsız RUO",
+    pharmaChartL2Title: "L2 Çift-Yönlü Rdl (GABA_A) ve nAChR İletkenlik Ölçekleme Eğrileri",
+    pharmaChartL1Title: "Reseptör Modülasyonları Boyunca L1 Pilot MaleCNS Çıkış Hızları (Hz, N=3)",
+    pharmaSnapshotTableTitle: "L2 -> L1 İletkenlik Eşleşmesi ve Bliss Bağımsızlık Değerlendirmesi",
+    pharmaContrastsTitle: "Keşifsel L1 Eşleştirilmiş Reseptör Farkları ve Kontroller (0.0–0.6 sn, N=3)",
+    pharmaLimitsTitle: "Zorunlu RUO Klinik-Dışı ve Dozdan Bağımsız Kapsam Sınırları",
+    pharmaLimitsBody:
+      "Tüm L2 eğrileri boyutsuz afinite oranları ([A]/EC50, [B]/Ki, [I]/IC50, [M]/Km) ve named_compound_gate_enabled = false ile çalışır — insan ilacı, hasta dozu veya klinik etkinlik DEĞİLDİR. L1 ağırlıkları öngörülen GABA/ACH kenarları boyunca PK/PD veya desensitizasyon olmadan tekdüze Rdl/nAChR kazancı uygular. Doğrulayıcı P5-PHARMA-001.yaml henüz dondurulmamıştır (draft).",
   },
 } as const;
 

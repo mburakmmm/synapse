@@ -20,6 +20,7 @@ from synapse_core import (
     DirectedConnectomeGraph,
     LIFParameters,
     MBPlasticityParameters,
+    ReceptorModulationParameters,
     TopologyAnalysisParameters,
     extract_bounded_subgraph,
     validate_model_spec,
@@ -357,11 +358,31 @@ def _serialize_topology_model_entry(params: TopologyAnalysisParameters) -> dict[
     }
 
 
+def _serialize_pharma_model_entry(params: ReceptorModulationParameters) -> dict[str, Any]:
+    return {
+        "model_id": params.model_id,
+        "model_revision": params.model_revision,
+        "model_level": params.model_level,
+        "parameter_manifest_sha256": params.canonical_sha256(),
+        "solver": params.solver,
+        "dt_s": params.dt_s,
+        "parameter_source": params.parameter_source,
+        "parameters": {
+            "named_compound_gate_enabled": params.named_compound_gate_enabled,
+            "rdl_gaba_a_hill_n": params.rdl_gaba_a_hill_n,
+            "rdl_pam_max_gain": params.rdl_pam_max_gain,
+            "rdl_pam_hill_m": params.rdl_pam_hill_m,
+            "nachr_ach_hill_n": params.nachr_ach_hill_n,
+        },
+    }
+
+
 def list_models_and_backends() -> dict[str, Any]:
     topology_l0 = TopologyAnalysisParameters()
     default_lif = LIFParameters()
     shiu_lif = LIFParameters.shiu2024_reference()
     plasticity_l2 = MBPlasticityParameters()
+    pharma_l2 = ReceptorModulationParameters()
     circadian_l3 = CircadianHomeostaticParameters()
     cpu_caps = Brian2CPUBackend().capabilities()
     return {
@@ -370,6 +391,7 @@ def list_models_and_backends() -> dict[str, Any]:
             _serialize_model_entry(default_lif),
             _serialize_model_entry(shiu_lif),
             _serialize_plasticity_model_entry(plasticity_l2),
+            _serialize_pharma_model_entry(pharma_l2),
             _serialize_circadian_model_entry(circadian_l3),
         ],
         "backends": [
@@ -893,6 +915,19 @@ def list_research_studies(settings: Settings) -> dict[str, Any]:
     else:
         neuro_phase = "planned"
 
+    pharma_l2_dir = settings.runs_root / "phase5c_pharma001_l2_kinetics"
+    pharma_l2_gate = _read_json_if_file(pharma_l2_dir / "l2_verification_gate.json")
+    pharma_l2_panel = _read_json_if_file(pharma_l2_dir / "l2_pharmacology_panel.json")
+    pharma_pilot_dir = settings.runs_root / "phase5c_pharma001_exploratory_pilot"
+    pharma_pilot = _read_json_if_file(pharma_pilot_dir / "pilot_summary.json")
+    pharma_available = pharma_l2_gate is not None or pharma_pilot is not None
+    if pharma_l2_gate is not None and pharma_pilot is not None:
+        pharma_phase = "l2_verified_and_l1_pilot_complete"
+    elif pharma_l2_gate is not None:
+        pharma_phase = "l2_verified"
+    else:
+        pharma_phase = "planned"
+
     modules = [
         {
             "module_id": "shiu2024_benchmark",
@@ -955,11 +990,11 @@ def list_research_studies(settings: Settings) -> dict[str, Any]:
         {
             "module_id": "pharma",
             "phase": "phase5c",
-            "ui_state": "planned",
-            "simulation_phase": "planned",
-            "dataset_id": None,
-            "protocol_id": None,
-            "available_on_disk": False,
+            "ui_state": "experimental" if pharma_available else "planned",
+            "simulation_phase": pharma_phase,
+            "dataset_id": "malecns_v1_0" if pharma_available else None,
+            "protocol_id": "P5-PHARMA-001-PILOT" if pharma_pilot is not None else None,
+            "available_on_disk": pharma_available,
         },
         {
             "module_id": "stress",
@@ -1000,6 +1035,11 @@ def list_research_studies(settings: Settings) -> dict[str, Any]:
             "l0_summary": neuro_l0_summary,
             "malecns_l0_audit": neuro_malecns_audit,
             "pilot": neuro_pilot,
+        },
+        "pharma": {
+            "l2_gate": pharma_l2_gate,
+            "l2_panel": pharma_l2_panel,
+            "pilot": pharma_pilot,
         },
     }
 

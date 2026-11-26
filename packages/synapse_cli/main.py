@@ -25,6 +25,7 @@ from synapse_core import (
     LIFParameters,
     MBPlasticityParameters,
     PlasticityTrajectory,
+    ReceptorModulationParameters,
     TopologyAnalysisParameters,
     TwoProcessTrajectory,
     extract_bounded_subgraph,
@@ -32,8 +33,10 @@ from synapse_core import (
     run_progressive_ablation_curve,
     run_shift_work_experiment,
     simulate_conditioning_schedule,
+    simulate_receptor_modulation_panel,
     validate_model_spec,
     verify_circadian_homeostatic_gates,
+    verify_pharmacology_gates,
     verify_plasticity_paradigm_gates,
     verify_topology_ablation_gates,
 )
@@ -206,6 +209,7 @@ def _cmd_model_list(args: argparse.Namespace) -> int:
     default_lif = LIFParameters()
     shiu_lif = LIFParameters.shiu2024_reference()
     plasticity_l2 = MBPlasticityParameters()
+    pharma_l2 = ReceptorModulationParameters()
     circadian_l3 = CircadianHomeostaticParameters()
     topology_l0 = TopologyAnalysisParameters()
     backend = Brian2CPUBackend()
@@ -249,6 +253,15 @@ def _cmd_model_list(args: argparse.Namespace) -> int:
                 "solver": plasticity_l2.solver,
                 "dt_s": plasticity_l2.dt_s,
                 "parameter_source": plasticity_l2.parameter_source,
+            },
+            {
+                "model_id": pharma_l2.model_id,
+                "model_revision": pharma_l2.model_revision,
+                "model_level": pharma_l2.model_level,
+                "parameter_manifest_sha256": pharma_l2.canonical_sha256(),
+                "solver": pharma_l2.solver,
+                "dt_s": pharma_l2.dt_s,
+                "parameter_source": pharma_l2.parameter_source,
             },
             {
                 "model_id": circadian_l3.model_id,
@@ -1060,6 +1073,174 @@ def _cmd_topology_attack(args: argparse.Namespace) -> int:
     return 0
 
 
+def _write_l2_pharma_figures(
+    panel_payload: dict[str, Any],
+    gate_report: dict[str, Any],
+    figures_dir: Path,
+) -> None:
+    figures_dir.mkdir(parents=True, exist_ok=True)
+
+    # Figure 1: L2 Receptor Conductance Curves (Rdl PAM vs Noncompetitive & nAChR Attenuation)
+    fig1 = Figure(figsize=(8.6, 4.4), dpi=200)
+    FigureCanvasAgg(fig1)
+    ax_rdl = fig1.add_subplot(121)
+    ax_ach = fig1.add_subplot(122)
+
+    xs_rdl_a = [float(p["ratio_ic50"]) for p in panel_payload["rdl_gaba_a_noncomp_curve"]]
+    ys_rdl_a = [float(p["conductance_scale"]) for p in panel_payload["rdl_gaba_a_noncomp_curve"]]
+    xs_rdl_p = [float(p["ratio_km"]) for p in panel_payload["rdl_gaba_a_pam_curve"]]
+    ys_rdl_p = [float(p["conductance_scale"]) for p in panel_payload["rdl_gaba_a_pam_curve"]]
+    ax_rdl.plot(xs_rdl_a, ys_rdl_a, color="#D55E00", linewidth=2.0, label="Rdl noncomp. antagonist")
+    ax_rdl.plot(xs_rdl_p, ys_rdl_p, color="#009E73", linewidth=2.0, label="Rdl allosteric PAM")
+    ax_rdl.axhline(
+        1.0, color="#64748B", linestyle="--", linewidth=1.0, label="Vehicle baseline (1.0x)"
+    )
+    ax_rdl.set_xscale("log")
+    ax_rdl.set_ylim(-0.05, 2.15)
+    ax_rdl.set_xlabel("Dimensionless ratio ([I]/IC50 or [M]/Km)")
+    ax_rdl.set_ylabel("GABA_A conductance scale factor")
+    ax_rdl.set_title("Bidirectional Rdl (GABA_A) Modulation", fontsize=10, fontweight="bold")
+    ax_rdl.legend(loc="best", frameon=False, fontsize=7.5)
+    ax_rdl.spines["top"].set_visible(False)
+    ax_rdl.spines["right"].set_visible(False)
+
+    schild_colors = ["#0F172A", "#0072B2", "#009E73", "#E69F00", "#CC79A7"]
+    for idx, curve_obj in enumerate(panel_payload["nachr_ach_comp_curves"]):
+        b_rat = float(curve_obj["antagonist_ratio_ki"])
+        pts = curve_obj["points"]
+        ax_ach.plot(
+            [float(p["agonist_ratio_ec50"]) for p in pts],
+            [float(p["response"]) for p in pts],
+            color=schild_colors[idx % len(schild_colors)],
+            linewidth=1.8,
+            label=f"[B]/Ki = {b_rat:g}",
+        )
+    ax_ach.set_xscale("log")
+    ax_ach.set_ylim(-0.05, 1.08)
+    ax_ach.set_xlabel("Normalized agonist ratio ([A]/EC50)")
+    ax_ach.set_ylabel("Fractional nAChR occupancy")
+    ax_ach.set_title("nAChR Competitive Schild Shift", fontsize=10, fontweight="bold")
+    ax_ach.legend(loc="lower right", frameon=False, fontsize=7.5)
+    ax_ach.spines["top"].set_visible(False)
+    ax_ach.spines["right"].set_visible(False)
+
+    fig1.suptitle(
+        "L2 Dose-Independent Drosophila Receptor Kinetics (RUO)",
+        fontsize=11,
+        fontweight="bold",
+    )
+    fig1.tight_layout(rect=(0.0, 0.0, 1.0, 0.94))
+    fig1.savefig(figures_dir / "l2_receptor_curves.svg")
+    fig1.savefig(figures_dir / "l2_receptor_curves.png", dpi=200)
+
+    # Figure 2: Schild Regression Line & Bliss Independence Surface
+    fig2 = Figure(figsize=(8.6, 4.4), dpi=200)
+    FigureCanvasAgg(fig2)
+    ax_sch = fig2.add_subplot(121)
+    ax_bliss = fig2.add_subplot(122)
+
+    s_pts = gate_report["gates"]["schild_linearity_and_slope"]["points"]
+    xs_s = [float(p["log10_antagonist_ratio"]) for p in s_pts]
+    ys_s = [float(p["log10_dr_minus_1"]) for p in s_pts]
+    slope_val = float(gate_report["gates"]["schild_linearity_and_slope"]["schild_slope"])
+    ax_sch.plot(
+        xs_s, xs_s, color="#94A3B8", linestyle="--", linewidth=1.2, label="Unit slope ref (1.0)"
+    )
+    ax_sch.scatter(
+        xs_s, ys_s, color="#0072B2", s=48, zorder=3, label=f"Solved slope = {slope_val:.6f}"
+    )
+    ax_sch.set_xlabel("log10([B] / Ki)")
+    ax_sch.set_ylabel("log10(DR - 1)")
+    ax_sch.set_title("Arunlakshana-Schild Regression", fontsize=10, fontweight="bold")
+    ax_sch.legend(loc="upper left", frameon=False, fontsize=8)
+    ax_sch.spines["top"].set_visible(False)
+    ax_sch.spines["right"].set_visible(False)
+
+    bliss_rows = panel_payload["bliss_surface_grid"]
+    fa_vals = sorted({float(r["suppression_a"]) for r in bliss_rows})
+    for idx, fb_fix in enumerate((0.0, 0.25, 0.50, 0.75)):
+        ys_b = [
+            float(r["expected_bliss_suppression"])
+            for r in bliss_rows
+            if abs(float(r["suppression_b"]) - fb_fix) < 1e-9
+        ]
+        ax_bliss.plot(
+            fa_vals,
+            ys_b,
+            marker="o",
+            linewidth=1.8,
+            color=schild_colors[(idx + 1) % len(schild_colors)],
+            label=f"Arm B supp = {fb_fix:.2f}",
+        )
+    ax_bliss.set_ylim(-0.04, 1.06)
+    ax_bliss.set_xlabel("Single-target fractional suppression (Arm A)")
+    ax_bliss.set_ylabel("Expected Bliss combined suppression")
+    ax_bliss.set_title("Bliss Independence Joint-Action Null", fontsize=10, fontweight="bold")
+    ax_bliss.legend(loc="lower right", frameon=False, fontsize=7.5)
+    ax_bliss.spines["top"].set_visible(False)
+    ax_bliss.spines["right"].set_visible(False)
+
+    fig2.suptitle(
+        "L2 Schild Slope & Bliss Independence Verification (RUO)",
+        fontsize=11,
+        fontweight="bold",
+    )
+    fig2.tight_layout(rect=(0.0, 0.0, 1.0, 0.94))
+    fig2.savefig(figures_dir / "l2_schild_and_bliss.svg")
+    fig2.savefig(figures_dir / "l2_schild_and_bliss.png", dpi=200)
+
+
+def _cmd_pharma_verify(args: argparse.Namespace) -> int:
+    params = ReceptorModulationParameters()
+    report = verify_pharmacology_gates(params)
+    report["generated_at_utc"] = datetime.now(UTC).isoformat()
+    report["source_provenance"] = collect_source_provenance(_repo_root())
+    if args.out_dir is not None:
+        out_dir = Path(args.out_dir)
+        out_dir.mkdir(parents=True, exist_ok=True)
+        (out_dir / "l2_verification_gate.json").write_text(
+            json.dumps(report, indent=2),
+            encoding="utf-8",
+        )
+    _emit(report, as_json=args.json)
+    return 0 if report["overall_passed"] else 3
+
+
+def _cmd_pharma_panel(args: argparse.Namespace) -> int:
+    params = ReceptorModulationParameters()
+    gate_report = verify_pharmacology_gates(params)
+    if not gate_report["overall_passed"]:
+        _emit(gate_report, as_json=args.json)
+        return 3
+
+    panel_payload = simulate_receptor_modulation_panel(params)
+    now_utc = datetime.now(UTC).isoformat()
+    src_prov = collect_source_provenance(_repo_root())
+    gate_report["generated_at_utc"] = now_utc
+    gate_report["source_provenance"] = src_prov
+    panel_payload["generated_at_utc"] = now_utc
+    panel_payload["source_provenance"] = src_prov
+    panel_payload["gate_overall_passed"] = bool(gate_report["overall_passed"])
+
+    if args.out_dir is not None:
+        out_dir = Path(args.out_dir)
+        out_dir.mkdir(parents=True, exist_ok=True)
+        (out_dir / "l2_verification_gate.json").write_text(
+            json.dumps(gate_report, indent=2),
+            encoding="utf-8",
+        )
+        (out_dir / "l2_pharmacology_panel.json").write_text(
+            json.dumps(panel_payload, indent=2),
+            encoding="utf-8",
+        )
+        snapshot_rows = list(panel_payload["l1_coupling_snapshots"])
+        pl.DataFrame(snapshot_rows).write_parquet(out_dir / "l2_coupling_snapshots.parquet")
+        _write_l2_pharma_figures(panel_payload, gate_report, out_dir / "figures")
+
+    _emit(panel_payload, as_json=args.json)
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="synapse",
@@ -1309,6 +1490,28 @@ def build_parser() -> argparse.ArgumentParser:
     p_topo_att.add_argument("--out-dir", required=True)
     p_topo_att.add_argument("--json", action="store_true")
     p_topo_att.set_defaults(func=_cmd_topology_attack)
+
+    # pharma (Phase 5C-2 Pharma L2 dose-independent receptor kinetics & L1 coupling)
+    p_pharma = sub.add_parser(
+        "pharma",
+        help="Verify L2 dose-independent receptor-conductance kinetics and run panel",
+    )
+    pharma_sub = p_pharma.add_subparsers(dest="pharma_cmd", required=True)
+    p_pharma_ver = pharma_sub.add_parser(
+        "verify",
+        help="Verify Hill, Schild slope, Rdl PAM/block, Bliss independence & RUO gates",
+    )
+    p_pharma_ver.add_argument("--out-dir", default=None)
+    p_pharma_ver.add_argument("--json", action="store_true")
+    p_pharma_ver.set_defaults(func=_cmd_pharma_verify)
+
+    p_pharma_pan = pharma_sub.add_parser(
+        "panel",
+        help="Run gated L2 receptor-modulation curves and export L2->L1 coupling snapshots",
+    )
+    p_pharma_pan.add_argument("--out-dir", default=None)
+    p_pharma_pan.add_argument("--json", action="store_true")
+    p_pharma_pan.set_defaults(func=_cmd_pharma_panel)
 
     return parser
 
